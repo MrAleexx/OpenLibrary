@@ -4,6 +4,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
+import { BookOpen, Download, Clock, Shield, AlertCircle, CheckCircle, ArrowRight, Search, User, BookMarked, Library, Zap, TrendingUp, RotateCcw, Calendar } from 'lucide-vue-next';
+import { ref, onMounted, computed } from 'vue';
 
 interface Props {
     recentDownloads?: Array<{
@@ -11,6 +13,7 @@ interface Props {
         downloaded_at: string;
         book: {
             title: string;
+            author?: string;
         };
     }>;
     activeLoans?: Array<{
@@ -19,6 +22,7 @@ interface Props {
         physical_copy: {
             book: {
                 title: string;
+                author?: string;
             };
         };
     }>;
@@ -37,204 +41,441 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: dashboard().url,
     },
 ];
+
+// Estado para animaciones
+const isVisible = ref(false);
+const currentTime = ref(new Date());
+
+// Computed para cálculos
+const downloadsToday = computed(() => {
+    return props.recentDownloads.filter(download => {
+        const downloadDate = new Date(download.downloaded_at);
+        return downloadDate.toDateString() === currentTime.value.toDateString();
+    }).length;
+});
+
+const remainingDownloads = computed(() => {
+    return Math.max(0, 5 - downloadsToday.value);
+});
+
+const upcomingDueLoans = computed(() => {
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    return props.activeLoans.filter(loan => {
+        const dueDate = new Date(loan.due_date);
+        return dueDate <= threeDaysFromNow;
+    });
+});
+
+onMounted(() => {
+    setTimeout(() => {
+        isVisible.value = true;
+    }, 100);
+});
 </script>
 
 <template>
     <Head title="Mi Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="p-6">
+        <div class="p-6 space-y-8">
             <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">
-                    Mi Biblioteca Digital
-                </h1>
-                <p class="text-gray-600 mt-2">
-                    Bienvenido a tu espacio personal de lectura
-                    <span v-if="!emailVerified" class="text-yellow-600 text-sm ml-2">
-                        (Email no verificado)
-                    </span>
-                </p>
+            <div class="mb-8 animate-slide-up" :class="{ 'animate-in': isVisible }">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-foreground">
+                            Mi Biblioteca Digital
+                        </h1>
+                        <p class="text-muted-foreground mt-2 flex items-center gap-2">
+                            <BookOpen class="w-4 h-4 text-primary" />
+                            Bienvenido a tu espacio personal de lectura
+                            <span v-if="!emailVerified" class="text-warning text-sm ml-2 flex items-center gap-1">
+                                <AlertCircle class="w-4 h-4" />
+                                (Email no verificado)
+                            </span>
+                            <span v-else class="text-success text-sm ml-2 flex items-center gap-1">
+                                <CheckCircle class="w-4 h-4" />
+                                Cuenta verificada
+                            </span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
+                        <Zap class="w-4 h-4" />
+                        <span class="text-sm font-medium">Bienvenido, {{ $page.props.auth.user.name }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
                 <!-- Descargas Hoy -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
+                <div 
+                    class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1 animate-slide-up"
+                    :class="{ 'animate-in': isVisible }"
+                    style="animation-delay: 0.1s;"
+                >
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground mb-2">
+                                    Descargas Hoy
+                                </p>
+                                <p class="text-3xl font-bold text-foreground">
+                                    {{ downloadsToday }}/5
+                                </p>
+                                <div class="flex items-center gap-1 mt-2 text-xs" :class="remainingDownloads > 2 ? 'text-success' : 'text-warning'">
+                                    <TrendingUp class="w-3 h-3" />
+                                    <span>{{ remainingDownloads }} restantes hoy</span>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">
-                                        Descargas Hoy
-                                    </dt>
-                                    <dd class="text-lg font-medium text-gray-900">
-                                        {{ $page.props.auth.user.downloads_today || 0 }}/5
-                                    </dd>
-                                </dl>
+                            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <Download class="w-6 h-6 text-primary" />
                             </div>
                         </div>
                     </div>
+                    <div class="h-1 bg-gradient-to-r from-primary to-primary/60" :style="{ width: `${(downloadsToday / 5) * 100}%` }"></div>
                 </div>
 
                 <!-- Préstamos Activos -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                    </svg>
+                <div 
+                    class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-secondary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1 animate-slide-up"
+                    :class="{ 'animate-in': isVisible }"
+                    style="animation-delay: 0.2s;"
+                >
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground mb-2">
+                                    Préstamos Activos
+                                </p>
+                                <p class="text-3xl font-bold text-foreground">
+                                    {{ activeLoans.length }}
+                                </p>
+                                <div v-if="upcomingDueLoans.length > 0" class="flex items-center gap-1 mt-2 text-xs text-warning">
+                                    <AlertCircle class="w-3 h-3" />
+                                    <span>{{ upcomingDueLoans.length }} por vencer</span>
+                                </div>
+                                <div v-else class="flex items-center gap-1 mt-2 text-xs text-success">
+                                    <CheckCircle class="w-3 h-3" />
+                                    <span>Al día</span>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">
-                                        Préstamos Activos
-                                    </dt>
-                                    <dd class="text-lg font-medium text-gray-900">
-                                        {{ activeLoans.length }}
-                                    </dd>
-                                </dl>
+                            <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <BookMarked class="w-6 h-6 text-secondary" />
                             </div>
                         </div>
                     </div>
+                    <div class="h-1 bg-gradient-to-r from-secondary to-secondary/60" :style="{ width: `${(activeLoans.length / $page.props.auth.user.max_concurrent_loans) * 100}%` }"></div>
                 </div>
 
                 <!-- Límite Préstamos -->
-                <div class="bg-white overflow-hidden shadow rounded-lg">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
+                <div 
+                    class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1 animate-slide-up"
+                    :class="{ 'animate-in': isVisible }"
+                    style="animation-delay: 0.3s;"
+                >
+                    <div class="p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground mb-2">
+                                    Límite Préstamos
+                                </p>
+                                <p class="text-3xl font-bold text-foreground">
+                                    {{ activeLoans.length }}/{{ $page.props.auth.user.max_concurrent_loans }}
+                                </p>
+                                <div class="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                                    <Shield class="w-3 h-3" />
+                                    <span>{{ $page.props.auth.user.max_concurrent_loans - activeLoans.length }} disponibles</span>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-gray-500 truncate">
-                                        Límite Préstamos
-                                    </dt>
-                                    <dd class="text-lg font-medium text-gray-900">
-                                        {{ activeLoans.length }}/{{ $page.props.auth.user.max_concurrent_loans }}
-                                    </dd>
-                                </dl>
+                            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <Library class="w-6 h-6 text-primary" />
                             </div>
                         </div>
                     </div>
+                    <div class="h-1 bg-gradient-to-r from-primary to-primary/60" :style="{ width: `${(activeLoans.length / $page.props.auth.user.max_concurrent_loans) * 100}%` }"></div>
                 </div>
             </div>
 
             <!-- Two Column Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Descargas Recientes -->
-                <div class="bg-white shadow rounded-lg">
-                    <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                            Descargas Recientes
-                        </h2>
-                        <div v-if="recentDownloads.length > 0" class="space-y-3">
-                            <div v-for="download in recentDownloads" :key="download.id" 
-                                 class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                                <div>
-                                    <h3 class="font-medium text-gray-900">{{ download.book.title }}</h3>
-                                    <p class="text-sm text-gray-500">
-                                        Descargado el {{ new Date(download.downloaded_at).toLocaleDateString() }}
+                <div class="bg-card shadow-lg rounded-xl border border-border p-6 animate-slide-up" :class="{ 'animate-in': isVisible }" style="animation-delay: 0.4s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-foreground">Descargas Recientes</h2>
+                        <div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                    </div>
+                    <div v-if="recentDownloads.length > 0" class="space-y-4">
+                        <div 
+                            v-for="download in recentDownloads.slice(0, 5)" 
+                            :key="download.id" 
+                            class="group flex items-center justify-between p-4 bg-background border border-border rounded-xl hover:border-primary/30 transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+                        >
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                    <Download class="w-5 h-5 text-primary" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-semibold text-foreground truncate">{{ download.book.title }}</h3>
+                                    <p class="text-sm text-muted-foreground truncate" v-if="download.book.author">
+                                        {{ download.book.author }}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground">
+                                        Descargado el {{ new Date(download.downloaded_at).toLocaleDateString('es-ES', { 
+                                            day: 'numeric', 
+                                            month: 'long', 
+                                            year: 'numeric' 
+                                        }) }}
                                     </p>
                                 </div>
-                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    Volver a descargar
-                                </button>
                             </div>
+                            <button class="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all duration-300">
+                                <Download class="w-4 h-4" />
+                                <span class="hidden sm:inline">Descargar</span>
+                            </button>
                         </div>
-                        <div v-else class="text-center py-8">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                            </svg>
-                            <p class="text-gray-500">Aún no has descargado ningún libro</p>
-                            <a href="/books" class="text-blue-600 hover:text-blue-800 font-medium mt-2 inline-block">
-                                Explorar catálogo
-                            </a>
+                    </div>
+                    <div v-else class="text-center py-8">
+                        <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Download class="w-8 h-8 text-muted-foreground" />
                         </div>
+                        <p class="text-muted-foreground mb-4">Aún no has descargado ningún libro</p>
+                        <a href="/books" class="inline-flex items-center gap-2 text-primary font-medium hover:text-primary/80 transition-colors duration-300 group">
+                            Explorar catálogo
+                            <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                        </a>
+                    </div>
+                    <div v-if="recentDownloads.length > 0" class="mt-4 pt-4 border-t border-border">
+                        <a href="/downloads" class="flex items-center justify-center gap-2 text-primary text-sm font-medium hover:text-primary/80 transition-colors duration-300 group">
+                            Ver todas las descargas
+                            <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                        </a>
                     </div>
                 </div>
 
                 <!-- Préstamos Activos -->
-                <div class="bg-white shadow rounded-lg">
-                    <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                            Mis Préstamos Activos
-                        </h2>
-                        <div v-if="activeLoans.length > 0" class="space-y-3">
-                            <div v-for="loan in activeLoans" :key="loan.id" 
-                                 class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                                <div>
-                                    <h3 class="font-medium text-gray-900">{{ loan.physical_copy.book.title }}</h3>
-                                    <p class="text-sm text-gray-500">
-                                        Vence el {{ new Date(loan.due_date).toLocaleDateString() }}
-                                    </p>
+                <div class="bg-card shadow-lg rounded-xl border border-border p-6 animate-slide-up" :class="{ 'animate-in': isVisible }" style="animation-delay: 0.5s;">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-foreground">Mis Préstamos Activos</h2>
+                        <div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                    </div>
+                    <div v-if="activeLoans.length > 0" class="space-y-4">
+                        <div 
+                            v-for="loan in activeLoans" 
+                            :key="loan.id" 
+                            class="group flex items-center justify-between p-4 bg-background border border-border rounded-xl hover:border-secondary/30 transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+                            :class="{
+                                'border-warning/30 hover:border-warning/50': upcomingDueLoans.some(l => l.id === loan.id)
+                            }"
+                        >
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                                    :class="{
+                                        'bg-warning/10': upcomingDueLoans.some(l => l.id === loan.id)
+                                    }"
+                                >
+                                    <BookMarked class="w-5 h-5 text-secondary"
+                                        :class="{
+                                            'text-warning': upcomingDueLoans.some(l => l.id === loan.id)
+                                        }"
+                                    />
                                 </div>
-                                <button class="text-green-600 hover:text-green-800 text-sm font-medium">
-                                    Renovar
-                                </button>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-semibold text-foreground truncate">{{ loan.physical_copy.book.title }}</h3>
+                                    <p class="text-sm text-muted-foreground truncate" v-if="loan.physical_copy.book.author">
+                                        {{ loan.physical_copy.book.author }}
+                                    </p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Calendar class="w-3 h-3 text-muted-foreground" />
+                                        <p class="text-xs" :class="upcomingDueLoans.some(l => l.id === loan.id) ? 'text-warning font-medium' : 'text-muted-foreground'">
+                                            Vence el {{ new Date(loan.due_date).toLocaleDateString('es-ES', { 
+                                                day: 'numeric', 
+                                                month: 'long', 
+                                                year: 'numeric' 
+                                            }) }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
+                            <button class="text-secondary hover:text-secondary/80 text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all duration-300"
+                                :class="{
+                                    'text-warning hover:text-warning/80': upcomingDueLoans.some(l => l.id === loan.id)
+                                }"
+                            >
+                                <RotateCcw class="w-4 h-4" />
+                                <span class="hidden sm:inline">Renovar</span>
+                            </button>
                         </div>
-                        <div v-else class="text-center py-8">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                            </svg>
-                            <p class="text-gray-500">No tienes préstamos activos</p>
-                            <a href="/books" class="text-green-600 hover:text-green-800 font-medium mt-2 inline-block">
-                                Buscar libros físicos
-                            </a>
+                    </div>
+                    <div v-else class="text-center py-8">
+                        <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                            <BookMarked class="w-8 h-8 text-muted-foreground" />
                         </div>
+                        <p class="text-muted-foreground mb-4">No tienes préstamos activos</p>
+                        <a href="/books" class="inline-flex items-center gap-2 text-secondary font-medium hover:text-secondary/80 transition-colors duration-300 group">
+                            Buscar libros físicos
+                            <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                        </a>
+                    </div>
+                    <div v-if="activeLoans.length > 0" class="mt-4 pt-4 border-t border-border">
+                        <a href="/loans" class="flex items-center justify-center gap-2 text-secondary text-sm font-medium hover:text-secondary/80 transition-colors duration-300 group">
+                            Ver todos mis préstamos
+                            <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+                        </a>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="bg-white shadow rounded-lg p-6 mt-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h2>
+            <div class="bg-card shadow-lg rounded-xl border border-border p-6 animate-slide-up" :class="{ 'animate-in': isVisible }" style="animation-delay: 0.6s;">
+                <h2 class="text-xl font-bold text-foreground mb-6">Acciones Rápidas</h2>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <a href="/books" class="group block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-center">
-                        <svg class="w-8 h-8 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        <h3 class="font-medium text-gray-900 group-hover:text-blue-700">Explorar Catálogo</h3>
+                    <a 
+                        href="/books" 
+                        class="group relative p-6 bg-background border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all duration-300 hover:-translate-y-1 text-center overflow-hidden"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative z-10">
+                            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <Search class="w-6 h-6 text-primary" />
+                            </div>
+                            <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Explorar Catálogo</h3>
+                        </div>
                     </a>
 
-                    <a href="/profile" class="group block p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors text-center">
-                        <svg class="w-8 h-8 text-green-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                        <h3 class="font-medium text-gray-900 group-hover:text-green-700">Mi Perfil</h3>
+                    <a 
+                        href="/profile" 
+                        class="group relative p-6 bg-background border border-border rounded-xl hover:border-secondary/50 hover:shadow-md transition-all duration-300 hover:-translate-y-1 text-center overflow-hidden"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative z-10">
+                            <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <User class="w-6 h-6 text-secondary" />
+                            </div>
+                            <h3 class="font-semibold text-foreground group-hover:text-secondary transition-colors duration-300">Mi Perfil</h3>
+                        </div>
                     </a>
 
-                    <a href="/downloads" class="group block p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center">
-                        <svg class="w-8 h-8 text-purple-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
-                        <h3 class="font-medium text-gray-900 group-hover:text-purple-700">Mis Descargas</h3>
+                    <a 
+                        href="/downloads" 
+                        class="group relative p-6 bg-background border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all duration-300 hover:-translate-y-1 text-center overflow-hidden"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative z-10">
+                            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <Download class="w-6 h-6 text-primary" />
+                            </div>
+                            <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Mis Descargas</h3>
+                        </div>
                     </a>
 
-                    <a href="/loans" class="group block p-4 border border-gray-200 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition-colors text-center">
-                        <svg class="w-8 h-8 text-yellow-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <h3 class="font-medium text-gray-900 group-hover:text-yellow-700">Mis Préstamos</h3>
+                    <a 
+                        href="/loans" 
+                        class="group relative p-6 bg-background border border-border rounded-xl hover:border-secondary/50 hover:shadow-md transition-all duration-300 hover:-translate-y-1 text-center overflow-hidden"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative z-10">
+                            <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <BookMarked class="w-6 h-6 text-secondary" />
+                            </div>
+                            <h3 class="font-semibold text-foreground group-hover:text-secondary transition-colors duration-300">Mis Préstamos</h3>
+                        </div>
                     </a>
+                </div>
+            </div>
+
+            <!-- Reading Progress -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slide-up" :class="{ 'animate-in': isVisible }" style="animation-delay: 0.7s;">
+                <!-- Reading Recommendations -->
+                <div class="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <TrendingUp class="w-6 h-6 text-primary" />
+                        <h3 class="text-lg font-semibold text-foreground">Recomendaciones para ti</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border hover:border-primary/30 transition-colors duration-300 cursor-pointer">
+                            <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <BookOpen class="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                                <p class="font-medium text-foreground">Libros similares a tus descargas</p>
+                                <p class="text-sm text-muted-foreground">Basado en tu historial de lectura</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border hover:border-primary/30 transition-colors duration-300 cursor-pointer">
+                            <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <Zap class="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                                <p class="font-medium text-foreground">Novedades en tu categoría</p>
+                                <p class="text-sm text-muted-foreground">Libros agregados recientemente</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reading Stats -->
+                <div class="bg-gradient-to-br from-secondary/5 to-secondary/10 rounded-xl border border-secondary/20 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <Library class="w-6 h-6 text-secondary" />
+                        <h3 class="text-lg font-semibold text-foreground">Tu Progreso</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-muted-foreground">Libros leídos este mes</span>
+                                <span class="text-sm font-medium text-foreground">3/8</span>
+                            </div>
+                            <div class="w-full bg-border rounded-full h-2">
+                                <div class="bg-primary rounded-full h-2" style="width: 37.5%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-muted-foreground">Objetivo anual</span>
+                                <span class="text-sm font-medium text-foreground">15/50</span>
+                            </div>
+                            <div class="w-full bg-border rounded-full h-2">
+                                <div class="bg-secondary rounded-full h-2" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.animate-slide-up {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease-out;
+}
+
+.animate-slide-up.animate-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Custom colors for warning states */
+.text-warning {
+    color: hsl(33 95% 53%);
+}
+
+.bg-warning\/10 {
+    background-color: hsl(33 95% 53% / 0.1);
+}
+
+.border-warning\/30 {
+    border-color: hsl(33 95% 53% / 0.3);
+}
+
+.border-warning\/50 {
+    border-color: hsl(33 95% 53% / 0.5);
+}
+
+.text-success {
+    color: hsl(142 76% 36%);
+}
+</style>

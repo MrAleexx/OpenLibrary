@@ -6,8 +6,8 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\DashboardController;
 
+// Ruta principal que redirige según autenticación
 Route::get('/', function () {
-    // Si el usuario está autenticado, redirigir al dashboard
     if (auth()->check()) {
         return redirect('/dashboard');
     }
@@ -17,9 +17,17 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+// NUEVA RUTA: Home que siempre muestra el welcome
+Route::get('/welcome', function () {
+    return Inertia::render('Welcome', [
+        'canRegister' => Features::enabled(Features::registration()),
+        'isAuthenticated' => auth()->check(),
+    ]);
+})->name('welcome.page');
+
 // Dashboard - solo para usuarios autenticados
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth']) // Remover 'verified' temporalmente
+    ->middleware(['auth'])
     ->name('dashboard');
 
 require __DIR__.'/settings.php';

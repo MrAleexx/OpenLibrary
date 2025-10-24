@@ -1,3 +1,4 @@
+<!-- resources/js/components/UserMenuContent.vue -->
 <script setup lang="ts">
 import UserInfo from '@/components/UserInfo.vue';
 import {

@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Response;
+
 
 
 class FortifyServiceProvider extends ServiceProvider
@@ -71,6 +73,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::twoFactorChallengeView(function () {
             return inertia('auth/TwoFactorLogin');
         });
+
 
         RateLimiter::for('login', function (Request $request) {
             $email = (string) $request->email;
