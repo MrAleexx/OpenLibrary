@@ -136,3 +136,33 @@ export interface LibraryStats {
     downloads_today: number;
     max_daily_downloads: number;
 }
+
+// Tipos para las props del perfil
+export interface ProfileProps {
+    mustVerifyEmail: boolean;
+    status?: string;
+    verificationStatus?: string;
+}
+
+// Declaraciones de módulos para rutas
+declare module '@/routes/verification' {
+    export function send(): string;
+    export function verify(): string;
+    export function notice(): string;
+}
+
+// Declaraciones para otros módulos que puedas necesitar
+declare module '@/routes' {
+    export function route(name: string, params?: any): string;
+}
+
+declare module '@/actions/App/Http/Controllers/Settings/ProfileController' {
+    export const update: {
+        form(): any;
+    };
+    export default {
+        update: {
+            form(): any;
+        }
+    };
+}

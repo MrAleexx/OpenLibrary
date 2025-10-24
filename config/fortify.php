@@ -148,7 +148,7 @@ return [
         Features::registration(),
         Features::resetPasswords(),
         // TEMPORALMENTE deshabilita la verificación de email para testing:
-        // Features::emailVerification(),
+        Features::emailVerification(),
         Features::updateProfileInformation(),
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
