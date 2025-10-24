@@ -1,4 +1,5 @@
 <?php
+// config/fortify.php
 
 use Laravel\Fortify\Features;
 
@@ -73,7 +74,7 @@ return [
     |
     */
 
-    'home' => '/dashboard',
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------
@@ -146,11 +147,13 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
-        Features::emailVerification(),
+        // TEMPORALMENTE deshabilita la verificación de email para testing:
+        // Features::emailVerification(),
+        Features::updateProfileInformation(),
+        Features::updatePasswords(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,
-            // 'window' => 0
         ]),
     ],
 

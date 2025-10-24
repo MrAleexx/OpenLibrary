@@ -1,3 +1,5 @@
+// resources/types/index.d.ts
+
 import { InertiaLinkProps } from '@inertiajs/vue3';
 import type { LucideIcon } from 'lucide-vue-next';
 
@@ -29,11 +31,108 @@ export type AppPageProps<
 export interface User {
     id: number;
     name: string;
+    last_name: string;
     email: string;
-    avatar?: string;
+    institutional_email?: string | null;
+    microsoft_id?: string | null;
     email_verified_at: string | null;
+    password: string;
+    is_temp_password: boolean;
+    temp_password_expires_at?: string | null;
+    remember_token?: string | null;
+    dni: string;
+    phone: string;
+    user_type: 'student' | 'teacher' | 'external' | 'staff';
+    institutional_id?: string | null;
+    membership_expires_at?: string | null;
+    max_concurrent_loans: number;
+    can_download: boolean;
+    downloads_today: number;
+    last_download_reset?: string | null;
+    created_by?: number | null;
+    is_active: boolean;
+    last_login_at?: string | null;
     created_at: string;
     updated_at: string;
+    // Campos de Fortify
+    two_factor_secret?: string | null;
+    two_factor_recovery_codes?: string | null;
+    two_factor_confirmed_at?: string | null;
+    // Relaciones (si las necesitas en frontend)
+    roles?: Array<{ id: number; name: string; guard_name: string }>;
+    permissions?: Array<{ id: number; name: string; guard_name: string }>;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+// Tipos para las props de las páginas
+export interface AdminDashboardProps {
+    stats: {
+        total_books: number;
+        total_users: number;
+        total_downloads: number;
+        active_loans: number;
+        pending_reservations: number;
+    };
+    userRole: string;
+}
+
+export interface UserDashboardProps {
+    recentDownloads: Array<{
+        id: number;
+        downloaded_at: string;
+        book: {
+            id: number;
+            title: string;
+            cover_image?: string;
+        };
+    }>;
+    activeLoans: Array<{
+        id: number;
+        due_date: string;
+        status: string;
+        physical_copy: {
+            id: number;
+            book: {
+                id: number;
+                title: string;
+            };
+        };
+    }>;
+}
+
+// Tipos para formularios de autenticación
+export interface RegisterFormData {
+    name: string;
+    last_name: string;
+    email: string;
+    dni: string;
+    phone: string;
+    password: string;
+    password_confirmation: string;
+}
+
+export interface LoginFormData {
+    email: string;
+    password: string;
+    remember?: boolean;
+}
+
+export interface ProfileUpdateFormData {
+    name: string;
+    last_name: string;
+    email: string;
+    dni: string;
+    phone: string;
+}
+
+// Tipos para estadísticas
+export interface LibraryStats {
+    total_books: number;
+    total_users: number;
+    total_downloads: number;
+    active_loans: number;
+    pending_reservations: number;
+    downloads_today: number;
+    max_daily_downloads: number;
+}

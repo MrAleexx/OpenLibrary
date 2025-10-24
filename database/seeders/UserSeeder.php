@@ -1,22 +1,18 @@
 <?php
+// database/seeders/UserSeeder.php
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Admin user
+        // Admin user - CON EMAIL VERIFICADO
         $admin = User::create([
             'name' => 'Admin',
             'last_name' => 'Principal',
@@ -32,10 +28,11 @@ class UserSeeder extends Seeder
             'max_concurrent_loans' => 10,
             'can_download' => true,
             'is_active' => true,
+            'email_verified_at' => now(),
         ]);
         $admin->assignRole('admin');
 
-        // Librarian user
+        // Librarian user - CON EMAIL VERIFICADO
         $librarian = User::create([
             'name' => 'Bibliotecario',
             'last_name' => 'Principal',
@@ -51,10 +48,11 @@ class UserSeeder extends Seeder
             'max_concurrent_loans' => 8,
             'can_download' => true,
             'is_active' => true,
+            'email_verified_at' => now(),
         ]);
         $librarian->assignRole('librarian');
 
-        // Regular user
+        // Regular user - CON EMAIL VERIFICADO
         $user = User::create([
             'name' => 'Usuario',
             'last_name' => 'Ejemplo',
@@ -70,10 +68,11 @@ class UserSeeder extends Seeder
             'max_concurrent_loans' => 3,
             'can_download' => true,
             'is_active' => true,
+            'email_verified_at' => now(),
         ]);
         $user->assignRole('user');
 
-        // Create multiple test users
+        // Crear múltiples usuarios de prueba también verificados
         for ($i = 3; $i <= 10; $i++) {
             $testUser = User::create([
                 'name' => 'Usuario',
@@ -92,6 +91,7 @@ class UserSeeder extends Seeder
                 'can_download' => true,
                 'is_active' => true,
                 'created_by' => $admin->id,
+                'email_verified_at' => now(),
             ]);
             $testUser->assignRole('user');
         }
