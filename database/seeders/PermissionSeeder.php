@@ -18,44 +18,44 @@ class PermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Permisos de Usuarios
-        Permission::create(['name' => 'view users', 'group' => 'users']);
-        Permission::create(['name' => 'create users', 'group' => 'users']);
-        Permission::create(['name' => 'edit users', 'group' => 'users']);
-        Permission::create(['name' => 'delete users', 'group' => 'users']);
-        Permission::create(['name' => 'import users', 'group' => 'users']);
+        Permission::create(['name' => 'view users']);
+        Permission::create(['name' => 'create users']);
+        Permission::create(['name' => 'edit users']);
+        Permission::create(['name' => 'delete users']);
+        Permission::create(['name' => 'import users']);
 
         // Permisos de Libros
-        Permission::create(['name' => 'view books', 'group' => 'books']);
-        Permission::create(['name' => 'create books', 'group' => 'books']);
-        Permission::create(['name' => 'edit books', 'group' => 'books']);
-        Permission::create(['name' => 'delete books', 'group' => 'books']);
-        Permission::create(['name' => 'manage featured', 'group' => 'books']);
+        Permission::create(['name' => 'view books']);
+        Permission::create(['name' => 'create books']);
+        Permission::create(['name' => 'edit books']);
+        Permission::create(['name' => 'delete books']);
+        Permission::create(['name' => 'manage featured']);
 
         // Permisos de Categorías
-        Permission::create(['name' => 'view categories', 'group' => 'categories']);
-        Permission::create(['name' => 'create categories', 'group' => 'categories']);
-        Permission::create(['name' => 'edit categories', 'group' => 'categories']);
-        Permission::create(['name' => 'delete categories', 'group' => 'categories']);
+        Permission::create(['name' => 'view categories']);
+        Permission::create(['name' => 'create categories']);
+        Permission::create(['name' => 'edit categories']);
+        Permission::create(['name' => 'delete categories']);
 
         // Permisos de Préstamos
-        Permission::create(['name' => 'view loans', 'group' => 'loans']);
-        Permission::create(['name' => 'create loans', 'group' => 'loans']);
-        Permission::create(['name' => 'edit loans', 'group' => 'loans']);
-        Permission::create(['name' => 'delete loans', 'group' => 'loans']);
+        Permission::create(['name' => 'view loans']);
+        Permission::create(['name' => 'create loans']);
+        Permission::create(['name' => 'edit loans']);
+        Permission::create(['name' => 'delete loans']);
 
         // Permisos de Reservas
-        Permission::create(['name' => 'view reservations', 'group' => 'reservations']);
-        Permission::create(['name' => 'create reservations', 'group' => 'reservations']);
-        Permission::create(['name' => 'edit reservations', 'group' => 'reservations']);
-        Permission::create(['name' => 'delete reservations', 'group' => 'reservations']);
+        Permission::create(['name' => 'view reservations']);
+        Permission::create(['name' => 'create reservations']);
+        Permission::create(['name' => 'edit reservations']);
+        Permission::create(['name' => 'delete reservations']);
 
         // Permisos de Reportes
-        Permission::create(['name' => 'view reports', 'group' => 'reports']);
-        Permission::create(['name' => 'export reports', 'group' => 'reports']);
+        Permission::create(['name' => 'view reports']);
+        Permission::create(['name' => 'export reports']);
 
         // Permisos de Configuración
-        Permission::create(['name' => 'view settings', 'group' => 'settings']);
-        Permission::create(['name' => 'edit settings', 'group' => 'settings']);
+        Permission::create(['name' => 'view settings']);
+        Permission::create(['name' => 'edit settings']);
 
         // Crear roles y asignar permisos
         $admin = Role::create(['name' => 'admin']);
