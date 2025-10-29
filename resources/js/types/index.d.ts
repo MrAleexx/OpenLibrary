@@ -54,6 +54,7 @@ export interface User {
     last_login_at?: string | null;
     created_at: string;
     updated_at: string;
+    avatar?: string | null;
     // Campos de Fortify
     two_factor_secret?: string | null;
     two_factor_recovery_codes?: string | null;
@@ -165,4 +166,47 @@ declare module '@/actions/App/Http/Controllers/Settings/ProfileController' {
             form(): any;
         }
     };
+}
+
+export interface Category {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    parent_id: number | null;
+    parent_name: string | null;
+    sort_order: number;
+    is_active: boolean;
+    books_count: number;
+    children_count: number;
+    created_at: string;
+    updated_at: string;
+    children?: Category[];
+}
+
+export interface CategoryHistory {
+    id: number;
+    action: string;
+    description: string;
+    user: {
+        name: string;
+    };
+    created_at: string;
+}
+
+export interface AdminCategoriesProps {
+    categories: Category[];
+    viewType?: 'table' | 'tree';
+}
+
+export interface AdminCategoryCreateProps {
+    parentCategories: Array<{ id: number; name: string }>;
+    nextSortOrder: number;
+}
+
+export interface AdminCategoryEditProps {
+    category: Category;
+    parentCategories: Array<{ id: number; name: string }>;
+    availableOrders: number[];
+    maxSortOrder: number;
 }

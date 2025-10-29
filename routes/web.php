@@ -30,4 +30,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
 
+// Incluir rutas del admin
+require __DIR__.'/admin.php';
+
 require __DIR__.'/settings.php';
