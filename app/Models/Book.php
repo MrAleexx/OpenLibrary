@@ -1,5 +1,4 @@
 <?php
-// app/Models/Book.php
 
 namespace App\Models;
 
@@ -9,16 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use App\Models\Publisher;
-use App\Models\Language;
-use App\Models\BookDetail;
-use App\Models\BookContributor;
-use App\Models\BookContent;
-use App\Models\PhysicalCopy;
-use App\Models\BookReservation;
-use App\Models\UserDownload;
-use App\Models\Category;
-
 
 class Book extends Model
 {
@@ -37,34 +26,20 @@ class Book extends Model
         'downloadable',
         'book_type',
         'total_downloads',
-        'total_physical_copies',
-        'available_physical_copies',
-        'total_loans',
         'total_views',
         'featured',
-        'access_level',
-        'copyright_status',
-        'license_type',
         'search_metadata',
-        'acquisition_type',
-        'acquisition_cost',
-        'source',
         'published_at',
+        'physical_copies_count', // nuevo
+        'available_copies_count', // nuevo
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'downloadable' => 'boolean',
         'featured' => 'boolean',
-        'pages' => 'integer',
-        'total_downloads' => 'integer',
-        'total_physical_copies' => 'integer',
-        'available_physical_copies' => 'integer',
-        'total_loans' => 'integer',
-        'total_views' => 'integer',
-        'acquisition_cost' => 'decimal:2',
-        'publication_year' => 'integer',
         'published_at' => 'datetime',
+        'publication_year' => 'integer',
     ];
 
     /**
@@ -109,6 +84,11 @@ class Book extends Model
     public function reservations(): HasMany
     {
         return $this->hasMany(BookReservation::class);
+    }
+
+    public function loans(): HasMany
+    {
+        return $this->hasMany(BookLoan::class);
     }
 
     public function downloads(): HasMany
@@ -166,6 +146,7 @@ class Book extends Model
         $this->increment('total_downloads');
     }
 
+    // Métodos actualizados para usar physical_copies
     public function getAvailablePhysicalCopies(): int
     {
         return $this->physicalCopies()->where('status', 'available')->count();
@@ -179,6 +160,11 @@ class Book extends Model
     public function isAvailableForLoan(): bool
     {
         return $this->book_type !== 'digital' && $this->hasAvailablePhysicalCopies();
+    }
+
+    public function getTotalLoansCount(): int
+    {
+        return $this->loans()->count();
     }
 
     public function getAuthorsAttribute(): string
@@ -199,5 +185,16 @@ class Book extends Model
     public function getPdfUrlAttribute(): ?string
     {
         return $this->pdf_file ? asset('storage/' . $this->pdf_file) : null;
+    }
+
+    /**
+     * Actualizar contadores de copias físicas
+     */
+    public function updatePhysicalCopiesCount(): void
+    {
+        $this->update([
+            'physical_copies_count' => $this->physicalCopies()->count(),
+            'available_copies_count' => $this->physicalCopies()->where('status', 'available')->count(),
+        ]);
     }
 }

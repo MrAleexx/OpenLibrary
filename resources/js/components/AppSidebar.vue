@@ -30,14 +30,14 @@ const mainNavItems: NavItem[] = [
         icon: Folder,
     },
     {
-        title: 'Usuarios',
-        href: '/admin/users',
-        icon: Users,
-    },
-    {
         title: 'Libros',
         href: '/admin/books',
         icon: BookOpen,
+    },
+    {
+        title: 'Usuarios',
+        href: '/admin/users',
+        icon: Users,
     },
     {
         title: 'Préstamos',
