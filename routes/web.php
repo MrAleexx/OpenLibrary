@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BookController;
 
 // Ruta principal que redirige según autenticación
 Route::get('/', function () {
@@ -29,6 +30,26 @@ Route::get('/welcome', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
+
+// ============================================
+// RUTAS DE CATÁLOGO DE LIBROS (PÚBLICAS)
+// ============================================
+
+// Catálogo de libros - acceso público
+Route::get('/books', [BookController::class, 'index'])
+    ->name('books.index');
+
+// Detalle de un libro - acceso público
+Route::get('/books/{book}', [BookController::class, 'show'])
+    ->name('books.show');
+
+// Búsqueda de libros - requiere autenticación
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/search', [BookController::class, 'search'])
+        ->name('books.search');
+});
+
+// ============================================
 
 // Incluir rutas del admin
 require __DIR__.'/admin.php';
