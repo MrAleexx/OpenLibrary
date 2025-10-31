@@ -189,6 +189,6 @@ const footerNavItems = computed(() => {
             <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
+        <slot />
     </Sidebar>
-    <slot />
 </template>
