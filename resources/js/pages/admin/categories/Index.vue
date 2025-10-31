@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { BreadcrumbItem, Category } from '@/types'; // ✅ Importar Category desde types
+import { BreadcrumbItem, Category } from '@/types'; 
 import CategoryTreeNode from '@/components/CategoryTreeNode.vue';
 import { 
     Plus, Edit, Trash2, Folder, FolderOpen, Eye, EyeOff, Search, 

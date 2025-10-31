@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Book extends Model
 {
@@ -86,9 +87,16 @@ class Book extends Model
         return $this->hasMany(BookReservation::class);
     }
 
-    public function loans(): HasMany
+    public function loans(): HasManyThrough
     {
-        return $this->hasMany(BookLoan::class);
+        return $this->hasManyThrough(
+            BookLoan::class,        // Modelo destino (book_loans)
+            PhysicalCopy::class,    // Modelo intermedio (physical_copies)
+            'book_id',              // FK en physical_copies que referencia a books.id
+            'physical_copy_id',     // FK en book_loans que referencia a physical_copies.id  
+            'id',                   // PK en books
+            'id'                    // PK en physical_copies
+        );
     }
 
     public function downloads(): HasMany
@@ -165,6 +173,16 @@ class Book extends Model
     public function getTotalLoansCount(): int
     {
         return $this->loans()->count();
+    }
+
+    public function getActiveLoansCount(): int
+    {
+        return $this->loans()->where('status', 'active')->count();
+    }
+
+    public function getOverdueLoansCount(): int
+    {
+        return $this->loans()->where('status', 'overdue')->count();
     }
 
     public function getAuthorsAttribute(): string
