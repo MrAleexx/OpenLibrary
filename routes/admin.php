@@ -6,8 +6,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\BookController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard Admin
+// Todas las rutas de admin requieren autenticación, verificación de email Y rol de admin o librarian
+Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function () {
+    // Dashboard Admin (redirige al dashboard general, pero con vista de admin)
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
 
