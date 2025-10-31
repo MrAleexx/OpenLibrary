@@ -1,0 +1,9 @@
+﻿<svg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'>
+  <rect width='400' height='600' fill='%23e5e7eb'/>
+  <g transform='translate(200 300)'>
+    <svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' x='-60' y='-60'>
+      <path d='M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20'/>
+    </svg>
+  </g>
+  <text x='200' y='480' font-family='Arial, sans-serif' font-size='18' fill='%239ca3af' text-anchor='middle'>Sin portada disponible</text>
+</svg>

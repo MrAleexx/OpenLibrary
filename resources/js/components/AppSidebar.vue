@@ -1,4 +1,19 @@
-<!-- resources/js/components/AppSidebar.vue -->
+<!-- 
+    AppSidebar.vue
+    
+    Componente de barra lateral (sidebar) con navegación adaptativa según roles.
+    
+    Funcionalidad:
+    - Muestra menú diferente según el rol del usuario
+    - Usuarios regulares: Solo dashboard personal
+    - Admin/Librarian: Menú completo de administración
+    
+    Características:
+    - Colapsable a modo ícono
+    - Navegación con Inertia (SPA)
+    - Footer con enlaces útiles según rol
+    - Avatar y menú de usuario
+-->
 <script setup lang="ts">
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,11 +29,59 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-const mainNavItems: NavItem[] = [
+const page = usePage();
+
+// ===============================================
+// GESTIÓN DE ROLES Y PERMISOS
+// ===============================================
+
+/**
+ * Obtener datos del usuario autenticado desde Inertia shared props
+ */
+const user = computed(() => page.props.auth?.user);
+
+/**
+ * Extraer array de roles del usuario
+ */
+const userRoles = computed(() => user.value?.roles || []);
+
+/**
+ * Verificar si el usuario tiene privilegios de administración
+ * 
+ * @returns {boolean} true si el usuario es admin o librarian
+ */
+const isAdminOrLibrarian = computed(() => {
+    return userRoles.value.some((role: any) => 
+        role.name === 'admin' || role.name === 'librarian'
+    );
+});
+
+// ===============================================
+// CONFIGURACIÓN DE MENÚS DE NAVEGACIÓN
+// ===============================================
+
+/**
+ * Menú de navegación principal para usuarios regulares
+ * Solo tienen acceso a su dashboard personal
+ */
+const userNavItems: NavItem[] = [
+    {
+        title: 'Mi Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
+    },
+];
+
+/**
+ * Menú de navegación principal para administradores y bibliotecarios
+ * Incluye todas las secciones de gestión del sistema
+ */
+const adminNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -46,23 +109,62 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
-const footerNavItems: NavItem[] = [
+/**
+ * Computed property que retorna el menú apropiado según el rol del usuario
+ */
+const mainNavItems = computed(() => {
+    return isAdminOrLibrarian.value ? adminNavItems : userNavItems;
+});
+
+// ===============================================
+// CONFIGURACIÓN DE FOOTER DEL SIDEBAR
+// ===============================================
+
+/**
+ * Enlaces del footer para usuarios regulares
+ * Acceso a páginas públicas del sistema
+ */
+const userFooterItems: NavItem[] = [
+    {
+        title: 'Inicio',
+        href: '/welcome',
+        icon: Home,
+    },
+    {
+        title: 'Catálogo',
+        href: '/books',
+        icon: Library,
+    },
+];
+
+/**
+ * Enlaces del footer para administradores
+ * Incluye enlaces adicionales como repositorio del proyecto
+ */
+const adminFooterItems: NavItem[] = [
     {
         title: 'Home',
-        href: '/welcome', // Cambiado a la nueva ruta
+        href: '/welcome',
         icon: Home,
+    },
+    {
+        title: 'Catálogo',
+        href: '/books',
+        icon: Library,
     },
     {
         title: 'Github Repo',
         href: 'https://github.com/MrAleexx/OpenLibrary/tree/dev',
         icon: Folder,
     },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
 ];
+
+/**
+ * Computed property que retorna el footer apropiado según el rol
+ */
+const footerNavItems = computed(() => {
+    return isAdminOrLibrarian.value ? adminFooterItems : userFooterItems;
+});
 </script>
 
 <template>

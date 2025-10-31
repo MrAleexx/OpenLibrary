@@ -26,12 +26,13 @@ class Book extends Model
         'downloadable',
         'book_type',
         'total_downloads',
+        'total_physical_copies',
+        'available_physical_copies',
+        'total_loans',
         'total_views',
         'featured',
         'search_metadata',
         'published_at',
-        'physical_copies_count', // nuevo
-        'available_copies_count', // nuevo
     ];
 
     protected $casts = [
@@ -41,6 +42,60 @@ class Book extends Model
         'published_at' => 'datetime',
         'publication_year' => 'integer',
     ];
+
+    /**
+     * ==============================================================
+     * ACCESSORS PARA COMPATIBILIDAD DE NOMBRES
+     * ==============================================================
+     * 
+     * Problema: La base de datos usa nombres diferentes a los que espera el frontend
+     * 
+     * Base de Datos (migrations):    | Frontend/API espera:
+     * ------------------------------|------------------------
+     * available_physical_copies     | available_copies_count
+     * total_physical_copies         | physical_copies_count
+     * 
+     * Solución: Accessors que crean "alias" automáticos
+     * 
+     * Estos atributos se agregan automáticamente cuando el modelo
+     * se serializa a JSON (en responses de API/Inertia)
+     * 
+     * IMPORTANTE para queries:
+     * ✅ CORRECTO: Book::where('available_physical_copies', '>', 0)
+     * ❌ INCORRECTO: Book::where('available_copies_count', '>', 0)
+     * 
+     * Los accessors solo funcionan DESPUÉS de cargar el modelo,
+     * NO en queries SQL/Eloquent.
+     * 
+     * @see https://laravel.com/docs/eloquent-mutators#defining-an-accessor
+     */
+    protected $appends = ['physical_copies_count', 'available_copies_count'];
+
+    /**
+     * Accessor: Alias para total_physical_copies
+     * 
+     * Permite usar $book->physical_copies_count en lugar de
+     * $book->total_physical_copies
+     * 
+     * @return int Número total de copias físicas del libro
+     */
+    public function getPhysicalCopiesCountAttribute(): int
+    {
+        return $this->total_physical_copies ?? 0;
+    }
+
+    /**
+     * Accessor: Alias para available_physical_copies
+     * 
+     * Permite usar $book->available_copies_count en lugar de
+     * $book->available_physical_copies
+     * 
+     * @return int Número de copias físicas disponibles para préstamo
+     */
+    public function getAvailableCopiesCountAttribute(): int
+    {
+        return $this->available_physical_copies ?? 0;
+    }
 
     /**
      * Relationships
