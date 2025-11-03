@@ -2,11 +2,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { router, Head, Link } from '@inertiajs/vue3'
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,33 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { 
-  Search, 
-  Plus, 
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
-  Trash2,
-  Users,
-  User,
-  Download,
-  BookOpen,
-  Filter,
-  X,
-  RefreshCw,
-  Calendar,
-  UserPlus,
-  FileDown,
-  UserCheck,
-  UserX,
-  Clock,
-  Shield,
-  Mail,
-  IdCard,
-  Library,
-  TrendingUp,
-  Zap,
-  Hash
+import {Search,MoreHorizontal,Eye,Edit,Users,User,Download,BookOpen,Filter,X,RefreshCw,Calendar,UserPlus,FileDown,UserCheck,UserX,Clock,Shield,Mail,IdCard,Library,TrendingUp,Zap,Hash
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 
@@ -91,9 +65,9 @@ const props = withDefaults(defineProps<{
     teachers: number
   }
 }>(), {
-  users: () => ({ 
-    data: [], 
-    total: 0, 
+  users: () => ({
+    data: [],
+    total: 0,
     links: []
   }),
   filters: () => ({}),
@@ -149,7 +123,7 @@ const handleFilterChange = (newFilters: any) => {
 // Debounce function
 function debounce(fn: Function, wait: number) {
   let timeout: number | undefined
-  return function(this: any, ...args: any[]) {
+  return function (this: any, ...args: any[]) {
     clearTimeout(timeout)
     timeout = window.setTimeout(() => fn.apply(this, args), wait)
   }
@@ -165,7 +139,7 @@ watch([search, selectedUserType, selectedStatus, selectedMembershipStatus], () =
     status: selectedStatus.value,
     membershipStatus: selectedMembershipStatus.value
   })
-}, { 
+}, {
   deep: true,
   flush: 'post'
 })
@@ -230,10 +204,11 @@ function isMembershipExpired(user: any) {
 </script>
 
 <template>
+
   <Head>
     <title>Gestión de Usuarios</title>
   </Head>
-  
+
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-6 space-y-8">
       <!-- Header Mejorado - Consistente con Books -->
@@ -251,11 +226,12 @@ function isMembershipExpired(user: any) {
           <div class="flex items-center gap-4">
             <Button as-child class="bg-primary text-primary-foreground hover:bg-primary/90">
               <Link href="/admin/users/create" class="flex items-center gap-2">
-                <UserPlus class="w-4 h-4" />
-                Nuevo Usuario
+              <UserPlus class="w-4 h-4" />
+              Nuevo Usuario
               </Link>
             </Button>
-            <div class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
+            <div
+              class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
               <Zap class="w-4 h-4 animate-pulse" />
               <span class="text-sm font-medium">{{ users.data.length }} Usuarios</span>
             </div>
@@ -266,7 +242,8 @@ function isMembershipExpired(user: any) {
       <!-- Stats Cards - Consistente con Books -->
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <!-- Total Usuarios -->
-        <div class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+        <div
+          class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
           <div class="p-6">
             <div class="flex items-center justify-between">
               <div>
@@ -281,16 +258,20 @@ function isMembershipExpired(user: any) {
                   <span>+8% este mes</span>
                 </div>
               </div>
-              <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div
+                class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <Users class="w-6 h-6 text-primary" />
               </div>
             </div>
           </div>
-          <div class="h-1 bg-gradient-to-r from-primary to-primary/60 w-0 group-hover:w-full transition-all duration-500"></div>
+          <div
+            class="h-1 bg-gradient-to-r from-primary to-primary/60 w-0 group-hover:w-full transition-all duration-500">
+          </div>
         </div>
 
         <!-- Usuarios Activos -->
-        <div class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-secondary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+        <div
+          class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-secondary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
           <div class="p-6">
             <div class="flex items-center justify-between">
               <div>
@@ -305,16 +286,20 @@ function isMembershipExpired(user: any) {
                   <span>+5% este mes</span>
                 </div>
               </div>
-              <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div
+                class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <UserCheck class="w-6 h-6 text-secondary" />
               </div>
             </div>
           </div>
-          <div class="h-1 bg-gradient-to-r from-secondary to-secondary/60 w-0 group-hover:w-full transition-all duration-500"></div>
+          <div
+            class="h-1 bg-gradient-to-r from-secondary to-secondary/60 w-0 group-hover:w-full transition-all duration-500">
+          </div>
         </div>
 
         <!-- Estudiantes -->
-        <div class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+        <div
+          class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
           <div class="p-6">
             <div class="flex items-center justify-between">
               <div>
@@ -329,16 +314,20 @@ function isMembershipExpired(user: any) {
                   <span>Principal grupo</span>
                 </div>
               </div>
-              <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div
+                class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <Users class="w-6 h-6 text-primary" />
               </div>
             </div>
           </div>
-          <div class="h-1 bg-gradient-to-r from-primary to-primary/60 w-0 group-hover:w-full transition-all duration-500"></div>
+          <div
+            class="h-1 bg-gradient-to-r from-primary to-primary/60 w-0 group-hover:w-full transition-all duration-500">
+          </div>
         </div>
 
         <!-- Docentes -->
-        <div class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-secondary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+        <div
+          class="group bg-card overflow-hidden shadow-lg rounded-xl border border-border hover:border-secondary/30 transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
           <div class="p-6">
             <div class="flex items-center justify-between">
               <div>
@@ -353,12 +342,15 @@ function isMembershipExpired(user: any) {
                   <span>Personal académico</span>
                 </div>
               </div>
-              <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div
+                class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <Shield class="w-6 h-6 text-secondary" />
               </div>
             </div>
           </div>
-          <div class="h-1 bg-gradient-to-r from-secondary to-secondary/60 w-0 group-hover:w-full transition-all duration-500"></div>
+          <div
+            class="h-1 bg-gradient-to-r from-secondary to-secondary/60 w-0 group-hover:w-full transition-all duration-500">
+          </div>
         </div>
       </div>
 
@@ -369,17 +361,13 @@ function isMembershipExpired(user: any) {
             <div class="flex items-center gap-2">
               <Filter class="h-4 w-4 text-muted-foreground" />
               <CardTitle class="text-lg text-foreground">Filtros y Búsqueda</CardTitle>
-              <Badge v-if="activeFiltersCount > 0" variant="secondary" class="bg-primary/10 text-primary border-primary/20">
+              <Badge v-if="activeFiltersCount > 0" variant="secondary"
+                class="bg-primary/10 text-primary border-primary/20">
                 {{ activeFiltersCount }} activos
               </Badge>
             </div>
-            <Button 
-              v-if="activeFiltersCount > 0" 
-              variant="outline" 
-              size="sm" 
-              @click="clearFilters"
-              class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
-            >
+            <Button v-if="activeFiltersCount > 0" variant="outline" size="sm" @click="clearFilters"
+              class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
               <X class="h-4 w-4 mr-1" />
               Limpiar
             </Button>
@@ -389,11 +377,8 @@ function isMembershipExpired(user: any) {
           <!-- Search -->
           <div class="relative">
             <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              v-model="search"
-              placeholder="Buscar por nombre, email, DNI o código institucional..."
-              class="pl-10 bg-background border-border focus:border-primary"
-            />
+            <Input v-model="search" placeholder="Buscar por nombre, email, DNI o código institucional..."
+              class="pl-10 bg-background border-border focus:border-primary" />
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -482,11 +467,8 @@ function isMembershipExpired(user: any) {
                 </tr>
               </thead>
               <tbody>
-                <tr 
-                  v-for="user in users.data" 
-                  :key="user.id"
-                  class="border-b border-border hover:bg-accent/50 transition-colors group"
-                >
+                <tr v-for="user in users.data" :key="user.id"
+                  class="border-b border-border hover:bg-accent/50 transition-colors group">
                   <!-- Información del Usuario -->
                   <td class="py-4 px-6">
                     <div class="flex items-center gap-3">
@@ -545,7 +527,8 @@ function isMembershipExpired(user: any) {
                         <Clock class="w-3 h-3 mr-1" />
                         Expirado
                       </Badge>
-                      <Badge v-if="user.is_temp_password" variant="outline" class="text-xs bg-amber-500/10 text-amber-600 border-amber-200">
+                      <Badge v-if="user.is_temp_password" variant="outline"
+                        class="text-xs bg-amber-500/10 text-amber-600 border-amber-200">
                         <Clock class="w-3 h-3 mr-1" />
                         Temporal
                       </Badge>
@@ -577,21 +560,24 @@ function isMembershipExpired(user: any) {
                   <td class="py-4 px-6">
                     <DropdownMenu>
                       <DropdownMenuTrigger as-child>
-                        <Button variant="ghost" size="sm" class="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Button variant="ghost" size="sm"
+                          class="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity duration-200">
                           <MoreHorizontal class="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" class="w-48">
                         <DropdownMenuItem as-child>
-                          <Link :href="`/admin/users/${user.id}`" class="flex items-center cursor-pointer text-foreground">
-                            <Eye class="w-4 h-4 mr-2 text-blue-500" />
-                            Ver detalles
+                          <Link :href="`/admin/users/${user.id}`"
+                            class="flex items-center cursor-pointer text-foreground">
+                          <Eye class="w-4 h-4 mr-2 text-blue-500" />
+                          Ver detalles
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem as-child>
-                          <Link :href="`/admin/users/${user.id}/edit`" class="flex items-center cursor-pointer text-foreground">
-                            <Edit class="w-4 h-4 mr-2 text-emerald-500" />
-                            Editar usuario
+                          <Link :href="`/admin/users/${user.id}/edit`"
+                            class="flex items-center cursor-pointer text-foreground">
+                          <Edit class="w-4 h-4 mr-2 text-emerald-500" />
+                          Editar usuario
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -605,15 +591,17 @@ function isMembershipExpired(user: any) {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem as-child>
-                          <Link :href="`/admin/users/${user.id}/download-history`" class="flex items-center cursor-pointer text-foreground">
-                            <Download class="w-4 h-4 mr-2 text-blue-500" />
-                            Historial Descargas
+                          <Link :href="`/admin/users/${user.id}/download-history`"
+                            class="flex items-center cursor-pointer text-foreground">
+                          <Download class="w-4 h-4 mr-2 text-blue-500" />
+                          Historial Descargas
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem as-child>
-                          <Link :href="`/admin/users/${user.id}/loan-history`" class="flex items-center cursor-pointer text-foreground">
-                            <BookOpen class="w-4 h-4 mr-2 text-emerald-500" />
-                            Historial Préstamos
+                          <Link :href="`/admin/users/${user.id}/loan-history`"
+                            class="flex items-center cursor-pointer text-foreground">
+                          <BookOpen class="w-4 h-4 mr-2 text-emerald-500" />
+                          Historial Préstamos
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -625,10 +613,8 @@ function isMembershipExpired(user: any) {
           </div>
 
           <!-- Empty State -->
-          <div 
-            v-if="users.data.length === 0" 
-            class="text-center py-16 border-2 border-dashed border-border rounded-xl m-6"
-          >
+          <div v-if="users.data.length === 0"
+            class="text-center py-16 border-2 border-dashed border-border rounded-xl m-6">
             <div class="max-w-md mx-auto">
               <div class="p-4 bg-primary/10 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <Users class="w-10 h-10 text-primary" />
@@ -641,15 +627,15 @@ function isMembershipExpired(user: any) {
                 <Button as-child variant="outline"
                   class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
                   <Link href="/admin/users/import" class="flex items-center gap-2">
-                    <FileDown class="w-4 h-4" />
-                    Importar Usuarios
+                  <FileDown class="w-4 h-4" />
+                  Importar Usuarios
                   </Link>
                 </Button>
                 <Button as-child v-if="activeFiltersCount === 0"
                   class="bg-primary text-primary-foreground px-6 py-3 rounded-lg inline-flex items-center gap-2 hover:bg-primary/90 transition-colors">
                   <Link href="/admin/users/create" class="flex items-center gap-2">
-                    <UserPlus class="w-5 h-5" />
-                    Crear Usuario
+                  <UserPlus class="w-5 h-5" />
+                  Crear Usuario
                   </Link>
                 </Button>
                 <Button v-else variant="outline" @click="clearFilters"
@@ -666,13 +652,9 @@ function isMembershipExpired(user: any) {
       <!-- Pagination - Consistente con Books -->
       <div v-if="users.data.length > 0" class="flex justify-center">
         <div class="flex gap-2">
-          <Link v-for="(link, index) in users.links" :key="index"
-                  :href="link.url ?? ''"
-                  :disabled="!link.url"
-                  :class="['rounded-lg font-medium px-3 py-1.5 text-sm', link.active ? 'bg-primary text-primary-foreground' : 'bg-background border border-input hover:bg-accent hover:text-accent-foreground', !link.url ? 'opacity-50 cursor-not-allowed' : '']"
-                  v-html="link.label"
-                  preserve-scroll
-           />
+          <Link v-for="(link, index) in users.links" :key="index" :href="link.url ?? ''" :disabled="!link.url"
+            :class="['rounded-lg font-medium px-3 py-1.5 text-sm', link.active ? 'bg-primary text-primary-foreground' : 'bg-background border border-input hover:bg-accent hover:text-accent-foreground', !link.url ? 'opacity-50 cursor-not-allowed' : '']"
+            v-html="link.label" preserve-scroll />
         </div>
       </div>
     </div>

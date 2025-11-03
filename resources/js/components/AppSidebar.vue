@@ -34,7 +34,25 @@ import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library } from '
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
-const page = usePage();
+// Definir la interfaz para el usuario y sus roles
+interface Role {
+    name: string;
+    [key: string]: any;
+}
+
+interface User {
+    roles: Role[];
+    [key: string]: any;
+}
+
+interface PageProps {
+    auth: {
+        user: User | null;
+    };
+    [key: string]: any;
+}
+
+const page = usePage<PageProps>();
 
 // ===============================================
 // GESTIÓN DE ROLES Y PERMISOS
@@ -56,7 +74,7 @@ const userRoles = computed(() => user.value?.roles || []);
  * @returns {boolean} true si el usuario es admin o librarian
  */
 const isAdminOrLibrarian = computed(() => {
-    return userRoles.value.some((role: any) => 
+    return userRoles.value.some((role: Role) => 
         role.name === 'admin' || role.name === 'librarian'
     );
 });

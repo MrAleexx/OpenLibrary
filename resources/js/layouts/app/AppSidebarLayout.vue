@@ -1,3 +1,4 @@
+<!-- resources/js/layouts/app/AppSiderLayout.vue -->
 <script setup lang="ts">
 import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
@@ -30,9 +31,9 @@ onBeforeUnmount(() => {
 <template>
     <AppShell variant="sidebar">
         <Transition name="fade" mode="out-in">
-            <div v-if="isLoaded" class="flex h-full">
+            <div v-if="isLoaded" class="flex h-full w-full">
                 <AppSidebar />
-                <AppContent variant="sidebar" class="overflow-x-hidden">
+                <AppContent variant="sidebar" class="flex-1 min-w-0">
                     <AppSidebarHeader :breadcrumbs="breadcrumbs" />
                     <Suspense>
                         <template #default>

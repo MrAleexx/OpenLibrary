@@ -67,7 +67,7 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $users = $query->paginate(15)->withQueryString();
+        $users = $query->paginate(10)->withQueryString();
 
         return Inertia::render('admin/users/Index', [
             'users' => $users,

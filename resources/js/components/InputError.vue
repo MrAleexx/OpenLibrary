@@ -1,3 +1,4 @@
+<!-- resources/js/components/InputError.vue -->
 <script setup lang="ts">
 defineProps<{
     message?: string;
