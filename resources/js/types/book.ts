@@ -22,6 +22,8 @@ export interface Book {
   featured: boolean
   is_active: boolean
   downloadable: boolean
+  cover_image: string | null
+  pdf_file: string | null
   details?: BookDetails
   categories?: Array<{ id: number; name: string }>
   contributors?: Contributor[]
@@ -43,4 +45,6 @@ export interface BookFormData {
   keywords: string
   categories: string[]
   contributors: Contributor[]
+  cover_image: File | null
+  pdf_file: File | null
 }

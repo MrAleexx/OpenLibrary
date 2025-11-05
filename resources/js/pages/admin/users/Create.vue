@@ -107,7 +107,6 @@ function submit() {
     <AppLayout :breadcrumbs="breadcrumbs">
         <!-- Header Simple -->
         <div class="flex items-center gap-4 p-6 border-b border-border">
-
             <div class="flex-1">
                 <h1 class="text-3xl font-bold tracking-tight text-foreground">
                     Crear Nuevo Usuario

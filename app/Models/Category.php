@@ -62,6 +62,11 @@ class Category extends Model
         return $query->whereNull('parent_id');
     }
 
+    public function scopeLeaf($query)
+    {
+        return $query->whereDoesntHave('children');
+    }
+
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('name');
@@ -80,6 +85,11 @@ class Category extends Model
         return is_null($this->parent_id);
     }
 
+    public function isLeaf(): bool
+    {
+        return $this->children()->count() === 0;
+    }
+
     public function getBreadcrumbAttribute(): array
     {
         $breadcrumb = [];
@@ -91,5 +101,23 @@ class Category extends Model
         }
 
         return array_reverse($breadcrumb);
+    }
+
+    public function getFullPathAttribute(): string
+    {
+        return $this->breadcrumb->pluck('name')->implode(' > ');
+    }
+
+    public function getLevelAttribute(): int
+    {
+        $level = 0;
+        $category = $this;
+
+        while ($category->parent) {
+            $level++;
+            $category = $category->parent;
+        }
+
+        return $level;
     }
 }

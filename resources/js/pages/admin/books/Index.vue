@@ -1,3 +1,4 @@
+<!-- resources/js/pages/admin/books/Index.vue -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -21,7 +22,7 @@ import {
     DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import {
-    Plus,MoreHorizontal,Eye,Edit,Trash2,BookOpen,Download,Users,Library,BookMarked,FileText,BookCopy,Star,Calendar,Hash,FileDigit,Globe,Archive,TrendingUp,Zap
+    Plus,MoreHorizontal,Eye,Edit,Trash2,BookOpen,Download,Users,Library,BookMarked,FileText,BookCopy,Star,Calendar,Hash,FileDigit,Globe,Archive,TrendingUp,Zap,X
 } from 'lucide-vue-next'
 
 const breadcrumbs = [
@@ -66,51 +67,56 @@ const props = defineProps<{
     }
 }>()
 
-// Refs
-const search = ref(props.filters.search || '')
-const selectedCategory = ref<string>(props.filters.category || '')
-const selectedBookType = ref(props.filters.book_type || '')
-const selectedStatus = ref(props.filters.status || '')
+// Refs usando el nuevo formato del FilterBar
+const filters = ref({
+    search: props.filters.search || '',
+    book_type: props.filters.book_type || '',
+    status: props.filters.status || '',
+    category: props.filters.category || ''
+})
+
+// Configuración del FilterBar para libros
+const filterConfig = {
+    module: 'books' as const
+}
+
+// Datos para el FilterBar
+const filterData = {
+    categories: props.categories
+}
 
 // Computed
 const activeFiltersCount = computed(() => {
     let count = 0
-    if (search.value) count++
-    if (selectedCategory.value) count++
-    if (selectedBookType.value) count++
-    if (selectedStatus.value) count++
+    if (filters.value.search) count++
+    if (filters.value.category) count++
+    if (filters.value.book_type) count++
+    if (filters.value.status) count++
     return count
 })
 
 // Watchers
-const handleFilterChange = (newFilters: any) => {
+watch(filters, (newFilters) => {
     router.get('/admin/books', {
         search: newFilters.search,
         category: newFilters.category,
-        book_type: newFilters.bookType,
+        book_type: newFilters.book_type,
         status: newFilters.status
     }, {
         preserveState: true,
         replace: true,
         preserveScroll: true
     })
-}
-
-watch([search, selectedCategory, selectedBookType, selectedStatus], () => {
-    handleFilterChange({
-        search: search.value,
-        category: selectedCategory.value,
-        bookType: selectedBookType.value,
-        status: selectedStatus.value
-    })
-})
+}, { deep: true })
 
 // Methods
 function clearFilters() {
-    search.value = ''
-    selectedCategory.value = ''
-    selectedBookType.value = ''
-    selectedStatus.value = ''
+    filters.value = {
+        search: '',
+        category: '',
+        book_type: '',
+        status: ''
+    }
 }
 
 function deleteBook(book: any) {
@@ -303,16 +309,11 @@ const getCategories = (book: any) => {
                 </div>
             </div>
 
-            <!-- Filters -->
+            <!-- FilterBar Component -->
             <FilterBar
-                :modelValue="{
-                    search,
-                    category: selectedCategory,
-                    bookType: selectedBookType,
-                    status: selectedStatus
-                }"
-                :categories="categories"
-                @update:modelValue="handleFilterChange"
+                v-model="filters"
+                :config="filterConfig"
+                :data="filterData"
             />
 
             <!-- Results Count - Consistente con Categories -->

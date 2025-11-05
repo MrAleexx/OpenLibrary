@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -19,16 +18,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {Search,MoreHorizontal,Eye,Edit,Users,User,Download,BookOpen,Filter,X,RefreshCw,Calendar,UserPlus,FileDown,UserCheck,UserX,Clock,Shield,Mail,IdCard,Library,TrendingUp,Zap,Hash
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
+import FilterBar from '@/components/FilterBar.vue' // Importar el FilterBar
 
 // Props with default values
 const props = withDefaults(defineProps<{
@@ -85,30 +78,37 @@ const breadcrumbs = [
   { title: 'Usuarios', href: '/admin/users' },
 ]
 
-// Refs
-const search = ref(props.filters.search || '')
-const selectedUserType = ref(props.filters.user_type || '')
-const selectedStatus = ref(props.filters.status || '')
-const selectedMembershipStatus = ref(props.filters.membership_status || '')
+// Refs usando el nuevo formato del FilterBar
+const filters = ref({
+  search: props.filters.search || '',
+  user_type: props.filters.user_type || '',
+  status: props.filters.status || '',
+  membership_status: props.filters.membership_status || ''
+})
+
+// Configuración del FilterBar para usuarios
+const filterConfig = {
+  module: 'users' as const
+}
 
 // Computed
 const activeFiltersCount = computed(() => {
   let count = 0
-  if (search.value) count++
-  if (selectedUserType.value) count++
-  if (selectedStatus.value) count++
-  if (selectedMembershipStatus.value) count++
+  if (filters.value.search) count++
+  if (filters.value.user_type) count++
+  if (filters.value.status) count++
+  if (filters.value.membership_status) count++
   return count
 })
 
-// Watchers with debounce
-const handleFilterChange = (newFilters: any) => {
+// Watchers con el nuevo formato
+watch(filters, (newFilters) => {
   if (router) {
     router.get('/admin/users', {
       search: newFilters.search,
-      user_type: newFilters.userType,
+      user_type: newFilters.user_type,
       status: newFilters.status,
-      membership_status: newFilters.membershipStatus
+      membership_status: newFilters.membership_status
     }, {
       preserveState: true,
       replace: true,
@@ -118,38 +118,16 @@ const handleFilterChange = (newFilters: any) => {
       }
     })
   }
-}
-
-// Debounce function
-function debounce(fn: Function, wait: number) {
-  let timeout: number | undefined
-  return function (this: any, ...args: any[]) {
-    clearTimeout(timeout)
-    timeout = window.setTimeout(() => fn.apply(this, args), wait)
-  }
-}
-
-// Debounced filter change
-const debouncedFilterChange = debounce(handleFilterChange, 300)
-
-watch([search, selectedUserType, selectedStatus, selectedMembershipStatus], () => {
-  debouncedFilterChange({
-    search: search.value,
-    userType: selectedUserType.value,
-    status: selectedStatus.value,
-    membershipStatus: selectedMembershipStatus.value
-  })
-}, {
-  deep: true,
-  flush: 'post'
-})
+}, { deep: true })
 
 // Methods
 function clearFilters() {
-  search.value = ''
-  selectedUserType.value = ''
-  selectedStatus.value = ''
-  selectedMembershipStatus.value = ''
+  filters.value = {
+    search: '',
+    user_type: '',
+    status: '',
+    membership_status: ''
+  }
 }
 
 function toggleActive(user: any) {
@@ -354,91 +332,11 @@ function isMembershipExpired(user: any) {
         </div>
       </div>
 
-      <!-- Filters Card - Consistente con Books -->
-      <Card class="bg-card rounded-xl border border-border shadow-lg">
-        <CardHeader class="pb-4">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div class="flex items-center gap-2">
-              <Filter class="h-4 w-4 text-muted-foreground" />
-              <CardTitle class="text-lg text-foreground">Filtros y Búsqueda</CardTitle>
-              <Badge v-if="activeFiltersCount > 0" variant="secondary"
-                class="bg-primary/10 text-primary border-primary/20">
-                {{ activeFiltersCount }} activos
-              </Badge>
-            </div>
-            <Button v-if="activeFiltersCount > 0" variant="outline" size="sm" @click="clearFilters"
-              class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
-              <X class="h-4 w-4 mr-1" />
-              Limpiar
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent class="space-y-4">
-          <!-- Search -->
-          <div class="relative">
-            <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input v-model="search" placeholder="Buscar por nombre, email, DNI o código institucional..."
-              class="pl-10 bg-background border-border focus:border-primary" />
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- User Type Filter -->
-            <Select v-model="selectedUserType">
-              <SelectTrigger class="bg-background border-border focus:border-primary">
-                <SelectValue placeholder="Todos los tipos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los tipos</SelectItem>
-                <SelectItem value="student">Estudiante</SelectItem>
-                <SelectItem value="teacher">Docente</SelectItem>
-                <SelectItem value="external">Externo</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <!-- Status Filter -->
-            <Select v-model="selectedStatus">
-              <SelectTrigger class="bg-background border-border focus:border-primary">
-                <SelectValue placeholder="Todos los estados" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
-                <SelectItem value="active">Activos</SelectItem>
-                <SelectItem value="inactive">Inactivos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <!-- Membership Status Filter -->
-            <Select v-model="selectedMembershipStatus">
-              <SelectTrigger class="bg-background border-border focus:border-primary">
-                <SelectValue placeholder="Estado membresía" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
-                <SelectItem value="active">Membresía Activa</SelectItem>
-                <SelectItem value="expired">Membresía Expirada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <!-- Active Filters Info -->
-          <div v-if="activeFiltersCount > 0" class="pt-4 border-t border-border">
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter class="w-4 h-4" />
-              <span>Filtros activos:</span>
-              <span v-if="selectedUserType" class="bg-primary/10 text-primary px-2 py-1 rounded text-xs">
-                Tipo: {{ userTypeLabels[selectedUserType] }}
-              </span>
-              <span v-if="selectedStatus" class="bg-secondary/10 text-secondary px-2 py-1 rounded text-xs">
-                Estado: {{ selectedStatus === 'active' ? 'Activos' : 'Inactivos' }}
-              </span>
-              <span v-if="selectedMembershipStatus" class="bg-primary/10 text-primary px-2 py-1 rounded text-xs">
-                Membresía: {{ selectedMembershipStatus === 'active' ? 'Activa' : 'Expirada' }}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <!-- FilterBar Component -->
+      <FilterBar
+        v-model="filters"
+        :config="filterConfig"
+      />
 
       <!-- Results Count - Consistente con Books -->
       <div class="text-sm text-muted-foreground">

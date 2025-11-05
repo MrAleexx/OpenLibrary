@@ -1,43 +1,62 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
-import type { BookFormData } from '@/types/book'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
+import {Card,  CardContent,  CardDescription,  CardHeader,  CardTitle,  CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import {  Select,  SelectContent,  SelectItem,  SelectTrigger,  SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  User,
-  BookOpen,
-  Save,
-  AlertCircle
+import {  ArrowLeft,  Plus,  Trash2,  User,  BookOpen,  Save,  AlertCircle,  Info,  Upload,  Image,  FileText,  X,  Search,  Loader2,  Eye,  EyeOff
 } from 'lucide-vue-next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import {  Tooltip,  TooltipContent,  TooltipProvider,  TooltipTrigger,
+} from '@/components/ui/tooltip'
+
+// Define el tipo localmente
+interface BookFormData {
+  title: string
+  publisher_id: number | null
+  isbn: string
+  language_code: string
+  pages: string | number
+  publication_year: string | number
+  book_type: string
+  featured: boolean
+  is_active: boolean
+  downloadable: boolean
+  description: string
+  edition: string
+  keywords: string
+  categories: string[]
+  contributors: {
+    full_name: string
+    contributor_type: 'author' | 'editor' | 'translator' | 'illustrator' | 'prologuist'
+    sequence_number: number
+  }[]
+  cover_image: File | null
+  pdf_file: File | null
+}
+
+interface Contributor {
+  full_name: string
+  contributor_type: 'author' | 'editor' | 'translator' | 'illustrator' | 'prologuist'
+  sequence_number: number
+}
 
 // Props
 const props = defineProps<{
-  categories: any[]
+  categories: Array<{
+    id: number
+    name: string
+    full_path: string
+    breadcrumb: string
+  }>
   publishers: any[]
   languages: any[]
   book_types: any[]
@@ -50,6 +69,21 @@ const breadcrumbs = [
   { title: 'Libros', href: '/admin/books' },
   { title: 'Crear Libro', href: '/admin/books/create' }
 ]
+
+// File refs
+const coverImageInput = ref<HTMLInputElement>()
+const pdfFileInput = ref<HTMLInputElement>()
+
+// Preview states
+const coverPreview = ref<string | null>(null)
+const pdfFileName = ref<string | null>(null)
+
+// UI States
+const isLoading = ref(false)
+const searchCategory = ref('')
+const showDescriptionPreview = ref(false)
+const isDraggingCover = ref(false)
+const isDraggingPdf = ref(false)
 
 // Form state
 const form = reactive<BookFormData>({
@@ -70,14 +104,39 @@ const form = reactive<BookFormData>({
   contributors: [
     {
       full_name: '',
-      contributor_type: 'author' as const,
+      contributor_type: 'author',
       sequence_number: 1
     }
+  ],
+  cover_image: null,
+  pdf_file: null
+})
+
+// Computed
+const filteredCategories = computed(() => {
+  if (!searchCategory.value) return props.categories
+  return props.categories.filter(category =>
+    category.name.toLowerCase().includes(searchCategory.value.toLowerCase()) ||
+    category.full_path.toLowerCase().includes(searchCategory.value.toLowerCase())
+  )
+})
+
+const selectedCategoriesCount = computed(() => form.categories.length)
+const selectedContributorsCount = computed(() => form.contributors.length)
+
+const progress = computed(() => {
+  const fields = [
+    form.title, form.isbn, form.pages, form.categories.length,
+    form.contributors.length, form.language_code, form.book_type
   ]
+  const filled = fields.filter(field =>
+    field && (typeof field === 'string' ? field.trim() !== '' : true)
+  ).length
+  return Math.round((filled / fields.length) * 100)
 })
 
 // Methods
-function addContributor() {
+function addContributor(): void {
   form.contributors.push({
     full_name: '',
     contributor_type: 'author',
@@ -85,27 +144,201 @@ function addContributor() {
   })
 }
 
-function removeContributor(index: number) {
+function removeContributor(index: number): void {
   if (form.contributors.length > 1) {
     form.contributors.splice(index, 1)
     // Reordenar sequence numbers
-    for (const [idx, contributor] of form.contributors.entries()) {
+    form.contributors.forEach((contributor: Contributor, idx: number) => {
       contributor.sequence_number = idx + 1
+    })
+  }
+}
+
+// Cover Image Methods
+function triggerCoverUpload(): void {
+  coverImageInput.value?.click()
+}
+
+function handleCoverChange(event: Event): void {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (file) {
+    processCoverFile(file)
+  }
+}
+
+function processCoverFile(file: File): void {
+  // Validar tipo de archivo
+  if (!file.type.startsWith('image/')) {
+    alert('Por favor, selecciona un archivo de imagen válido (JPEG, PNG, JPG, GIF)')
+    return
+  }
+
+  // Validar tamaño (2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    alert('La imagen no debe superar los 2MB')
+    return
+  }
+
+  form.cover_image = file
+
+  // Crear preview
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    coverPreview.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeCover(): void {
+  form.cover_image = null
+  coverPreview.value = null
+  if (coverImageInput.value) {
+    coverImageInput.value.value = ''
+  }
+}
+
+// PDF Methods
+function triggerPdfUpload(): void {
+  pdfFileInput.value?.click()
+}
+
+function handlePdfChange(event: Event): void {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (file) {
+    processPdfFile(file)
+  }
+}
+
+function processPdfFile(file: File): void {
+  // Validar tipo de archivo
+  if (file.type !== 'application/pdf') {
+    alert('Por favor, selecciona un archivo PDF válido')
+    return
+  }
+
+  // Validar tamaño (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El PDF no debe superar los 10MB')
+    return
+  }
+
+  form.pdf_file = file
+  pdfFileName.value = file.name
+}
+
+function removePdf(): void {
+  form.pdf_file = null
+  pdfFileName.value = null
+  if (pdfFileInput.value) {
+    pdfFileInput.value.value = ''
+  }
+}
+
+// Drag and Drop handlers
+function handleDragOver(event: DragEvent, type: 'cover' | 'pdf'): void {
+  event.preventDefault()
+  if (type === 'cover') isDraggingCover.value = true
+  else isDraggingPdf.value = true
+}
+
+function handleDragLeave(event: DragEvent, type: 'cover' | 'pdf'): void {
+  event.preventDefault()
+  if (type === 'cover') isDraggingCover.value = false
+  else isDraggingPdf.value = false
+}
+
+function handleDrop(event: DragEvent, type: 'cover' | 'pdf'): void {
+  event.preventDefault()
+  if (type === 'cover') isDraggingCover.value = false
+  else isDraggingPdf.value = false
+
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (type === 'cover') {
+      processCoverFile(file)
+    } else {
+      processPdfFile(file)
     }
   }
 }
 
-function submit() {
-  // Preparar datos para enviar
-  const submitData = {
-    ...form,
-    pages: form.pages ? Number.parseInt(form.pages.toString()) : null,
-    publisher_id: form.publisher_id ? Number.parseInt(form.publisher_id.toString()) : null,
-    publication_year: form.publication_year ? Number.parseInt(form.publication_year.toString()) : null,
-    categories: form.categories.map(id => Number.parseInt(id))
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+async function submit(): Promise<void> {
+  isLoading.value = true
+
+  // Crear FormData para enviar archivos
+  const formData = new FormData()
+  const boolToFormData = (value: boolean): string => value ? '1' : '0'
+
+  // Agregar campos del formulario
+  formData.append('title', form.title)
+  formData.append('isbn', form.isbn)
+  formData.append('language_code', form.language_code)
+  formData.append('pages', form.pages.toString())
+  formData.append('book_type', form.book_type)
+  formData.append('featured', boolToFormData(form.featured))
+  formData.append('is_active', boolToFormData(form.is_active))
+  formData.append('downloadable', boolToFormData(form.downloadable))
+  formData.append('description', form.description)
+  formData.append('edition', form.edition)
+  formData.append('keywords', form.keywords)
+
+  if (form.publisher_id) {
+    formData.append('publisher_id', form.publisher_id.toString())
   }
 
-  router.post('/admin/books', submitData)
+  if (form.publication_year) {
+    formData.append('publication_year', form.publication_year.toString())
+  }
+
+  // Agregar categorías con tipo explícito
+  form.categories.forEach((categoryId: string) => {
+    formData.append('categories[]', categoryId)
+  })
+
+  // Agregar contribuidores con tipo explícito
+  form.contributors.forEach((contributor: Contributor, index: number) => {
+    formData.append(`contributors[${index}][full_name]`, contributor.full_name)
+    formData.append(`contributors[${index}][contributor_type]`, contributor.contributor_type)
+    formData.append(`contributors[${index}][sequence_number]`, contributor.sequence_number.toString())
+  })
+
+  // Agregar archivos si existen
+  if (form.cover_image) {
+    formData.append('cover_image', form.cover_image)
+  }
+
+  if (form.pdf_file) {
+    formData.append('pdf_file', form.pdf_file)
+  }
+
+  try {
+    await router.post('/admin/books', formData, {
+      forceFormData: true,
+      onError: (errors) => {
+        console.error('Error al crear libro:', errors)
+        isLoading.value = false
+      },
+      onFinish: () => {
+        isLoading.value = false
+      }
+    })
+  } catch (error) {
+    isLoading.value = false
+    console.error('Error al enviar formulario:', error)
+  }
 }
 
 // Contributor type labels
@@ -118,222 +351,572 @@ const contributorTypes = {
 }
 
 // Validación de campos requeridos
-const hasEmptyRequiredFields = () => {
+const hasEmptyRequiredFields = (): boolean => {
   return !form.title || !form.isbn || !form.pages || form.categories.length === 0
+}
+
+// Auto-save description to localStorage
+onMounted(() => {
+  const savedDescription = localStorage.getItem('book_description_draft')
+  if (savedDescription) {
+    form.description = savedDescription
+  }
+})
+
+function saveDescriptionDraft(): void {
+  if (form.description) {
+    localStorage.setItem('book_description_draft', form.description)
+  }
 }
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-6 space-y-6">
-      <!-- Header -->
-      <div class="flex items-center gap-4">
-        <Button variant="outline" size="sm" as-child>
-          <a href="/admin/books">
-            <ArrowLeft class="h-4 w-4 mr-2" />
-            Volver
-          </a>
-        </Button>
-        <div>
-          <h1 class="text-3xl font-bold tracking-tight">Crear Nuevo Libro</h1>
-          <p class="text-muted-foreground mt-1">
-            Agrega un nuevo libro al catálogo de la biblioteca
-          </p>
+      <!-- Header con Progress Bar -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <h1 class="text-3xl font-bold tracking-tight text-foreground">
+              Crear Nuevo Libro
+            </h1>
+            <p class="text-muted-foreground mt-1">
+              Completa la información para agregar un nuevo libro al catálogo
+            </p>
+          </div>
+          <Button variant="outline" size="sm" as-child class="border-border hover:bg-accent">
+            <a href="/admin/books">
+              <ArrowLeft class="h-4 w-4 mr-2" />
+              Volver
+            </a>
+          </Button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="text-muted-foreground">Progreso del formulario</span>
+            <span class="font-medium text-primary">{{ progress }}%</span>
+          </div>
+          <div class="w-full bg-muted rounded-full h-2">
+            <div class="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
+              :style="{ width: `${progress}%` }"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Alert de errores -->
-      <Alert v-if="props.errors" variant="destructive" class="bg-destructive/10 border-destructive/20">
+      <!-- Alert de errores mejorado -->
+      <Alert v-if="Object.keys(props.errors || {}).length > 0" variant="destructive"
+        class="bg-destructive/10 border-destructive/20 animate-in fade-in-50">
         <AlertCircle class="h-4 w-4" />
-        <AlertDescription>
-          Hay errores en el formulario. Por favor, revisa los campos marcados.
+        <AlertDescription class="flex-1">
+          <div class="space-y-2">
+            <p class="font-medium">Se encontraron los siguientes errores:</p>
+            <ul class="text-sm space-y-1">
+              <li v-for="(error, field) in props.errors" :key="field" class="flex items-start gap-2">
+                <div class="w-1 h-1 bg-destructive rounded-full mt-2 flex-shrink-0"></div>
+                <span>{{ error }}</span>
+              </li>
+            </ul>
+          </div>
         </AlertDescription>
       </Alert>
 
-      <form @submit.prevent="submit" class="space-y-6">
+      <form @submit.prevent="submit" class="space-y-6" enctype="multipart/form-data">
+        <!-- Inputs de archivo ocultos -->
+        <input type="file" ref="coverImageInput" accept="image/*" class="hidden" @change="handleCoverChange" />
+        <input type="file" ref="pdfFileInput" accept=".pdf" class="hidden" @change="handlePdfChange" />
+
         <!-- Información Básica -->
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-              <BookOpen class="h-5 w-5" />
-              Información Básica
+        <Card class="group hover:shadow-md transition-all duration-300 border-border bg-card">
+          <CardHeader class="pb-4">
+            <CardTitle class="flex items-center gap-3 text-xl text-card-foreground">
+              <div class="p-2 bg-primary/10 rounded-lg">
+                <BookOpen class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                Información Básica
+                <Badge variant="secondary" class="ml-2">Requerido</Badge>
+              </div>
             </CardTitle>
-            <CardDescription>
-              Información principal del libro
+            <CardDescription class="text-muted-foreground text-base">
+              Información principal e identificadora del libro
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent class="space-y-6 pt-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Título -->
               <div class="md:col-span-2">
-                <Label for="title" class="required">Título del Libro</Label>
+                <Label for="title" class="required text-base font-semibold text-card-foreground">Título del
+                  Libro</Label>
                 <Input id="title" v-model="form.title" placeholder="Ingresa el título completo del libro"
-                  :class="errors?.title ? 'border-destructive' : ''" required />
-                <p v-if="errors?.title" class="text-destructive text-sm mt-1">{{ errors.title }}</p>
+                  :class="errors?.title ? 'border-destructive focus-visible:ring-destructive' : 'border-input focus-visible:ring-ring'"
+                  class="h-12 text-base mt-2 bg-background text-foreground" required />
+                <p v-if="errors?.title" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.title }}
+                </p>
               </div>
 
               <!-- ISBN -->
               <div>
-                <Label for="isbn" class="required">ISBN</Label>
+                <Label for="isbn" class="required text-base font-semibold text-card-foreground">ISBN</Label>
                 <Input id="isbn" v-model="form.isbn" placeholder="978-612-00123-4-7"
-                  :class="errors?.isbn ? 'border-destructive' : ''" required />
-                <p v-if="errors?.isbn" class="text-destructive text-sm mt-1">{{ errors.isbn }}</p>
+                  :class="errors?.isbn ? 'border-destructive focus-visible:ring-destructive' : 'border-input focus-visible:ring-ring'"
+                  class="h-12 text-base mt-2 font-mono bg-background text-foreground" required />
+                <p v-if="errors?.isbn" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.isbn }}
+                </p>
               </div>
 
               <!-- Editorial -->
               <div>
-                <Label for="publisher_id">Editorial</Label>
+                <Label for="publisher_id" class="text-base font-semibold text-card-foreground">Editorial</Label>
                 <Select v-model="form.publisher_id" :class="errors?.publisher_id ? 'border-destructive' : ''">
-                  <SelectTrigger>
+                  <SelectTrigger class="h-12 text-base mt-2 bg-background text-foreground border-input">
                     <SelectValue placeholder="Selecciona una editorial" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem :value="null">Sin editorial</SelectItem>
-                    <SelectItem v-for="publisher in publishers" :key="publisher.id" :value="publisher.id">
-                      {{ publisher.name }} - {{ publisher.city }}, {{ publisher.country }}
+                  <SelectContent class="bg-popover text-popover-foreground border-border">
+                    <SelectItem :value="null" class="focus:bg-accent focus:text-accent-foreground">Sin editorial
+                    </SelectItem>
+                    <SelectItem v-for="publisher in publishers" :key="publisher.id" :value="publisher.id"
+                      class="text-base focus:bg-accent focus:text-accent-foreground">
+                      <div class="flex flex-col">
+                        <span class="font-medium">{{ publisher.name }}</span>
+                        <span class="text-sm text-muted-foreground">
+                          {{ publisher.city }}, {{ publisher.country }}
+                        </span>
+                      </div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p v-if="errors?.publisher_id" class="text-destructive text-sm mt-1">{{ errors.publisher_id }}</p>
+                <p v-if="errors?.publisher_id" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.publisher_id }}
+                </p>
               </div>
 
               <!-- Páginas y Año -->
               <div>
-                <Label for="pages" class="required">Número de Páginas</Label>
+                <Label for="pages" class="required text-base font-semibold text-card-foreground">Número de
+                  Páginas</Label>
                 <Input id="pages" v-model="form.pages" type="number" min="1"
-                  :class="errors?.pages ? 'border-destructive' : ''" required />
-                <p v-if="errors?.pages" class="text-destructive text-sm mt-1">{{ errors.pages }}</p>
+                  :class="errors?.pages ? 'border-destructive focus-visible:ring-destructive' : 'border-input focus-visible:ring-ring'"
+                  class="h-12 text-base mt-2 bg-background text-foreground" required />
+                <p v-if="errors?.pages" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.pages }}
+                </p>
               </div>
 
               <div>
-                <Label for="publication_year">Año de Publicación</Label>
+                <Label for="publication_year" class="text-base font-semibold text-card-foreground">Año de
+                  Publicación</Label>
                 <Input id="publication_year" v-model="form.publication_year" type="number" :min="1800"
-                  :max="new Date().getFullYear() + 1" :class="errors?.publication_year ? 'border-destructive' : ''" />
-                <p v-if="errors?.publication_year" class="text-destructive text-sm mt-1">{{ errors.publication_year }}
+                  :max="new Date().getFullYear() + 1"
+                  :class="errors?.publication_year ? 'border-destructive focus-visible:ring-destructive' : 'border-input focus-visible:ring-ring'"
+                  class="h-12 text-base mt-2 bg-background text-foreground" />
+                <p v-if="errors?.publication_year" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.publication_year }}
                 </p>
               </div>
 
               <!-- Idioma -->
               <div>
-                <Label for="language_code" class="required">Idioma</Label>
+                <Label for="language_code" class="required text-base font-semibold text-card-foreground">Idioma</Label>
                 <Select v-model="form.language_code" :class="errors?.language_code ? 'border-destructive' : ''">
-                  <SelectTrigger>
+                  <SelectTrigger class="h-12 text-base mt-2 bg-background text-foreground border-input">
                     <SelectValue placeholder="Selecciona un idioma" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="language in languages" :key="language.code" :value="language.code">
+                  <SelectContent class="bg-popover text-popover-foreground border-border">
+                    <SelectItem v-for="language in languages" :key="language.code" :value="language.code"
+                      class="text-base focus:bg-accent focus:text-accent-foreground">
                       {{ language.native_name }} ({{ language.name }})
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p v-if="errors?.language_code" class="text-destructive text-sm mt-1">{{ errors.language_code }}</p>
+                <p v-if="errors?.language_code" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.language_code }}
+                </p>
               </div>
 
               <!-- Tipo de Libro -->
               <div>
-                <Label for="book_type" class="required">Tipo de Libro</Label>
+                <Label for="book_type" class="required text-base font-semibold text-card-foreground">Tipo de
+                  Libro</Label>
                 <Select v-model="form.book_type" :class="errors?.book_type ? 'border-destructive' : ''">
-                  <SelectTrigger>
+                  <SelectTrigger class="h-12 text-base mt-2 bg-background text-foreground border-input">
                     <SelectValue placeholder="Selecciona el tipo" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="type in book_types" :key="type.value" :value="type.value">
+                  <SelectContent class="bg-popover text-popover-foreground border-border">
+                    <SelectItem v-for="type in book_types" :key="type.value" :value="type.value"
+                      class="text-base focus:bg-accent focus:text-accent-foreground">
                       {{ type.label }}
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p v-if="errors?.book_type" class="text-destructive text-sm mt-1">{{ errors.book_type }}</p>
+                <p v-if="errors?.book_type" class="text-destructive text-sm mt-2 flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.book_type }}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Archivos: Cover y PDF -->
+        <Card class="group hover:shadow-md transition-all duration-300 border-border bg-card">
+          <CardHeader class="pb-4">
+            <CardTitle class="flex items-center gap-3 text-xl text-card-foreground">
+              <div class="p-2 bg-primary/10 rounded-lg">
+                <Image class="h-6 w-6 text-primary" />
+              </div>
+              Archivos del Libro
+            </CardTitle>
+            <CardDescription class="text-muted-foreground text-base">
+              Sube la portada y el archivo PDF del libro
+            </CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-8 pt-4">
+            <!-- Cover Image -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div class="space-y-4">
+                <Label class="flex items-center gap-2 text-base font-semibold text-card-foreground">
+                  <Image class="h-5 w-5" />
+                  Portada del Libro
+                </Label>
+                <p class="text-sm text-muted-foreground">
+                  Formatos: JPEG, PNG, JPG, GIF. Máximo: 2MB
+                </p>
+
+                <div
+                  class="border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer group/upload border-border hover:border-primary/50 hover:bg-accent/50"
+                  :class="[
+                    isDraggingCover ? 'border-primary bg-accent scale-[1.02]' : '',
+                    coverPreview ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : ''
+                  ]" @click="triggerCoverUpload" @dragover="(e) => handleDragOver(e, 'cover')"
+                  @dragleave="(e) => handleDragLeave(e, 'cover')" @drop="(e) => handleDrop(e, 'cover')">
+                  <div class="space-y-4">
+                    <div class="relative mx-auto w-16 h-16">
+                      <Upload
+                        class="h-8 w-8 mx-auto text-muted-foreground group-hover/upload:text-primary transition-colors absolute inset-0 m-auto" />
+                      <div
+                        class="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                        <Image class="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <div>
+                      <p
+                        class="font-medium text-lg group-hover/upload:text-primary transition-colors text-card-foreground">
+                        {{ coverPreview ? 'Portada lista ✓' : 'Haz clic para subir la portada' }}
+                      </p>
+                      <p class="text-sm text-muted-foreground mt-1">
+                        {{ coverPreview ? 'Arrastra otra imagen para cambiar' : 'o arrastra y suelta la imagen aquí' }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p v-if="errors?.cover_image" class="text-destructive text-sm flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.cover_image }}
+                </p>
+              </div>
+
+              <!-- Cover Preview -->
+              <div class="space-y-4">
+                <Label class="text-base font-semibold text-card-foreground">Vista Previa de la Portada</Label>
+                <div
+                  class="aspect-[3/4] max-w-xs border-2 border-dashed border-border rounded-xl overflow-hidden bg-muted/20 group/preview">
+                  <div v-if="coverPreview" class="h-full flex items-center justify-center relative">
+                    <img :src="coverPreview" alt="Vista previa de la portada"
+                      class="w-full h-full object-cover group-hover/preview:scale-105 transition-transform duration-300" />
+                    <div
+                      class="absolute inset-0 bg-black/50 opacity-0 group-hover/preview:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <Button type="button" variant="destructive" size="sm"
+                        class="scale-90 group-hover/preview:scale-100 transition-transform duration-300"
+                        @click.stop="removeCover">
+                        <Trash2 class="h-4 w-4 mr-1" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  </div>
+                  <div v-else class="h-full flex flex-col items-center justify-center text-muted-foreground p-6">
+                    <Image class="h-16 w-16 mb-3 opacity-30" />
+                    <p class="text-sm text-center font-medium">No hay portada seleccionada</p>
+                    <p class="text-xs text-center mt-1">La vista previa aparecerá aquí</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PDF File -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div class="space-y-4">
+                <Label class="flex items-center gap-2 text-base font-semibold text-card-foreground">
+                  <FileText class="h-5 w-5" />
+                  Archivo PDF
+                </Label>
+                <p class="text-sm text-muted-foreground">
+                  Formato: PDF. Máximo: 10MB
+                </p>
+
+                <div
+                  class="border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 cursor-pointer group/upload border-border hover:border-primary/50 hover:bg-accent/50"
+                  :class="[
+                    isDraggingPdf ? 'border-primary bg-accent scale-[1.02]' : '',
+                    pdfFileName ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : ''
+                  ]" @click="triggerPdfUpload" @dragover="(e) => handleDragOver(e, 'pdf')"
+                  @dragleave="(e) => handleDragLeave(e, 'pdf')" @drop="(e) => handleDrop(e, 'pdf')">
+                  <div class="space-y-4">
+                    <div class="relative mx-auto w-16 h-16">
+                      <Upload
+                        class="h-8 w-8 mx-auto text-muted-foreground group-hover/upload:text-primary transition-colors absolute inset-0 m-auto" />
+                      <div
+                        class="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                        <FileText class="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <div>
+                      <p
+                        class="font-medium text-lg group-hover/upload:text-primary transition-colors text-card-foreground">
+                        {{ pdfFileName ? 'PDF listo ✓' : 'Haz clic para subir el PDF' }}
+                      </p>
+                      <p class="text-sm text-muted-foreground mt-1">
+                        {{ pdfFileName ? 'Arrastra otro PDF para cambiar' : 'o arrastra y suelta el archivo aquí' }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p v-if="errors?.pdf_file" class="text-destructive text-sm flex items-center gap-1">
+                  <AlertCircle class="h-3 w-3" />
+                  {{ errors.pdf_file }}
+                </p>
+              </div>
+
+              <!-- PDF Info -->
+              <div class="space-y-4">
+                <Label class="text-base font-semibold text-card-foreground">Información del Archivo PDF</Label>
+                <div
+                  class="border-2 border-dashed border-border rounded-xl p-6 transition-all duration-300 group/pdf bg-muted/20"
+                  :class="pdfFileName ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : ''">
+                  <div v-if="pdfFileName" class="space-y-4">
+                    <div class="flex items-center gap-3">
+                      <div class="p-2 bg-primary/10 rounded-lg">
+                        <FileText class="h-6 w-6 text-primary" />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="font-medium text-lg truncate text-card-foreground">{{ pdfFileName }}</p>
+                        <p class="text-sm text-muted-foreground">
+                          {{ form.pdf_file ? formatFileSize(form.pdf_file.size) : '' }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex gap-2">
+                      <Button type="button" variant="outline" size="sm"
+                        class="flex-1 border-border hover:bg-accent hover:text-accent-foreground" @click="removePdf">
+                        <Trash2 class="h-4 w-4 mr-1" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  </div>
+                  <div v-else class="text-center text-muted-foreground py-8">
+                    <FileText class="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p class="text-sm font-medium">No hay PDF seleccionado</p>
+                    <p class="text-xs mt-1">La información del archivo aparecerá aquí</p>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <!-- Categorías -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Categorías</CardTitle>
-            <CardDescription>
-              Selecciona las categorías a las que pertenece este libro
+        <Card class="group hover:shadow-md transition-all duration-300 border-border bg-card">
+          <CardHeader class="pb-4">
+            <CardTitle class="flex items-center gap-3 text-xl text-card-foreground">
+              <div class="p-2 bg-primary/10 rounded-lg">
+                <BookOpen class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                Categorías
+                <Badge variant="secondary" class="ml-2">Requerido</Badge>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger as-child>
+                    <Info class="h-5 w-5 text-muted-foreground cursor-help transition-colors hover:text-primary" />
+                  </TooltipTrigger>
+                  <TooltipContent class="max-w-sm text-sm bg-popover text-popover-foreground border-border">
+                    <p>Selecciona categorías específicas (sin subcategorías) para una mejor organización y búsqueda</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardTitle>
+            <CardDescription class="text-muted-foreground text-base">
+              Selecciona las categorías específicas a las que pertenece este libro
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              <div v-for="category in categories" :key="category.id" class="flex items-center space-x-2">
-                <Checkbox :id="`category-${category.id}`" :checked="form.categories.includes(category.id.toString())"
-                  @update:checked="(checked: boolean) => {
-                    const categoryId = category.id.toString()
-                    if (checked && !form.categories.includes(categoryId)) {
-                      form.categories.push(categoryId)
-                    } else if (!checked) {
-                      form.categories = form.categories.filter(id => id !== categoryId)
-                    }
-                  }" />
-                <Label :for="`category-${category.id}`" class="text-sm font-normal">
-                  {{ category.name }}
-                </Label>
+          <CardContent class="space-y-4 pt-4">
+            <!-- Búsqueda y contador -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+              <div class="relative flex-1 max-w-md">
+                <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input v-model="searchCategory" placeholder="Buscar categorías..."
+                  class="pl-10 h-11 bg-background text-foreground border-input" />
               </div>
-            </div>
-            <p v-if="form.categories.length === 0" class="text-sm text-muted-foreground mt-2">
-              Debes seleccionar al menos una categoría
-            </p>
-            <div v-else class="flex flex-wrap gap-1 mt-3">
-              <Badge v-for="categoryId in form.categories" :key="categoryId" variant="secondary">
-                {{categories.find(c => c.id.toString() === categoryId)?.name}}
+              <Badge variant="outline" class="text-sm px-3 py-1 border-border text-muted-foreground">
+                {{ selectedCategoriesCount }} categoría(s) seleccionada(s)
               </Badge>
             </div>
-            <p v-if="errors?.categories" class="text-destructive text-sm mt-1">{{ errors.categories }}</p>
+
+            <!-- Grid de categorías -->
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-1 custom-scrollbar">
+              <div v-for="category in filteredCategories" :key="category.id"
+                class="flex items-start space-x-3 p-4 border-2 rounded-xl transition-all duration-200 group/category cursor-pointer border-border hover:border-primary/50 hover:bg-accent/50"
+                :class="[
+                  form.categories.includes(category.id.toString())
+                    ? 'border-primary bg-accent shadow-sm scale-[1.02]'
+                    : ''
+                ]" @click="() => {
+                  const categoryId = category.id.toString()
+                  if (form.categories.includes(categoryId)) {
+                    form.categories = form.categories.filter((id: string) => id !== categoryId)
+                  } else {
+                    form.categories.push(categoryId)
+                  }
+                }">
+                <Checkbox :id="`category-${category.id}`" :checked="form.categories.includes(category.id.toString())"
+                  class="mt-0.5" @click.stop />
+                <Label :for="`category-${category.id}`" class="text-sm font-normal cursor-pointer flex-1 space-y-1">
+                  <div class="font-semibold text-card-foreground group-hover/category:text-primary transition-colors">
+                    {{ category.name }}
+                  </div>
+                  <div class="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {{ category.full_path }}
+                  </div>
+                </Label>
+
+                <!-- Tooltip con breadcrumb completo -->
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <Info
+                        class="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0 mt-0.5 transition-colors hover:text-primary" />
+                    </TooltipTrigger>
+                    <TooltipContent class="max-w-xs text-xs bg-popover text-popover-foreground border-border">
+                      <p class="font-medium">Ruta completa:</p>
+                      <p>{{ category.breadcrumb }}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+
+            <!-- Mensaje cuando no hay categorías seleccionadas -->
+            <div v-if="form.categories.length === 0"
+              class="text-center py-8 border-2 border-dashed border-muted-foreground/20 rounded-xl bg-muted/10">
+              <BookOpen class="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+              <p class="text-muted-foreground font-medium">No hay categorías seleccionadas</p>
+              <p class="text-sm text-muted-foreground mt-1">Selecciona al menos una categoría específica</p>
+            </div>
+
+            <!-- Categorías seleccionadas -->
+            <div v-else class="space-y-3">
+              <Label class="text-sm font-medium text-card-foreground">Categorías seleccionadas:</Label>
+              <div class="flex flex-wrap gap-2">
+                <Badge v-for="categoryId in form.categories" :key="categoryId" variant="secondary"
+                  class="flex items-center gap-1.5 group/badge px-3 py-1.5 text-sm transition-all duration-200 hover:scale-105 border-border bg-accent text-accent-foreground">
+                  <span class="font-medium">
+                    {{categories.find(c => c.id.toString() === categoryId)?.name}}
+                  </span>
+                  <Button type="button" variant="ghost" size="sm"
+                    class="h-4 w-4 p-0 hover:bg-transparent hover:text-destructive transition-colors"
+                    @click="form.categories = form.categories.filter((id: string) => id !== categoryId)">
+                    <X class="h-3 w-3" />
+                  </Button>
+                </Badge>
+              </div>
+            </div>
+
+            <p v-if="errors?.categories" class="text-destructive text-sm flex items-center gap-1 mt-2">
+              <AlertCircle class="h-3 w-3" />
+              {{ errors.categories }}
+            </p>
           </CardContent>
         </Card>
 
         <!-- Contribuidores -->
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-              <User class="h-5 w-5" />
-              Autores y Contribuidores
+        <Card class="group hover:shadow-md transition-all duration-300 border-border bg-card">
+          <CardHeader class="pb-4">
+            <CardTitle class="flex items-center gap-3 text-xl text-card-foreground">
+              <div class="p-2 bg-primary/10 rounded-lg">
+                <User class="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                Autores y Contribuidores
+                <Badge variant="secondary" class="ml-2">Requerido</Badge>
+              </div>
+              <Badge variant="outline" class="text-sm border-border text-muted-foreground">
+                {{ selectedContributorsCount }} contribuidor(es)
+              </Badge>
             </CardTitle>
-            <CardDescription>
-              Agrega autores, editores, traductores y otros contribuidores
+            <CardDescription class="text-muted-foreground text-base">
+              Agrega autores, editores, traductores y otros contribuidores del libro
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
+          <CardContent class="space-y-4 pt-4">
             <div v-for="(contributor, index) in form.contributors" :key="index"
-              class="flex items-end gap-4 p-4 border rounded-lg">
+              class="flex items-end gap-4 p-6 border-2 rounded-xl transition-all duration-200 group/contributor border-border bg-background hover:bg-accent/30">
               <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Nombre -->
                 <div>
-                  <Label :for="`contributor-name-${index}`">Nombre Completo</Label>
+                  <Label :for="`contributor-name-${index}`" class="font-semibold text-card-foreground">Nombre
+                    Completo</Label>
                   <Input :id="`contributor-name-${index}`" v-model="contributor.full_name"
-                    placeholder="Nombre completo del contribuidor" />
+                    placeholder="Nombre completo del contribuidor"
+                    class="h-11 mt-2 bg-background text-foreground border-input" />
                 </div>
 
                 <!-- Tipo -->
                 <div>
-                  <Label :for="`contributor-type-${index}`">Tipo de Contribución</Label>
+                  <Label :for="`contributor-type-${index}`" class="font-semibold text-card-foreground">Tipo de
+                    Contribución</Label>
                   <Select v-model="contributor.contributor_type">
-                    <SelectTrigger>
+                    <SelectTrigger class="h-11 mt-2 bg-background text-foreground border-input">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="author">Autor</SelectItem>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="translator">Traductor</SelectItem>
-                      <SelectItem value="illustrator">Ilustrador</SelectItem>
-                      <SelectItem value="prologuist">Prologuista</SelectItem>
+                    <SelectContent class="bg-popover text-popover-foreground border-border">
+                      <SelectItem value="author" class="focus:bg-accent focus:text-accent-foreground">Autor</SelectItem>
+                      <SelectItem value="editor" class="focus:bg-accent focus:text-accent-foreground">Editor
+                      </SelectItem>
+                      <SelectItem value="translator" class="focus:bg-accent focus:text-accent-foreground">Traductor
+                      </SelectItem>
+                      <SelectItem value="illustrator" class="focus:bg-accent focus:text-accent-foreground">Ilustrador
+                      </SelectItem>
+                      <SelectItem value="prologuist" class="focus:bg-accent focus:text-accent-foreground">Prologuista
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <!-- Orden -->
                 <div>
-                  <Label :for="`contributor-order-${index}`">Orden de Aparición</Label>
-                  <Input :id="`contributor-order-${index}`" v-model="contributor.sequence_number" type="number"
-                    min="1" />
+                  <Label :for="`contributor-order-${index}`" class="font-semibold text-card-foreground">Orden de
+                    Aparición</Label>
+                  <Input :id="`contributor-order-${index}`" v-model="contributor.sequence_number" type="number" min="1"
+                    class="h-11 mt-2 bg-background text-foreground border-input" />
                 </div>
 
                 <!-- Badge -->
-                <div class="flex items-center">
-                  <Badge variant="outline">
+                <div class="flex items-end">
+                  <Badge variant="outline"
+                    class="text-sm px-3 py-1.5 h-fit transition-colors border-border bg-accent text-accent-foreground">
                     {{ contributorTypes[contributor.contributor_type as keyof typeof contributorTypes] }}
                   </Badge>
                 </div>
@@ -341,95 +924,159 @@ const hasEmptyRequiredFields = () => {
 
               <!-- Remove Button -->
               <Button v-if="form.contributors.length > 1" type="button" variant="outline" size="sm"
+                class="h-9 w-9 p-0 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition-all duration-200 hover:scale-110"
                 @click="removeContributor(index)">
                 <Trash2 class="h-4 w-4" />
               </Button>
             </div>
 
             <!-- Add Contributor Button -->
-            <Button type="button" variant="outline" @click="addContributor">
-              <Plus class="h-4 w-4 mr-2" />
+            <Button type="button" variant="outline" @click="addContributor"
+              class="w-full h-12 border-dashed border-border hover:border-solid hover:bg-accent hover:text-accent-foreground transition-all duration-200 hover:scale-[1.02]">
+              <Plus class="h-5 w-5 mr-2" />
               Agregar Contribuidor
             </Button>
           </CardContent>
         </Card>
 
-        <!-- Configuración -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Configuración</CardTitle>
-            <CardDescription>
-              Configura las opciones de visibilidad y descarga del libro
+        <!-- Descripción y Metadatos -->
+        <Card class="group hover:shadow-md transition-all duration-300 border-border bg-card">
+          <CardHeader class="pb-4">
+            <CardTitle class="flex items-center gap-3 text-xl text-card-foreground">
+              <div class="p-2 bg-primary/10 rounded-lg">
+                <FileText class="h-6 w-6 text-primary" />
+              </div>
+              Descripción y Metadatos
+              <Button type="button" variant="ghost" size="sm" @click="showDescriptionPreview = !showDescriptionPreview"
+                class="ml-auto hover:bg-accent hover:text-accent-foreground">
+                <component :is="showDescriptionPreview ? EyeOff : Eye" class="h-4 w-4 mr-1" />
+                {{ showDescriptionPreview ? 'Ocultar' : 'Vista previa' }}
+              </Button>
+            </CardTitle>
+            <CardDescription class="text-muted-foreground text-base">
+              Información adicional y palabras clave para mejorar la búsqueda y descubrimiento
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
-            <!-- Checkboxes -->
-            <div class="flex flex-col gap-3">
-              <div class="flex items-center space-x-2">
-                <Checkbox id="downloadable" v-model="form.downloadable" />
-                <Label for="downloadable" class="text-sm font-normal">
-                  Permitir descarga del libro
-                </Label>
+          <CardContent class="space-y-6 pt-4">
+            <!-- Vista previa de descripción -->
+            <div v-if="showDescriptionPreview && form.description"
+              class="p-4 border-2 border-green-200 rounded-xl bg-green-50/50 dark:bg-green-950/20 dark:border-green-800 space-y-3 animate-in fade-in-50">
+              <Label class="text-sm font-semibold text-green-700 dark:text-green-300">Vista Previa de la
+                Descripción:</Label>
+              <p class="text-sm text-green-800 dark:text-green-200 leading-relaxed whitespace-pre-wrap">{{
+                form.description }}</p>
+            </div>
+
+            <!-- Descripción -->
+            <div class="space-y-3">
+              <Label for="description" class="font-semibold text-card-foreground">Descripción del Libro</Label>
+              <Textarea id="description" v-model="form.description" @blur="saveDescriptionDraft"
+                placeholder="Proporciona una descripción detallada del contenido, temática y objetivos del libro. Incluye información sobre el público objetivo y aspectos destacados..."
+                rows="6"
+                class="resize-none text-base leading-relaxed min-h-[150px] bg-background text-foreground border-input" />
+              <div class="flex justify-between items-center text-sm text-muted-foreground">
+                <span>La descripción se guarda automáticamente como borrador</span>
+                <span>{{ form.description.length }}/2000 caracteres</span>
               </div>
-              <div class="flex items-center space-x-2">
-                <Checkbox id="featured" v-model="form.featured" />
-                <Label for="featured" class="text-sm font-normal">
-                  Marcar como libro destacado
-                </Label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Edición -->
+              <div class="space-y-3">
+                <Label for="edition" class="font-semibold text-card-foreground">Edición</Label>
+                <Input id="edition" v-model="form.edition"
+                  placeholder="Ej: 1ra Edición, 2da Edición Revisada, Edición Especial, etc."
+                  class="h-11 bg-background text-foreground border-input" />
               </div>
-              <div class="flex items-center space-x-2">
-                <Checkbox id="is_active" v-model="form.is_active" />
-                <Label for="is_active" class="text-sm font-normal">
-                  Libro activo y visible en el catálogo
-                </Label>
+
+              <!-- Palabras Clave -->
+              <div class="space-y-3">
+                <Label for="keywords" class="font-semibold text-card-foreground">Palabras Clave</Label>
+                <Input id="keywords" v-model="form.keywords"
+                  placeholder="Separadas por comas: programación, python, desarrollo web, algoritmos"
+                  class="h-11 bg-background text-foreground border-input" />
+                <p class="text-xs text-muted-foreground">
+                  Usa palabras clave relevantes para mejorar la búsqueda
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <!-- Descripción y Metadatos -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Descripción y Metadatos</CardTitle>
-            <CardDescription>
-              Información adicional y palabras clave para mejorar la búsqueda
+        <!-- Configuración -->
+        <Card class="group hover:shadow-md transition-all duration-300 border-border bg-card">
+          <CardHeader class="pb-4">
+            <CardTitle class="flex items-center gap-3 text-xl text-card-foreground">
+              <div class="p-2 bg-primary/10 rounded-lg">
+                <Save class="h-6 w-6 text-primary" />
+              </div>
+              Configuración
+            </CardTitle>
+            <CardDescription class="text-muted-foreground text-base">
+              Configura las opciones de visibilidad, descarga y promoción del libro
             </CardDescription>
           </CardHeader>
-          <CardContent class="space-y-4">
-            <!-- Descripción -->
-            <div>
-              <Label for="description">Descripción del Libro</Label>
-              <Textarea id="description" v-model="form.description"
-                placeholder="Proporciona una descripción detallada del contenido del libro..." rows="4" />
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Edición -->
-              <div>
-                <Label for="edition">Edición</Label>
-                <Input id="edition" v-model="form.edition" placeholder="Ej: 1ra Edición, 2da Edición Revisada, etc." />
+          <CardContent class="space-y-4 pt-4">
+            <!-- Checkboxes con mejor diseño -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div
+                class="flex items-start space-x-3 p-4 border-2 rounded-xl transition-all duration-200 group/checkbox cursor-pointer border-border hover:border-primary/50 hover:bg-accent/50"
+                :class="form.downloadable ? 'border-primary bg-accent' : ''"
+                @click="form.downloadable = !form.downloadable">
+                <Checkbox id="downloadable" v-model="form.downloadable" class="mt-0.5" @click.stop />
+                <Label for="downloadable" class="text-sm font-normal cursor-pointer flex-1 space-y-1">
+                  <div class="font-semibold text-card-foreground">Descarga Habilitada</div>
+                  <div class="text-xs text-muted-foreground">Permitir descarga del libro PDF</div>
+                </Label>
               </div>
 
-              <!-- Palabras Clave -->
-              <div>
-                <Label for="keywords">Palabras Clave</Label>
-                <Input id="keywords" v-model="form.keywords"
-                  placeholder="Separadas por comas: programación, python, desarrollo" />
+              <div
+                class="flex items-start space-x-3 p-4 border-2 rounded-xl transition-all duration-200 group/checkbox cursor-pointer border-border hover:border-primary/50 hover:bg-accent/50"
+                :class="form.featured ? 'border-primary bg-accent' : ''" @click="form.featured = !form.featured">
+                <Checkbox id="featured" v-model="form.featured" class="mt-0.5" @click.stop />
+                <Label for="featured" class="text-sm font-normal cursor-pointer flex-1 space-y-1">
+                  <div class="font-semibold text-card-foreground">Libro Destacado</div>
+                  <div class="text-xs text-muted-foreground">Mostrar en sección destacada</div>
+                </Label>
+              </div>
+
+              <div
+                class="flex items-start space-x-3 p-4 border-2 rounded-xl transition-all duration-200 group/checkbox cursor-pointer border-border hover:border-primary/50 hover:bg-accent/50"
+                :class="form.is_active ? 'border-primary bg-accent' : ''" @click="form.is_active = !form.is_active">
+                <Checkbox id="is_active" v-model="form.is_active" class="mt-0.5" @click.stop />
+                <Label for="is_active" class="text-sm font-normal cursor-pointer flex-1 space-y-1">
+                  <div class="font-semibold text-card-foreground">Activo en Catálogo</div>
+                  <div class="text-xs text-muted-foreground">Visible para los usuarios</div>
+                </Label>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <!-- Actions -->
-        <Card>
-          <CardFooter class="flex justify-between">
-            <Button variant="outline" type="button" as-child>
-              <a href="/admin/books">Cancelar</a>
-            </Button>
-            <Button type="submit" :disabled="hasEmptyRequiredFields()">
-              <Save class="h-4 w-4 mr-2" />
-              Crear Libro
-            </Button>
+        <Card class="bg-accent border-border">
+          <CardFooter class="flex flex-col sm:flex-row justify-between items-center gap-4 p-6">
+            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                <span>Formulario listo</span>
+              </div>
+              <span>•</span>
+              <span>{{ progress }}% completado</span>
+            </div>
+
+            <div class="flex gap-3">
+              <Button variant="outline" type="button" as-child
+                class="border-2 h-11 px-6 transition-all duration-200 hover:scale-105 border-border hover:bg-accent hover:text-accent-foreground">
+                <a href="/admin/books">Cancelar</a>
+              </Button>
+              <Button type="submit" :disabled="hasEmptyRequiredFields() || isLoading"
+                class="h-11 px-8 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                <Loader2 v-if="isLoading" class="h-4 w-4 mr-2 animate-spin" />
+                <Save v-else class="h-4 w-4 mr-2" />
+                {{ isLoading ? 'Creando...' : 'Crear Libro' }}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </form>
@@ -441,5 +1088,30 @@ const hasEmptyRequiredFields = () => {
 .required::after {
   content: " *";
   color: hsl(var(--destructive));
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 </style>
