@@ -48,8 +48,8 @@ class Book extends Model
         'total_views' => 'integer',
     ];
 
-    // ELIMINAR los accessors ya que ahora usamos los nombres correctos
-    // protected $appends = ['physical_copies_count', 'available_copies_count'];
+    // Agregar URLs completas para las imágenes y PDFs
+    protected $appends = ['cover_url', 'pdf_url'];
 
     /**
      * Relationships

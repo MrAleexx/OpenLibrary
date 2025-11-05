@@ -30,9 +30,10 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library, ShoppingCart } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import AppLogo from './AppLogo.vue';
+import { useCart } from '@/composables/useCart';
 
 // Definir la interfaz para el usuario y sus roles
 interface Role {
@@ -83,23 +84,31 @@ const isAdminOrLibrarian = computed(() => {
 // CONFIGURACIÓN DE MENÚS DE NAVEGACIÓN
 // ===============================================
 
+const { count } = useCart();
+
 /**
  * Menú de navegación principal para usuarios regulares
  * Solo tienen acceso a su dashboard personal
  */
-const userNavItems: NavItem[] = [
+const userNavItems = computed<NavItem[]>(() => [
     {
         title: 'Mi Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
     },
-];
+    {
+        title: 'Mi Carrito',
+        href: '/cart',
+        icon: ShoppingCart,
+        badge: count.value > 0 ? count.value.toString() : undefined,
+    },
+]);
 
 /**
  * Menú de navegación principal para administradores y bibliotecarios
  * Incluye todas las secciones de gestión del sistema
  */
-const adminNavItems: NavItem[] = [
+const adminNavItems = computed<NavItem[]>(() => [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -125,13 +134,13 @@ const adminNavItems: NavItem[] = [
         href: '/admin/loans',
         icon: BookMarked,
     },
-];
+]);
 
 /**
  * Computed property que retorna el menú apropiado según el rol del usuario
  */
 const mainNavItems = computed(() => {
-    return isAdminOrLibrarian.value ? adminNavItems : userNavItems;
+    return isAdminOrLibrarian.value ? adminNavItems.value : userNavItems.value;
 });
 
 // ===============================================

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             UserSeeder::class,
             BookSeeder::class,
+            PhysicalCopySeeder::class, // ← Agregar copias físicas
             LibrarySettingSeeder::class,
         ]);
     }

@@ -6,6 +6,9 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\DownloadController;
 
 // Ruta principal que redirige según autenticación
 Route::get('/', function () {
@@ -47,6 +50,64 @@ Route::get('/books/{book}', [BookController::class, 'show'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/search', [BookController::class, 'search'])
         ->name('books.search');
+});
+
+// ============================================
+// RUTAS DE CARRITO DE PRÉSTAMOS
+// ============================================
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Ver carrito
+    Route::get('/cart', [CartController::class, 'index'])
+        ->name('cart.index');
+    
+    // Agregar libro al carrito
+    Route::post('/cart/add/{book}', [CartController::class, 'add'])
+        ->name('cart.add');
+    
+    // Remover libro del carrito
+    Route::delete('/cart/remove/{book}', [CartController::class, 'remove'])
+        ->name('cart.remove');
+    
+    // Obtener items del carrito
+    Route::get('/cart/items', [CartController::class, 'getItems'])
+        ->name('cart.items');
+    
+    // Proceso de checkout
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])
+        ->name('cart.checkout');
+    
+    // Limpiar carrito
+    Route::delete('/cart/clear', [CartController::class, 'clear'])
+        ->name('cart.clear');
+    
+    // ============================================
+    // RUTAS DE RESERVAS DE LIBROS
+    // ============================================
+    
+    // Ver mis reservas
+    Route::get('/reservations', [ReservationController::class, 'index'])
+        ->name('reservations.index');
+    
+    // Crear nueva reserva
+    Route::post('/reservations', [ReservationController::class, 'store'])
+        ->name('reservations.store');
+    
+    // Cancelar reserva
+    Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])
+        ->name('reservations.destroy');
+    
+    // ============================================
+    // RUTAS DE DESCARGAS DE LIBROS
+    // ============================================
+    
+    // Registrar y descargar PDF
+    Route::post('/downloads', [DownloadController::class, 'download'])
+        ->name('downloads.register');
+    
+    // Stream directo de PDF (alternativo)
+    Route::get('/downloads/{book}/stream', [DownloadController::class, 'stream'])
+        ->name('downloads.stream');
 });
 
 // ============================================

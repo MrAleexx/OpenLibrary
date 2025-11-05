@@ -108,6 +108,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(BookLoan::class);
     }
 
+    /**
+     * Alias for loans relationship for better readability
+     */
+    public function bookLoans(): HasMany
+    {
+        return $this->hasMany(BookLoan::class);
+    }
+
     public function reservations(): HasMany
     {
         return $this->hasMany(BookReservation::class);

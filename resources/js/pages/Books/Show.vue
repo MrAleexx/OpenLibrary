@@ -13,6 +13,8 @@ interface Book {
     title: string;
     isbn: string | null;
     cover_image: string | null;
+    cover_url?: string | null;
+    pdf_url?: string | null;
     publication_year: number;
     pages: number;
     downloadable: boolean;
@@ -138,7 +140,7 @@ const canDownload = computed(() => {
 });
 
 const coverImageUrl = computed(() => {
-    return props.book.cover_image || '/images/book-placeholder.svg';
+    return props.book.cover_url || '/images/book-placeholder.svg';
 });
 
 const availabilityStatus = computed(() => {
@@ -172,43 +174,100 @@ const availabilityStatus = computed(() => {
 
 const isReserving = ref(false);
 const isDownloading = ref(false);
+const reservationError = ref<string | null>(null);
+const reservationSuccess = ref<string | null>(null);
 
-const handleReserve = () => {
-    if (!canReserve.value) return;
+const handleReserve = async () => {
+    if (!canReserve.value || isReserving.value) return;
     
     isReserving.value = true;
-    router.post(`/reservations`, {
-        book_id: props.book.id,
-    }, {
-        onSuccess: () => {
-            // Mostrar notificación de éxito
-        },
-        onError: () => {
-            // Mostrar error
-        },
-        onFinish: () => {
-            isReserving.value = false;
-        },
-    });
+    reservationError.value = null;
+    reservationSuccess.value = null;
+
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        const response = await fetch('/reservations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                book_id: props.book.id,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            reservationError.value = data.error || 'Error al crear la reserva';
+            return;
+        }
+
+        reservationSuccess.value = data.message || 'Reserva creada exitosamente';
+        
+        // Redirect to reservations page after 2 seconds
+        setTimeout(() => {
+            router.visit('/reservations');
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error creating reservation:', error);
+        reservationError.value = 'Error de conexión al crear la reserva';
+    } finally {
+        isReserving.value = false;
+    }
 };
 
-const handleDownload = () => {
-    if (!canDownload.value) return;
+const handleDownload = async () => {
+    if (!canDownload.value || !props.book.pdf_url) return;
     
     isDownloading.value = true;
-    router.post(`/downloads`, {
-        book_id: props.book.id,
-    }, {
-        onSuccess: () => {
-            // Descargar archivo
-        },
-        onError: () => {
-            // Mostrar error
-        },
-        onFinish: () => {
-            isDownloading.value = false;
-        },
-    });
+    
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        // Registrar la descarga en el backend
+        const response = await fetch('/downloads', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                book_id: props.book.id,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || 'Error al descargar el archivo. Por favor intenta de nuevo.');
+            return;
+        }
+
+        // Iniciar descarga del PDF
+        const link = document.createElement('a');
+        link.href = props.book.pdf_url;
+        link.download = `${props.book.title}.pdf`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+    } catch (error) {
+        console.error('Error downloading book:', error);
+        alert('Error al descargar el archivo. Por favor intenta de nuevo.');
+    } finally {
+        isDownloading.value = false;
+    }
 };
 </script>
 
@@ -338,6 +397,22 @@ const handleDownload = () => {
                                 <p class="text-sm mb-4" :class="availabilityStatus.color">
                                     {{ availabilityStatus.text }}
                                 </p>
+
+                                <!-- Success Message -->
+                                <div v-if="reservationSuccess" class="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                                    <p class="text-sm text-green-800 dark:text-green-300 flex items-center gap-2">
+                                        <CheckCircle class="w-4 h-4" />
+                                        {{ reservationSuccess }}
+                                    </p>
+                                </div>
+
+                                <!-- Error Message -->
+                                <div v-if="reservationError" class="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                                    <p class="text-sm text-red-800 dark:text-red-300 flex items-center gap-2">
+                                        <AlertCircle class="w-4 h-4" />
+                                        {{ reservationError }}
+                                    </p>
+                                </div>
 
                                 <!-- Action Buttons -->
                                 <div class="flex flex-wrap gap-3">

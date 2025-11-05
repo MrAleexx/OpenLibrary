@@ -19,9 +19,10 @@
     - Protección contra loops infinitos en carga de imágenes
 -->
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Download, Calendar, User, Building2, Eye, BookMarked } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Download, Calendar, User, Building2, Eye, BookMarked, ShoppingCart, Check } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { useCart } from '@/composables/useCart';
 
 /**
  * Interface que define la estructura de datos de un libro
@@ -30,6 +31,8 @@ interface Book {
     id: number;
     title: string;
     cover_image: string | null;
+    cover_url?: string | null;
+    pdf_url?: string | null;
     publication_year: number;
     pages: number;
     downloadable: boolean;
@@ -55,6 +58,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { isInCart, addToCart, isLoading } = useCart();
+const page = usePage();
+const isAuthenticated = computed(() => !!page.props.auth?.user);
+const isAddingToCart = ref(false);
+const showAddedMessage = ref(false);
 
 // ===============================================
 // COMPUTED PROPERTIES
@@ -141,8 +150,39 @@ const availabilityStatus = computed(() => {
  * @returns {string} URL de la imagen
  */
 const coverImageUrl = computed(() => {
-    return props.book.cover_image || '/images/book-placeholder.svg';
+    return props.book.cover_url || '/images/book-placeholder.svg';
 });
+
+/**
+ * Determina si el libro puede ser agregado al carrito
+ */
+const canAddToCart = computed(() => {
+    const hasPhysical = props.book.book_type === 'physical' || props.book.book_type === 'both';
+    const available = props.book.available_copies_count || 0;
+    return hasPhysical && available > 0 && isAuthenticated.value;
+});
+
+/**
+ * Handle agregar al carrito
+ */
+const handleAddToCart = async (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!canAddToCart.value || isAddingToCart.value) return;
+    
+    isAddingToCart.value = true;
+    const success = await addToCart(props.book.id);
+    
+    if (success) {
+        showAddedMessage.value = true;
+        setTimeout(() => {
+            showAddedMessage.value = false;
+        }, 2000);
+    }
+    
+    isAddingToCart.value = false;
+};
 </script>
 
 <template>
@@ -205,7 +245,7 @@ const coverImageUrl = computed(() => {
             </div>
 
             <!-- Divider -->
-            <div class="border-t border-border pt-3">
+            <div class="border-t border-border pt-3 space-y-2">
                 <!-- Availability Badge -->
                 <div 
                     class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors"
@@ -220,6 +260,22 @@ const coverImageUrl = computed(() => {
                         {{ availabilityStatus.text }}
                     </span>
                 </div>
+
+                <!-- Add to Cart Button -->
+                <button
+                    v-if="canAddToCart"
+                    @click="handleAddToCart"
+                    :disabled="isInCart(book.id) || isAddingToCart"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    :class="isInCart(book.id) 
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'"
+                >
+                    <component :is="isInCart(book.id) ? Check : ShoppingCart" class="w-4 h-4" />
+                    <span v-if="isInCart(book.id)">En carrito</span>
+                    <span v-else-if="isAddingToCart">Agregando...</span>
+                    <span v-else>Agregar al carrito</span>
+                </button>
             </div>
         </div>
     </Link>
