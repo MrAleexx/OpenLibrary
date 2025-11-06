@@ -35,6 +35,7 @@ import {
     User,
     Loader2,
     UserPlus,
+    Upload,
     Calendar as CalendarIcon
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -120,6 +121,13 @@ function submit() {
                 <Link href="/admin/users">
                 <ArrowLeft class="h-4 w-4 mr-2" />
                 Volver a Usuarios
+                </Link>
+            </Button>
+            <Button variant="outline" as-child
+                class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
+                <Link href="/admin/users/import">
+                <Upload class="h-4 w-4 mr-2" />
+                Importar Usuarios
                 </Link>
             </Button>
         </div>

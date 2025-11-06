@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserImportController;
 use Illuminate\Support\Facades\Route;
 
 // Todas las rutas de admin requieren autenticación, verificación de email Y rol de admin o librarian
@@ -22,7 +23,7 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
         Route::patch('/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('toggle-status');
-        
+
         // Nuevas rutas para las funcionalidades agregadas
         Route::patch('/reorder', [CategoryController::class, 'reorder'])->name('reorder');
         Route::get('/{category}/history', [CategoryController::class, 'history'])->name('history');
@@ -52,9 +53,12 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::patch('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
         Route::get('/{user}/download-history', [UserController::class, 'downloadHistory'])->name('download-history');
         Route::get('/{user}/loan-history', [UserController::class, 'loanHistory'])->name('loan-history');
-        Route::get('/import', [UserController::class, 'import'])->name('import');
-        Route::post('/import', [UserController::class, 'processImport'])->name('import.process');
-        Route::get('/import/report', [UserController::class, 'downloadImportReport'])->name('import.report');
-        Route::delete('/import/session', [UserController::class, 'clearImportSession'])->name('import.clear-session');
+        
+        // Rutas de importación
+        Route::get('/import', [UserImportController::class, 'import'])->name('import');
+        Route::get('/import/template', [UserImportController::class, 'downloadTemplate'])->name('import.template');
+        Route::post('/import', [UserImportController::class, 'processImport'])->name('import.process');
+        Route::get('/import/report', [UserImportController::class, 'downloadImportReport'])->name('import.report');
+        Route::delete('/import/session', [UserImportController::class, 'clearImportSession'])->name('import.clear-session');
     });
 });

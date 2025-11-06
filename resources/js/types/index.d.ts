@@ -210,3 +210,31 @@ export interface AdminCategoryEditProps {
     availableOrders: number[];
     maxSortOrder: number;
 }
+
+interface FlashMessages {
+  success?: string;
+  error?: string;
+  import_results?: {
+    total_rows: number;
+    imported: number;
+    skipped: number;
+    errors: Array<{
+      row: number;
+      field: string;
+      error: string;
+      value: string;
+      type: string;
+    }>;
+    has_errors: boolean;
+  };
+  import_errors?: Array<{
+    row: number;
+    field: string;
+    error: string;
+    value: string;
+  }>;
+}
+
+interface PageProps {
+  flash?: FlashMessages;
+}

@@ -64,8 +64,17 @@ const form = reactive({
 
 // Loading state
 const loading = reactive({
-  submitting: false
+  submitting: false,
+  fields: {} as Record<string, boolean>
 })
+
+function validateField(field: string) {
+  loading.fields[field] = true
+  // Simular validación o debounce
+  setTimeout(() => {
+    loading.fields[field] = false
+  }, 500)
+}
 
 // Methods
 function submit() {
@@ -143,12 +152,10 @@ function submit() {
                 </div>
 
                 <!-- Email -->
-                <div class="space-y-2">
-                  <Label for="email" class="text-foreground">Email *</Label>
-                  <Input id="email" v-model="form.email" type="email" placeholder="usuario@ejemplo.com"
-                    class="bg-background border-border focus:border-primary w-full" required />
-                  <InputError :message="errors?.email" />
-                </div>
+                <Input id="email" v-model="form.email" type="email" placeholder="usuario@ejemplo.com" :class="[
+                  'bg-background border-border focus:border-primary w-full',
+                  errors?.email ? 'border-destructive focus:border-destructive' : ''
+                ]" required />
 
                 <!-- DNI -->
                 <div class="space-y-2">
@@ -169,7 +176,7 @@ function submit() {
                 <!-- Tipo de Usuario -->
                 <div class="space-y-2">
                   <Label for="user_type" class="text-foreground">Tipo de Usuario *</Label>
-                  <Select v-model="form.user_type">
+                  <Select v-model:model-value="form.user_type">
                     <SelectTrigger class="bg-background border-border focus:border-primary w-full">
                       <SelectValue placeholder="Selecciona el tipo" />
                     </SelectTrigger>
@@ -216,6 +223,7 @@ function submit() {
                 <div class="space-y-2">
                   <Label for="membership_expires_at" class="text-foreground">Membresía hasta</Label>
                   <Input id="membership_expires_at" v-model="form.membership_expires_at" type="date"
+                    :min="new Date().toISOString().split('T')[0]"
                     class="bg-background border-border focus:border-primary w-full" />
                   <InputError :message="errors?.membership_expires_at" />
                 </div>

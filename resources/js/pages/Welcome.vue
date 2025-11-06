@@ -155,7 +155,7 @@ onUnmounted(() => {
             <div class="container mx-auto px-4 py-20 relative">
                 <div class="flex flex-col lg:flex-row items-center justify-between gap-16">
                     <div 
-                        class="flex-1 text-center lg:text-left"
+                        class="flex-1 text-center lg:text-left px-15"
                         data-animate
                     >
                         <div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6 border border-primary/20 animate-fade-in">
