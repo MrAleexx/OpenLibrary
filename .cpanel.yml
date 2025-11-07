@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/usuario/public_html
+    - export DEPLOYPATH=/home/usersumak/public_html
 
     - /bin/cp -R * $DEPLOYPATH
     - if [ ! -f $DEPLOYPATH/.env ]; then /bin/cp .env.example $DEPLOYPATH/.env; fi
