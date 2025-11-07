@@ -2,30 +2,15 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  ArrowLeft,
-  Save,
-  User,
-  Loader2
+import { ArrowLeft, Save, User, Loader2
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import InputError from '@/components/InputError.vue'

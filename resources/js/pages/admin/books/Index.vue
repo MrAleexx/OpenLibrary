@@ -4,25 +4,13 @@ import { ref, computed, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue'
 import FilterBar from '@/components/FilterBar.vue'
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-    CardFooter
+import {    Card,    CardContent,    CardDescription,    CardHeader,    CardTitle,    CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator
+import {    DropdownMenu,    DropdownMenuContent,    DropdownMenuItem,    DropdownMenuTrigger,    DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import {
-    Plus, MoreHorizontal, Eye, Edit, Trash2, BookOpen, Download, Users, Library, BookMarked, FileText, BookCopy, Star, Calendar, Hash, FileDigit, Globe, Archive, TrendingUp, Zap, X
+import {Plus, MoreHorizontal, Eye, Edit, Trash2, BookOpen, Download, Users, Library, BookMarked, BookCopy, Star, FileDigit, Globe, Archive, TrendingUp, Zap, X
 } from 'lucide-vue-next'
 
 const breadcrumbs = [

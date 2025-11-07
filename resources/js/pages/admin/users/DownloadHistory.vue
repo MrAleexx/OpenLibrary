@@ -1,30 +1,11 @@
 <!-- resources/js/pages/admin/users/DownloadHistory.vue -->
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle 
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  ArrowLeft, 
-  Download,
-  User,
-  Calendar,
-  Globe,
-  FileText,
-  BookOpen,
-  Hash,
-  Eye,
-  Search,
-  Filter,
-  ChevronDown,
-  ChevronUp,
-  TrendingUp
+import { ArrowLeft, Download, User, Calendar, Globe, FileText, BookOpen, Hash, Eye, ChevronDown, ChevronUp, TrendingUp
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { ref, computed } from 'vue'

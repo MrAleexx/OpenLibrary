@@ -1,36 +1,19 @@
 <!-- resources/js/pages/admin/users/Import.vue -->
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { router, Head, Link, usePage } from '@inertiajs/vue3'
 import { AppPageProps } from '@/types'
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  ArrowLeft, 
-  Download,
-  Upload,
-  FileText,
-  Users,
-  FileDown,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  TrendingUp,
-  Zap,
-  Loader2,
-  UserPlus,
-  X,
-  FileSearch
+import {
+  ArrowLeft, Download, Upload, FileText, Users, FileDown, CheckCircle, 
+  AlertCircle, Clock, TrendingUp, Zap, Loader2, UserPlus, X, FileSearch
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 
@@ -67,6 +50,7 @@ interface PageProps extends AppPageProps {
 const breadcrumbs = [
   { title: 'Dashboard', href: '/admin/dashboard' },
   { title: 'Usuarios', href: '/admin/users' },
+  { title: 'Importar Usuarios', href: '#' },
 ]
 
 // State
@@ -81,7 +65,29 @@ const errorMessage = computed(() => page.props.flash?.error)
 const importResults = computed(() => page.props.flash?.import_results)
 const importErrors = computed(() => page.props.flash?.import_errors)
 
-// Methods
+// CORRECCIÓN: Usar template ref para el input nativo
+function triggerFileInput() {
+  const nativeInput = document.getElementById('import_file') as HTMLInputElement
+  if (nativeInput) {
+    nativeInput.click()
+  }
+}
+
+function handleFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    importFile.value = target.files[0]
+  }
+}
+
+function clearFile() {
+  importFile.value = null
+  const nativeInput = document.getElementById('import_file') as HTMLInputElement
+  if (nativeInput) {
+    nativeInput.value = ''
+  }
+}
+
 function submit() {
   if (!importFile.value) {
     alert('Por favor selecciona un archivo para importar')
@@ -98,28 +104,13 @@ function submit() {
     onSuccess: () => {
       loading.value = false
       importFile.value = null
-      if (fileInput.value) fileInput.value.value = ''
+      const nativeInput = document.getElementById('import_file') as HTMLInputElement
+      if (nativeInput) nativeInput.value = ''
     },
     onError: () => {
       loading.value = false
     }
   })
-}
-
-function handleFileChange(event: Event) {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    importFile.value = target.files[0]
-  }
-}
-
-function clearFile() {
-  importFile.value = null
-  if (fileInput.value) fileInput.value.value = ''
-}
-
-function triggerFileInput() {
-  fileInput.value?.click()
 }
 
 function downloadTemplate() {
@@ -136,7 +127,6 @@ function clearImportSession() {
   router.delete('/admin/users/import/session', {
     preserveScroll: true,
     onSuccess: () => {
-      // Force reload to clear flash messages
       router.reload({ only: [] })
     }
   })
@@ -153,7 +143,7 @@ function formatFileSize(bytes: number) {
 
 // Format row number for display (accounting for header row)
 function formatRowNumber(row: number) {
-  return row - 1 // Subtract 1 because row numbers include header
+  return row - 1
 }
 </script>
 
@@ -219,20 +209,19 @@ function formatRowNumber(row: number) {
             </CardDescription>
           </CardHeader>
           <CardContent class="space-y-6 pt-6">
-            <!-- File Upload -->
+            <!-- File Upload - CORREGIDO -->
             <div class="space-y-3">
               <Label for="import_file" class="text-foreground">Archivo de Importación *</Label>
-              <div 
+              <div
                 class="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
-                @click="triggerFileInput"
-              >
-                <Input
-                  id="import_file"
-                  ref="fileInput"
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
+                @click="triggerFileInput">
+                <!-- ✅ SOLUCIÓN: Input HTML nativo en lugar del componente Shadcn -->
+                <input 
+                  id="import_file" 
+                  type="file" 
+                  accept=".csv,.xlsx,.xls" 
                   @change="handleFileChange"
-                  class="hidden"
+                  class="hidden" 
                 />
                 <div class="max-w-md mx-auto">
                   <Upload class="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -278,12 +267,8 @@ function formatRowNumber(row: number) {
             </div>
 
             <!-- Submit Button -->
-            <Button 
-              @click="submit" 
-              :disabled="!importFile || loading"
-              class="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-              size="lg"
-            >
+            <Button @click="submit" :disabled="!importFile || loading"
+              class="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="lg">
               <Loader2 v-if="loading" class="h-4 w-4 mr-2 animate-spin" />
               <Upload v-else class="h-4 w-4 mr-2" />
               {{ loading ? 'Procesando...' : 'Iniciar Importación' }}
@@ -291,8 +276,8 @@ function formatRowNumber(row: number) {
 
             <!-- Import Results -->
             <div v-if="importResults" class="space-y-4">
-              <div class="p-4 border rounded-lg" 
-                   :class="importResults.has_errors ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'">
+              <div class="p-4 border rounded-lg"
+                :class="importResults.has_errors ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'">
                 <div class="flex items-center gap-3 mb-3">
                   <CheckCircle v-if="!importResults.has_errors" class="h-5 w-5 text-green-600" />
                   <AlertCircle v-else class="h-5 w-5 text-amber-600" />
@@ -300,7 +285,7 @@ function formatRowNumber(row: number) {
                     Resultado de la Importación
                   </h3>
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span class="font-medium">Total de filas:</span>
@@ -326,8 +311,8 @@ function formatRowNumber(row: number) {
                     </Button>
                   </div>
                   <div class="max-h-40 overflow-y-auto space-y-2">
-                    <div v-for="(error, index) in importResults.errors.slice(0, 5)" :key="index" 
-                         class="text-xs p-2 bg-white rounded border border-amber-200">
+                    <div v-for="(error, index) in importResults.errors.slice(0, 5)" :key="index"
+                      class="text-xs p-2 bg-white rounded border border-amber-200">
                       <div class="font-medium">Fila {{ formatRowNumber(error.row) }} - {{ error.field }}</div>
                       <div class="text-amber-700">{{ error.error }}</div>
                       <div class="text-gray-500">Valor: {{ error.value }}</div>
@@ -457,16 +442,17 @@ function formatRowNumber(row: number) {
                 Comienza importando tu primer lote de usuarios
               </p>
               <div class="flex gap-3 justify-center">
-                <Button variant="outline" as-child class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
+                <Button variant="outline" as-child
+                  class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
                   <Link href="/admin/users/create">
-                    <UserPlus class="w-4 h-4 mr-2" />
-                    Crear Usuario Manual
+                  <UserPlus class="w-4 h-4 mr-2" />
+                  Crear Usuario Manual
                   </Link>
                 </Button>
                 <Button as-child class="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Link href="/admin/users">
-                    <Users class="w-4 h-4 mr-2" />
-                    Ver Todos los Usuarios
+                  <Users class="w-4 h-4 mr-2" />
+                  Ver Todos los Usuarios
                   </Link>
                 </Button>
               </div>

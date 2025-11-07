@@ -4,7 +4,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { BookOpen, Users, Download, Clock, BookMarked, Plus, UserPlus, FileText, ArrowRight, TrendingUp, Library, Shield, Zap } from 'lucide-vue-next';
+import { BookOpen, Users, Download, Clock, BookMarked, Plus, UserPlus, FileText, ArrowRight, TrendingUp, Library, Shield, Zap
+} from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 
 defineProps<{

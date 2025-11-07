@@ -12,7 +12,7 @@ use App\Http\Controllers\Admin\UserImportController;
 // Grupo principal: rutas protegidas del panel admin
 // ========================================
 Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function () {
-    
+
     // ===========================
     // DASHBOARD
     // ===========================
@@ -59,6 +59,8 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::get('/template', [UserImportController::class, 'downloadTemplate'])->name('template');
         Route::post('/', [UserImportController::class, 'processImport'])->name('process');
         Route::get('/report', [UserImportController::class, 'downloadImportReport'])->name('report');
+        Route::get('/passwords', [UserImportController::class, 'showTempPasswords'])->name('passwords');
+        Route::get('/passwords-report', [UserImportController::class, 'downloadPasswordReport'])->name('passwords.report');
         Route::delete('/session', [UserImportController::class, 'clearImportSession'])->name('clear-session');
     });
 
@@ -77,5 +79,9 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::patch('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
         Route::get('/{user}/download-history', [UserController::class, 'downloadHistory'])->name('download-history');
         Route::get('/{user}/loan-history', [UserController::class, 'loanHistory'])->name('loan-history');
+
+        // RUTAS PARA CONTRASEÑAS TEMPORALES
+        Route::get('/temp-passwords', [UserImportController::class, 'showTempPasswords'])->name('temp-passwords');
+        Route::get('/temp-passwords/report', [UserImportController::class, 'downloadPasswordReport'])->name('temp-passwords.report');
     });
 });

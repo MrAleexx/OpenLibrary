@@ -10,9 +10,8 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
-use Maatwebsite\Excel\Validators\Failure;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -29,6 +28,7 @@ class UsersImport implements
     private $rows = 0;
     private $successCount = 0;
     private $errors = [];
+    private $tempPasswords = [];
 
     /**
      * @param array $row
@@ -39,10 +39,14 @@ class UsersImport implements
     {
         ++$this->rows;
 
-        // Limpiar y formatear datos
-        $formattedData = $this->formatRowData($row);
-
         try {
+            $formattedData = $this->formatRowData($row);
+
+            // ✅ SIEMPRE GENERAR ID AUTOMÁTICO (igual que en creación individual)
+            $institutionalId = $this->generateInstitutionalId($formattedData['user_type']);
+
+            $tempPassword = Str::random(12);
+
             $user = new User([
                 'name' => $formattedData['name'],
                 'last_name' => $formattedData['last_name'],
@@ -50,30 +54,84 @@ class UsersImport implements
                 'dni' => $formattedData['dni'],
                 'phone' => $formattedData['phone'],
                 'user_type' => $formattedData['user_type'],
+
+                // ✅ SIEMPRE USAR ID AUTOMÁTICO (ignorar institutional_id del Excel)
                 'institutional_email' => $formattedData['institutional_email'],
-                'institutional_id' => $formattedData['institutional_id'],
+                'institutional_id' => $institutionalId, // ← SIEMPRE automático
+
                 'membership_expires_at' => $formattedData['membership_expires_at'],
                 'max_concurrent_loans' => $formattedData['max_concurrent_loans'],
                 'can_download' => $formattedData['can_download'],
                 'is_active' => $formattedData['is_active'],
-                'password' => Hash::make(Str::random(12)),
+
+                'password' => Hash::make($tempPassword),
                 'is_temp_password' => true,
                 'temp_password_expires_at' => now()->addDays(7),
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
+                'downloads_today' => 0,
+                'last_download_reset' => null,
+                'email_verified_at' => now(),
             ]);
 
             $user->save();
             ++$this->successCount;
 
+            $this->tempPasswords[] = [
+                'row' => $this->rows,
+                'email' => $user->email,
+                'name' => $user->name . ' ' . $user->last_name,
+                'temp_password' => $tempPassword,
+                'user_id' => $user->id,
+                'institutional_id' => $user->institutional_id
+            ];
+
             return $user;
         } catch (\Exception $e) {
             $this->errors[] = [
-                'row' => $this->rows + 1, // +1 por el header
-                'error' => $e->getMessage(),
-                'data' => $formattedData
+                'row' => $this->rows + 1,
+                'error' => 'Error del sistema: ' . $e->getMessage(),
+                'data' => $formattedData ?? $row
             ];
             return null;
         }
+    }
+
+    /**
+     * Generar ID institucional automático
+     */
+    private function generateInstitutionalId(string $userType): string
+    {
+        $prefix = $this->getPrefixForUserType($userType);
+        $year = date('y');
+
+        $lastUser = User::where('institutional_id', 'like', "{$prefix}{$year}%")
+            ->orderBy('institutional_id', 'desc')
+            ->first();
+
+        if ($lastUser && preg_match('/' . $prefix . $year . '(\d+)/', $lastUser->institutional_id, $matches)) {
+            $lastNumber = intval($matches[1]);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $sequential = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return "{$prefix}{$year}{$sequential}";
+    }
+
+    private function getPrefixForUserType(string $userType): string
+    {
+        $prefixes = [
+            'admin' => 'ADM',
+            'librarian' => 'BIB',
+            'student' => 'EST',
+            'teacher' => 'DOC',
+            'external' => 'EXT',
+            'staff' => 'PER'
+        ];
+
+        return $prefixes[$userType] ?? 'USU';
     }
 
     /**
@@ -89,7 +147,7 @@ class UsersImport implements
             'phone' => trim($row['phone'] ?? ''),
             'user_type' => $this->normalizeUserType($row['user_type'] ?? 'student'),
             'institutional_email' => !empty($row['institutional_email']) ? trim($row['institutional_email']) : null,
-            'institutional_id' => !empty($row['institutional_id']) ? trim($row['institutional_id']) : null,
+            // ✅ REMOVED: 'institutional_id' => ... (ya no se usa)
             'membership_expires_at' => $this->parseDate($row['membership_expires_at'] ?? null),
             'max_concurrent_loans' => $this->parseInteger($row['max_concurrent_loans'] ?? 3),
             'can_download' => $this->parseBoolean($row['can_download'] ?? true),
@@ -138,7 +196,7 @@ class UsersImport implements
     private function parseInteger($value)
     {
         $value = intval($value);
-        return max(1, min(10, $value)); // Limitar entre 1-10
+        return max(1, min(10, $value));
     }
 
     /**
@@ -159,7 +217,7 @@ class UsersImport implements
     }
 
     /**
-     * Reglas de validación
+     * Reglas de validación - REMOVER institutional_id
      */
     public function rules(): array
     {
@@ -171,7 +229,7 @@ class UsersImport implements
             'phone' => 'required|string|size:9',
             'user_type' => 'required|in:student,teacher,external,staff',
             'institutional_email' => 'nullable|email|unique:users,institutional_email',
-            'institutional_id' => 'nullable|string|max:255',
+            // ✅ REMOVED: 'institutional_id' => 'nullable|string|max:255',
             'membership_expires_at' => 'nullable|date|after:today',
             'max_concurrent_loans' => 'nullable|integer|min:1|max:10',
             'can_download' => 'nullable|boolean',
@@ -206,7 +264,7 @@ class UsersImport implements
             'phone' => 'teléfono',
             'user_type' => 'tipo de usuario',
             'institutional_email' => 'email institucional',
-            'institutional_id' => 'código institucional',
+            // ✅ REMOVED: 'institutional_id' => 'código institucional',
         ];
     }
 
@@ -247,5 +305,27 @@ class UsersImport implements
     public function getFailures(): array
     {
         return $this->failures;
+    }
+
+    /**
+     * NUEVO: Obtener contraseñas temporales generadas
+     */
+    public function getTempPasswords(): array
+    {
+        return $this->tempPasswords;
+    }
+
+    /**
+     * NUEVO: Obtener resumen de importación con contraseñas
+     */
+    public function getImportSummary(): array
+    {
+        return [
+            'total_rows' => $this->rows,
+            'imported' => $this->successCount,
+            'temp_passwords' => $this->tempPasswords,
+            'errors' => $this->errors,
+            'failures' => $this->failures
+        ];
     }
 }

@@ -7,9 +7,8 @@ use App\Models\User;
 use App\Imports\UsersImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -37,9 +36,14 @@ class UserImportController extends Controller
 
             $results = $this->prepareImportResults($import);
 
-            return back()
-                ->with('success', $this->getSuccessMessage($results))
-                ->with('import_results', $results);
+            // ✅ OBTENER CONTRASEÑAS TEMPORALES
+            $tempPasswords = $import->getTempPasswords();
+
+            // ✅ REDIRIGIR A CONTRASEÑAS TEMPORALES DE IMPORTACIÓN
+            return redirect()->route('admin.users.import.passwords')
+                ->with('temp_passwords', $tempPasswords)
+                ->with('import_results', $results)
+                ->with('success', $this->getSuccessMessage($results));
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             DB::rollBack();
 
@@ -142,7 +146,6 @@ class UserImportController extends Controller
                 'phone',
                 'user_type',
                 'institutional_email',
-                'institutional_id',
                 'membership_expires_at',
                 'max_concurrent_loans',
                 'can_download',
@@ -156,7 +159,6 @@ class UserImportController extends Controller
                 '987654321',
                 'student',
                 'juan.perez@institution.edu.pe',
-                'STU001',
                 '2025-12-31',
                 '3',
                 '1',
@@ -170,7 +172,6 @@ class UserImportController extends Controller
                 '912345678',
                 'teacher',
                 'maria.gomez@institution.edu.pe',
-                'TCH001',
                 '2025-12-31',
                 '5',
                 '1',
@@ -184,7 +185,6 @@ class UserImportController extends Controller
                 '934567890',
                 'external',
                 '',
-                'EXT001',
                 '2024-06-30',
                 '2',
                 '1',
@@ -198,7 +198,6 @@ class UserImportController extends Controller
                 '945678901',
                 'staff',
                 'ana.rodriguez@institution.edu.pe',
-                'STA001',
                 '',
                 '8',
                 '1',
@@ -212,7 +211,6 @@ class UserImportController extends Controller
                 '956789012',
                 'student',
                 'luis.martinez@institution.edu.pe',
-                'STU002',
                 '2024-08-15',
                 '3',
                 '0',
@@ -225,7 +223,7 @@ class UserImportController extends Controller
         return Response::stream(
             function () use ($templateData) {
                 $handle = fopen('php://output', 'w');
-                fputs($handle, "\xEF\xBB\xBF"); // BOM para UTF-8
+                fputs($handle, "\xEF\xBB\xBF");
 
                 foreach ($templateData as $row) {
                     fputcsv($handle, $row);
@@ -247,9 +245,8 @@ class UserImportController extends Controller
     /**
      * Download import report
      */
-    public function downloadImportReport(Request $request) // ✅ Agregar Request $request
+    public function downloadImportReport(Request $request)
     {
-        // ✅ Obtener resultados reales de la sesión
         $results = $request->session()->get('import_results');
 
         if (!$results || empty($results['errors'])) {
@@ -299,7 +296,7 @@ class UserImportController extends Controller
     /**
      * Clear import session
      */
-    public function clearImportSession(Request $request) // ✅ Agregar Request $request
+    public function clearImportSession(Request $request)
     {
         $request->session()->forget(['import_results', 'import_errors']);
 
@@ -315,16 +312,112 @@ class UserImportController extends Controller
         $lastWeek = Carbon::now()->subWeek();
 
         $stats = [
-            'total_imported' => User::where('created_by', auth()->id())
+            'total_imported' => User::where('created_by', Auth::id())
                 ->where('created_at', '>=', $lastWeek)
                 ->count(),
-            'last_import_date' => User::where('created_by', auth()->id())
+            'last_import_date' => User::where('created_by', Auth::id())
                 ->max('created_at'),
-            'imports_this_month' => User::where('created_by', auth()->id())
+            'imports_this_month' => User::where('created_by', Auth::id())
                 ->whereMonth('created_at', now()->month)
                 ->count(),
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * NUEVO: Descargar reporte de contraseñas temporales
+     */
+    public function downloadPasswordReport(Request $request)
+    {
+        $tempPasswords = $request->session()->get('temp_passwords', []);
+        $tempPassword = $request->session()->get('temp_password');
+
+        // MANEJAR TANTO IMPORTACIÓN COMO CREACIÓN INDIVIDUAL
+        if (empty($tempPasswords) && !$tempPassword) {
+            $reportData = [
+                ['Estado', 'No hay contraseñas temporales para reportar'],
+                ['Nota', 'Las contraseñas solo están disponibles inmediatamente después de la creación/importación'],
+            ];
+        } else {
+            $reportData = [
+                ['#', 'Nombre', 'Email', 'ID Institucional', 'Contraseña Temporal', 'Fecha Expiración']
+            ];
+
+            // AGREGAR CONTRASEÑAS DE IMPORTACIÓN
+            foreach ($tempPasswords as $index => $password) {
+                $reportData[] = [
+                    $index + 1,
+                    $password['name'],
+                    $password['email'],
+                    $password['institutional_id'],
+                    $password['temp_password'],
+                    now()->addDays(7)->format('Y-m-d')
+                ];
+            }
+
+            // AGREGAR CONTRASEÑA INDIVIDUAL SI EXISTE
+            if ($tempPassword) {
+                $userCreated = $request->session()->get('user_created');
+                $userReset = $request->session()->get('user_reset');
+
+                $userData = $userCreated ?? $userReset;
+
+                if ($userData) {
+                    $reportData[] = [
+                        count($tempPasswords) + 1,
+                        $userData['name'],
+                        $userData['email'],
+                        $userData['institutional_id'],
+                        $tempPassword,
+                        now()->addDays(7)->format('Y-m-d')
+                    ];
+                }
+            }
+        }
+
+        $fileName = 'contraseñas-temporales-' . date('Y-m-d-H-i') . '.csv';
+
+        return Response::stream(
+            function () use ($reportData) {
+                $handle = fopen('php://output', 'w');
+                fputs($handle, "\xEF\xBB\xBF");
+
+                foreach ($reportData as $row) {
+                    fputcsv($handle, $row);
+                }
+
+                fclose($handle);
+            },
+            200,
+            [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            ]
+        );
+    }
+
+    /**
+     * NUEVO: Ver contraseñas temporales
+     */
+    public function showTempPasswords(Request $request)
+    {
+        $tempPasswords = $request->session()->get('temp_passwords', []);
+        $importResults = $request->session()->get('import_results');
+
+        // DETECTAR SI ES CREACIÓN INDIVIDUAL O RESET
+        $tempPassword = $request->session()->get('temp_password');
+        $userCreated = $request->session()->get('user_created');
+        $userReset = $request->session()->get('user_reset');
+
+        return Inertia::render('admin/users/TempPasswords', [
+            'tempPasswords' => $tempPasswords,
+            'importResults' => $importResults,
+            'tempPassword' => $tempPassword,
+            'userCreated' => $userCreated,
+            'userReset' => $userReset,
+            'success' => $request->session()->get('success'),
+            'error' => $request->session()->get('error')
+        ]);
     }
 }

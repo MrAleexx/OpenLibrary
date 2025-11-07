@@ -1,52 +1,31 @@
 <!-- resources/js/pages/admin/users/Create.vue -->
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-    CardFooter
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter
 } from '@/components/ui/card'
 import { Calendar } from '@/components/ui/calendar'
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+import { Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-    ArrowLeft,
-    Save,
-    User,
-    Loader2,
-    UserPlus,
-    Upload,
-    Calendar as CalendarIcon
+import { ArrowLeft, Save, User, Loader2, UserPlus, Upload, Calendar as CalendarIcon, Info, Key
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import InputError from '@/components/InputError.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 // Función para formatear la fecha
 const formatDate = (date: Date | undefined) => {
     if (!date) return ''
     return format(date, 'PPP', { locale: es })
 }
-
 
 // Props
 const props = defineProps<{
@@ -70,11 +49,41 @@ const form = reactive({
     phone: '',
     user_type: 'student',
     institutional_email: '',
-    institutional_id: '',
-    membership_expires_at: null as any,  // El componente Calendar manejará el tipo internamente
+    membership_expires_at: null as any,
     max_concurrent_loans: 3,
     can_download: true,
     is_active: true,
+})
+
+// Información del ID que se generará
+const autoIdInfo = reactive({
+    prefix: 'EST',
+    year: new Date().getFullYear().toString().slice(-2),
+    typeName: 'Estudiante'
+})
+
+// Watch para actualizar la información del ID automático
+watch(() => form.user_type, (newType) => {
+    const prefixes: Record<string, string> = {
+        'admin': 'ADM',
+        'librarian': 'BIB',
+        'student': 'EST',
+        'teacher': 'DOC',
+        'external': 'EXT',
+        'staff': 'PER'
+    }
+    
+    const typeNames: Record<string, string> = {
+        'admin': 'Administrador',
+        'librarian': 'Bibliotecario',
+        'student': 'Estudiante',
+        'teacher': 'Docente',
+        'external': 'Externo',
+        'staff': 'Personal'
+    }
+    
+    autoIdInfo.prefix = prefixes[newType] || 'USU'
+    autoIdInfo.typeName = typeNames[newType] || 'Usuario'
 })
 
 // Loading state
@@ -86,10 +95,10 @@ const loading = reactive({
 function submit() {
     loading.submitting = true
 
-    // Convertir la fecha al formato esperado por el servidor
     const formData = {
         ...form,
         membership_expires_at: form.membership_expires_at ? format(form.membership_expires_at, 'yyyy-MM-dd') : null
+        // ✅ NO se envía institutional_id - se genera automáticamente en el backend
     }
 
     router.post('/admin/users', formData, {
@@ -226,13 +235,27 @@ function submit() {
                                 <InputError :message="errors?.institutional_email" />
                             </div>
 
-                            <!-- Código Institucional -->
+                            <!-- ✅ INFORMACIÓN DEL ID AUTOMÁTICO (NO EDITABLE) -->
                             <div class="space-y-2">
-                                <Label for="institutional_id" class="text-foreground">Código Institucional</Label>
-                                <Input id="institutional_id" v-model="form.institutional_id"
-                                    placeholder="Código o ID institucional"
-                                    class="bg-background border-border focus:border-primary w-full" />
-                                <InputError :message="errors?.institutional_id" />
+                                <Label class="text-foreground">Código Institucional</Label>
+                                <div class="p-3 bg-muted/30 border border-border rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <Key class="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-semibold text-foreground">
+                                                {{ autoIdInfo.prefix }}{{ autoIdInfo.year }}XXX
+                                            </div>
+                                            <div class="text-sm text-muted-foreground">
+                                                ID automático para {{ autoIdInfo.typeName }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-muted-foreground">
+                                    El sistema generará automáticamente un código único secuencial
+                                </p>
                             </div>
 
                             <!-- Fecha de Expiración de Membresía -->
@@ -296,6 +319,43 @@ function submit() {
                         </div>
                         <InputError :message="errors?.can_download" />
                         <InputError :message="errors?.is_active" />
+                    </CardContent>
+                </Card>
+
+                <!-- Información del Sistema -->
+                <Card class="bg-card border-border shadow-lg border-blue-200 bg-blue-50/30">
+                    <CardHeader class="border-b border-blue-200">
+                        <CardTitle class="text-blue-900 flex items-center gap-2">
+                            <Info class="h-5 w-5" />
+                            Información del Sistema
+                        </CardTitle>
+                        <CardDescription class="text-blue-700">
+                            Características automáticas del nuevo usuario
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent class="pt-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Key class="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div>
+                                    <div class="font-medium text-blue-900">ID Institucional</div>
+                                    <div class="text-blue-700 text-xs">
+                                        {{ autoIdInfo.prefix }}{{ autoIdInfo.year }}XXX → Número secuencial automático
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <UserPlus class="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div>
+                                    <div class="font-medium text-blue-900">Contraseña Temporal</div>
+                                    <div class="text-blue-700 text-xs">Se generará automáticamente</div>
+                                </div>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 

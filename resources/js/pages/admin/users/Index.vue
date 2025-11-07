@@ -2,23 +2,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { router, Head, Link } from '@inertiajs/vue3'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+import { Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import {Search,MoreHorizontal,Eye,Edit,Users,User,Download,BookOpen,Filter,X,RefreshCw,Calendar,UserPlus,FileDown,UserCheck,UserX,Clock,Shield,Mail,IdCard,Library,TrendingUp,Zap,Hash
+import {MoreHorizontal,Eye,Edit,Users,User,Download,BookOpen,X,RefreshCw,Calendar,UserPlus,FileDown,UserCheck,UserX,Clock,Shield,Mail,IdCard,Library,TrendingUp,Zap,Hash
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import FilterBar from '@/components/FilterBar.vue' // Importar el FilterBar
@@ -92,6 +82,7 @@ const filterConfig = {
 }
 
 // Computed
+
 const activeFiltersCount = computed(() => {
   let count = 0
   if (filters.value.search) count++

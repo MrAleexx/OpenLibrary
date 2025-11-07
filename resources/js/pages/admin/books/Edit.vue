@@ -3,51 +3,21 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import type { Book, BookFormData } from '@/types/book'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter
+import {  Card,  CardContent,  CardDescription,  CardHeader,  CardTitle,  CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import {  Select,  SelectContent,  SelectItem,  SelectTrigger,  SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  User,
-  BookOpen,
-  Save,
-  AlertCircle,
-  Info,
-  Upload,
-  Image,
-  FileText,
-  X,
-  Search,
-  Loader2,
-  Eye,
-  EyeOff
+import {  ArrowLeft,  Plus,  Trash2,  User,  BookOpen,  Save,  AlertCircle,  Info,  Upload,  Image,  FileText,  X,  Search,  Loader2,
+  Eye,  EyeOff
 } from 'lucide-vue-next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+import {  Tooltip,  TooltipContent,  TooltipProvider,  TooltipTrigger,
 } from '@/components/ui/tooltip'
 
 // Define el tipo localmente

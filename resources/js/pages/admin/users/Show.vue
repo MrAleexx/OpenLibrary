@@ -1,42 +1,11 @@
 <!-- resources/js/pages/admin/users/Show.vue -->
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+import { Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  ArrowLeft,
-  User,
-  Mail,
-  IdCard,
-  Phone,
-  Calendar,
-  Download,
-  BookOpen,
-  Clock,
-  Users,
-  UserCheck,
-  UserX,
-  Shield,
-  TrendingUp,
-  FileText,
-  MapPin,
-  Building,
-  CreditCard,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Edit,
-  RefreshCw,
-  History,
-  BookMarked,
-  CalendarDays
+import { ArrowLeft, User, Mail, IdCard, Phone, Calendar, Download, BookOpen, Clock, Users, UserCheck, UserX, Shield, TrendingUp,  Building, CreditCard, XCircle, Edit, RefreshCw, History, BookMarked, CalendarDays
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 
