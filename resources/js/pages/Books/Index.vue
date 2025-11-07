@@ -59,9 +59,12 @@ interface Props {
         type?: string;
         availability?: string;
     };
+    userLoanedBookIds?: number[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    userLoanedBookIds: () => []
+});
 
 const breadcrumbs = [
     { title: 'Inicio', href: '/' },
@@ -148,7 +151,8 @@ const resultText = computed(() => {
                 <BookCard 
                     v-for="book in books.data" 
                     :key="book.id" 
-                    :book="book" 
+                    :book="book"
+                    :user-has-loaned="userLoanedBookIds.includes(book.id)"
                 />
             </div>
 

@@ -4,9 +4,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { 
     BookOpen, Download, Calendar, User, Building2, FileText, 
     ChevronLeft, BookMarked, CheckCircle, XCircle, Clock,
-    Info, Globe, Hash, Layers, Eye, Star, AlertCircle
+    Info, Globe, Hash, Layers, Eye, Star, AlertCircle, ShoppingCart
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useCart } from '@/composables/useCart';
 
 interface Book {
     id: number;
@@ -66,11 +67,13 @@ interface Props {
     book: Book;
     availableCopies: number;
     userHasReservation: boolean;
+    userHasActiveLoan: boolean;
 }
 
 const props = defineProps<Props>();
 
 const page = usePage();
+const { addToCart, removeFromCart, isInCart, isLoading: cartLoading } = useCart();
 
 /**
  * ==============================================================
@@ -132,12 +135,38 @@ const isDigital = computed(() => {
 });
 
 const canReserve = computed(() => {
-    return isAuthenticated.value && hasPhysicalCopies.value && props.availableCopies > 0 && !props.userHasReservation;
+    // Solo se puede reservar si:
+    // - Usuario autenticado
+    // - Es libro físico
+    // - NO hay copias disponibles (para esto existe la reserva)
+    // - El usuario no tiene ya una reserva
+    // - El usuario NO tiene un préstamo activo del libro
+    return isAuthenticated.value && 
+           hasPhysicalCopies.value && 
+           props.availableCopies === 0 && 
+           !props.userHasReservation &&
+           !props.userHasActiveLoan;
 });
 
 const canDownload = computed(() => {
     return isAuthenticated.value && isDigital.value;
 });
+
+const canAddToCart = computed(() => {
+    // Solo se puede agregar al carrito si:
+    // - Usuario autenticado
+    // - Es libro físico
+    // - Hay copias disponibles
+    // - NO está en el carrito
+    // - El usuario NO tiene un préstamo activo del libro
+    return isAuthenticated.value && 
+           hasPhysicalCopies.value && 
+           props.availableCopies > 0 && 
+           !isInCart(props.book.id) &&
+           !props.userHasActiveLoan;
+});
+
+const bookInCart = computed(() => isInCart(props.book.id));
 
 const coverImageUrl = computed(() => {
     return props.book.cover_url || '/images/book-placeholder.svg';
@@ -176,6 +205,26 @@ const isReserving = ref(false);
 const isDownloading = ref(false);
 const reservationError = ref<string | null>(null);
 const reservationSuccess = ref<string | null>(null);
+
+const handleAddToCart = async () => {
+    if (!canAddToCart.value || cartLoading.value) return;
+    
+    try {
+        await addToCart(props.book.id);
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+    }
+};
+
+const handleRemoveFromCart = async () => {
+    if (cartLoading.value) return;
+    
+    try {
+        await removeFromCart(props.book.id);
+    } catch (error) {
+        console.error('Error removing from cart:', error);
+    }
+};
 
 const handleReserve = async () => {
     if (!canReserve.value || isReserving.value) return;
@@ -416,22 +465,52 @@ const handleDownload = async () => {
 
                                 <!-- Action Buttons -->
                                 <div class="flex flex-wrap gap-3">
-                                    <!-- Reserve Button -->
+                                    <!-- Add to Cart Button (Primary action for physical books) -->
                                     <button
-                                        v-if="hasPhysicalCopies"
+                                        v-if="hasPhysicalCopies && !bookInCart"
+                                        @click="handleAddToCart"
+                                        :disabled="!canAddToCart || cartLoading"
+                                        class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :class="canAddToCart 
+                                            ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl' 
+                                            : 'bg-muted text-muted-foreground cursor-not-allowed'"
+                                    >
+                                        <ShoppingCart class="w-5 h-5" />
+                                        <span v-if="cartLoading">Agregando...</span>
+                                        <span v-else-if="!isAuthenticated">Inicia sesión para obtener</span>
+                                        <span v-else-if="props.userHasActiveLoan">Préstamo activo</span>
+                                        <span v-else-if="props.availableCopies === 0">No disponible</span>
+                                        <span v-else>Agregar al carrito</span>
+                                    </button>
+
+                                    <!-- Remove from Cart Button -->
+                                    <button
+                                        v-if="hasPhysicalCopies && bookInCart"
+                                        @click="handleRemoveFromCart"
+                                        :disabled="cartLoading"
+                                        class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <CheckCircle class="w-5 h-5" />
+                                        <span v-if="cartLoading">Quitando...</span>
+                                        <span v-else>En el carrito</span>
+                                    </button>
+
+                                    <!-- Reserve Button (Solo cuando NO hay copias disponibles) -->
+                                    <button
+                                        v-if="hasPhysicalCopies && props.availableCopies === 0"
                                         @click="handleReserve"
                                         :disabled="!canReserve || isReserving"
                                         class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         :class="canReserve 
-                                            ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl' 
+                                            ? 'bg-warning text-warning-foreground hover:bg-warning/90 shadow-lg hover:shadow-xl' 
                                             : 'bg-muted text-muted-foreground cursor-not-allowed'"
                                     >
                                         <BookMarked class="w-5 h-5" />
                                         <span v-if="props.userHasReservation">Ya tienes una reserva</span>
+                                        <span v-else-if="props.userHasActiveLoan">Préstamo activo</span>
                                         <span v-else-if="isReserving">Reservando...</span>
                                         <span v-else-if="!isAuthenticated">Inicia sesión para reservar</span>
-                                        <span v-else-if="props.availableCopies === 0">No disponible</span>
-                                        <span v-else>Reservar este libro</span>
+                                        <span v-else>Reservar para cuando esté disponible</span>
                                     </button>
 
                                     <!-- Download Button -->
@@ -457,19 +536,38 @@ const handleDownload = async () => {
                                         <Info class="w-4 h-4 mt-0.5 flex-shrink-0" />
                                         <p>
                                             <Link href="/login" class="text-primary hover:underline">Inicia sesión</Link> 
-                                            para reservar libros físicos o descargar PDFs
+                                            para obtener libros físicos o descargar PDFs
                                         </p>
                                     </div>
-                                    <div v-if="hasPhysicalCopies && canReserve" class="flex items-start gap-2 text-sm text-muted-foreground">
+                                    <div v-if="hasPhysicalCopies && bookInCart" class="flex items-start gap-2 text-sm">
+                                        <CheckCircle class="w-4 h-4 mt-0.5 flex-shrink-0 text-success" />
+                                        <p class="text-success">
+                                            Este libro está en tu carrito. 
+                                            <Link href="/cart" class="underline font-medium">Ver carrito</Link> 
+                                            para proceder con el préstamo.
+                                        </p>
+                                    </div>
+                                    <div v-if="hasPhysicalCopies && canAddToCart" class="flex items-start gap-2 text-sm text-muted-foreground">
+                                        <Info class="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                        <p>Agrégalo al carrito para solicitar el préstamo. El período de préstamo es de 14 días.</p>
+                                    </div>
+                                    <div v-if="hasPhysicalCopies && canReserve && !bookInCart" class="flex items-start gap-2 text-sm text-muted-foreground">
                                         <Clock class="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                        <p>Tendrás 48 horas para recoger tu reserva en la biblioteca</p>
+                                        <p>También puedes reservarlo y tendrás 48 horas para recogerlo en la biblioteca</p>
                                     </div>
                                     <div v-if="props.userHasReservation" class="flex items-start gap-2 text-sm">
                                         <AlertCircle class="w-4 h-4 mt-0.5 flex-shrink-0 text-warning" />
                                         <p class="text-warning">
-                                            Ya tienes una reserva pendiente. Visita 
-                                            <Link href="/my-reservations" class="underline">Mis Reservas</Link> 
+                                            Ya tienes una reserva pendiente de este libro. Visita 
+                                            <Link href="/reservations" class="underline">Mis Reservas</Link> 
                                             para más detalles
+                                        </p>
+                                    </div>
+                                    <div v-if="props.userHasActiveLoan" class="flex items-start gap-2 text-sm">
+                                        <AlertCircle class="w-4 h-4 mt-0.5 flex-shrink-0 text-destructive" />
+                                        <p class="text-destructive">
+                                            Actualmente tienes un préstamo activo de este libro. Para solicitarlo nuevamente, primero debes devolverlo. 
+                                            <Link href="/loans" class="underline font-medium">Ver mis préstamos</Link>
                                         </p>
                                     </div>
                                 </div>

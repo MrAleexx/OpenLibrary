@@ -16,100 +16,72 @@ use Inertia\Response;
 class CartController extends Controller
 {
     /**
-     * Maximum number of books a user can have on loan simultaneously
-     */
-    private const MAX_LOANS = 5;
-
-    /**
-     * Default loan period in days
+     * Periodo de préstamo predeterminado en días
      */
     private const LOAN_PERIOD_DAYS = 14;
 
     /**
-     * Show the cart page
+     * Estados de préstamo considerados como activos
+     */
+    private const ACTIVE_LOAN_STATUSES = ['active', 'overdue'];
+
+    /**
+     * Mensajes de error estandarizados
+     */
+    private const ERROR_BOOK_NOT_ACTIVE = 'Este libro no está disponible actualmente';
+    private const ERROR_NO_COPIES = 'No hay copias disponibles de este libro';
+    private const ERROR_ALREADY_ON_LOAN = 'Ya tienes un préstamo activo de este libro';
+    private const ERROR_ALREADY_IN_CART = 'Este libro ya está en tu carrito';
+    private const ERROR_EMAIL_NOT_VERIFIED = 'Debes verificar tu correo electrónico antes de hacer préstamos';
+    private const ERROR_SERVER = 'Error al procesar la solicitud';
+
+    /**
+     * Mostrar página del carrito de préstamos
+     * 
+     * @return Response
      */
     public function index(): Response
     {
         $user = auth()->user();
-        
-        // Get active loans count
         $activeLoansCount = $this->getActiveBookLoans();
-        $remainingLoans = self::MAX_LOANS - $activeLoansCount;
+        $maxLoans = $user->max_concurrent_loans;
+        $remainingLoans = $maxLoans - $activeLoansCount;
 
         return Inertia::render('Cart/Index', [
             'remainingLoans' => $remainingLoans,
-            'maxLoans' => self::MAX_LOANS,
+            'maxLoans' => $maxLoans,
             'activeLoansCount' => $activeLoansCount,
         ]);
     }
 
     /**
-     * Add a book to cart (session-based)
+     * Agregar un libro al carrito (basado en sesión)
+     * 
+     * @param Book $book Libro a agregar
+     * @param Request $request
+     * @return JsonResponse
      */
     public function add(Book $book, Request $request): JsonResponse
     {
         try {
-            // Validate book is active and available
-            if (!$book->is_active) {
-                return response()->json([
-                    'error' => 'Este libro no está disponible actualmente',
-                    'code' => 'BOOK_NOT_ACTIVE'
-                ], 422);
+            // Validar que el libro esté activo
+            $validation = $this->validateBookForCart($book);
+            if ($validation !== null) {
+                return $validation;
             }
 
-            // Check if book has available physical copies
-            $availableCopy = $this->getAvailableCopy($book);
-            if (!$availableCopy) {
-                return response()->json([
-                    'error' => 'No hay copias disponibles de este libro',
-                    'code' => 'NO_COPIES_AVAILABLE'
-                ], 422);
+            // Validar límites y estado del usuario
+            $userValidation = $this->validateUserCanAddToCart($book);
+            if ($userValidation !== null) {
+                return $userValidation;
             }
 
-            // Check if user already has this book on active loan
-            $hasActiveLoan = auth()->user()->bookLoans()
-                ->whereHas('physicalCopy', function ($query) use ($book) {
-                    $query->where('book_id', $book->id);
-                })
-                ->where('status', 'active')
-                ->exists();
-
-            if ($hasActiveLoan) {
-                return response()->json([
-                    'error' => 'Ya tienes un préstamo activo de este libro',
-                    'code' => 'ALREADY_ON_LOAN'
-                ], 422);
-            }
-
-            // Get current cart from session
+            // Agregar libro al carrito
             $cart = session()->get('cart', []);
-
-            // Check if book is already in cart
-            if (in_array($book->id, $cart)) {
-                return response()->json([
-                    'error' => 'Este libro ya está en tu carrito',
-                    'code' => 'ALREADY_IN_CART'
-                ], 422);
-            }
-
-            // Check cart size limit
-            if (count($cart) >= self::MAX_LOANS) {
-                return response()->json([
-                    'error' => 'No puedes agregar más de ' . self::MAX_LOANS . ' libros al carrito',
-                    'code' => 'CART_LIMIT_REACHED'
-                ], 422);
-            }
-
-            // Add book to cart
             $cart[] = $book->id;
             session()->put('cart', $cart);
 
-            Log::info('Book added to cart', [
-                'user_id' => auth()->id(),
-                'book_id' => $book->id,
-                'book_title' => $book->title,
-                'cart_count' => count($cart)
-            ]);
+            $this->logCartAction('Book added to cart', $book, count($cart));
 
             return response()->json([
                 'success' => true,
@@ -192,13 +164,14 @@ class CartController extends Controller
             // Check active loans limit
             $activeLoansCount = $this->getActiveBookLoans();
             $totalAfterCheckout = $activeLoansCount + count($bookIds);
+            $maxLoans = $user->max_concurrent_loans;
 
-            if ($totalAfterCheckout > self::MAX_LOANS) {
+            if ($totalAfterCheckout > $maxLoans) {
                 return response()->json([
-                    'error' => 'Excedes el límite de ' . self::MAX_LOANS . ' préstamos simultáneos',
+                    'error' => 'Excedes el límite de ' . $maxLoans . ' préstamos simultáneos',
                     'code' => 'LOAN_LIMIT_EXCEEDED',
                     'current_loans' => $activeLoansCount,
-                    'max_loans' => self::MAX_LOANS
+                    'max_loans' => $maxLoans
                 ], 422);
             }
 
@@ -245,8 +218,11 @@ class CartController extends Controller
                     ]);
 
                     // Update physical copy status
-                    $availableCopy->update(['status' => 'on_loan']);
+                    $availableCopy->update(['status' => 'loaned']);
 
+                    // Update book availability counters
+                    $book->decrement('available_physical_copies');
+                    
                     // Update book statistics
                     $book->increment('total_loans');
 
@@ -376,10 +352,121 @@ class CartController extends Controller
     /**
      * Get first available physical copy of a book
      */
+    /**
+     * Obtener primera copia física disponible de un libro
+     * 
+     * @param Book $book
+     * @return PhysicalCopy|null
+     */
     private function getAvailableCopy(Book $book): ?PhysicalCopy
     {
         return $book->physicalCopies()
             ->where('status', 'available')
             ->first();
+    }
+
+    /**
+     * Validar que el libro puede ser agregado al carrito
+     * 
+     * Verifica que el libro esté activo y tenga copias disponibles
+     * 
+     * @param Book $book
+     * @return JsonResponse|null Retorna JsonResponse si hay error, null si es válido
+     */
+    private function validateBookForCart(Book $book): ?JsonResponse
+    {
+        if (!$book->is_active) {
+            return response()->json([
+                'error' => self::ERROR_BOOK_NOT_ACTIVE,
+                'code' => 'BOOK_NOT_ACTIVE'
+            ], 422);
+        }
+
+        $availableCopy = $this->getAvailableCopy($book);
+        if (!$availableCopy) {
+            return response()->json([
+                'error' => self::ERROR_NO_COPIES,
+                'code' => 'NO_COPIES_AVAILABLE'
+            ], 422);
+        }
+
+        return null;
+    }
+
+    /**
+     * Validar que el usuario puede agregar el libro al carrito
+     * 
+     * Verifica:
+     * - No tiene préstamo activo del libro
+     * - El libro no está ya en el carrito
+     * - No excede el límite de préstamos
+     * 
+     * @param Book $book
+     * @return JsonResponse|null Retorna JsonResponse si hay error, null si es válido
+     */
+    private function validateUserCanAddToCart(Book $book): ?JsonResponse
+    {
+        // Verificar si ya tiene préstamo activo
+        if ($this->userHasActiveLoanOf($book)) {
+            return response()->json([
+                'error' => self::ERROR_ALREADY_ON_LOAN,
+                'code' => 'ALREADY_ON_LOAN'
+            ], 422);
+        }
+
+        $cart = session()->get('cart', []);
+
+        // Verificar si ya está en el carrito
+        if (in_array($book->id, $cart)) {
+            return response()->json([
+                'error' => self::ERROR_ALREADY_IN_CART,
+                'code' => 'ALREADY_IN_CART'
+            ], 422);
+        }
+
+        // Verificar límite de carrito
+        $maxLoans = auth()->user()->max_concurrent_loans;
+        if (count($cart) >= $maxLoans) {
+            return response()->json([
+                'error' => 'No puedes agregar más de ' . $maxLoans . ' libros al carrito',
+                'code' => 'CART_LIMIT_REACHED'
+            ], 422);
+        }
+
+        return null;
+    }
+
+    /**
+     * Verificar si el usuario tiene un préstamo activo del libro
+     * 
+     * @param Book $book
+     * @return bool
+     */
+    private function userHasActiveLoanOf(Book $book): bool
+    {
+        return auth()->user()->bookLoans()
+            ->whereHas('physicalCopy', function ($query) use ($book) {
+                $query->where('book_id', $book->id);
+            })
+            ->where('book_loans.status', 'active')
+            ->exists();
+    }
+
+    /**
+     * Registrar acción del carrito en los logs
+     * 
+     * @param string $message
+     * @param Book $book
+     * @param int $cartCount
+     * @return void
+     */
+    private function logCartAction(string $message, Book $book, int $cartCount): void
+    {
+        Log::info($message, [
+            'user_id' => auth()->id(),
+            'book_id' => $book->id,
+            'book_title' => $book->title,
+            'cart_count' => $cartCount
+        ]);
     }
 }

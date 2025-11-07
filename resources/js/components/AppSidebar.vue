@@ -30,7 +30,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library, ShoppingCart } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library, ShoppingCart, Clock } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import AppLogo from './AppLogo.vue';
 import { useCart } from '@/composables/useCart';
@@ -101,6 +101,11 @@ const userNavItems = computed<NavItem[]>(() => [
         href: '/cart',
         icon: ShoppingCart,
         badge: count.value > 0 ? count.value.toString() : undefined,
+    },
+    {
+        title: 'Mis Préstamos',
+        href: '/loans',
+        icon: Clock,
     },
 ]);
 

@@ -94,6 +94,12 @@ class BookLoan extends Model
             'status' => 'returned',
             'actual_return_date' => now(),
         ]);
+        
+        // Liberar la copia física para que esté disponible nuevamente
+        $this->physicalCopy->update(['status' => 'available']);
+        
+        // Incrementar contador de copias disponibles del libro
+        $this->physicalCopy->book->increment('available_physical_copies');
     }
 
     public function markAsOverdue(): void

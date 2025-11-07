@@ -54,10 +54,14 @@ class BookController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Obtener IDs de libros que el usuario tiene prestados actualmente
+        $userLoanedBookIds = $this->getUserLoanedBookIds();
+
         return Inertia::render('Books/Index', [
             'books' => $books,
             'categories' => $categories,
-            'filters' => $request->only(['search', 'category', 'type', 'availability'])
+            'filters' => $request->only(['search', 'category', 'type', 'availability']),
+            'userLoanedBookIds' => $userLoanedBookIds
         ]);
     }
 
@@ -188,10 +192,14 @@ class BookController extends Controller
         // Verificar si el usuario actual ya tiene una reserva activa
         $hasReservation = $this->userHasActiveReservation($book);
 
+        // Verificar si el usuario actual ya tiene un préstamo activo del libro
+        $hasActiveLoan = $this->userHasActiveLoan($book);
+
         return Inertia::render('Books/Show', [
             'book' => $book,
             'availableCopies' => $availableCount,
-            'userHasReservation' => $hasReservation
+            'userHasReservation' => $hasReservation,
+            'userHasActiveLoan' => $hasActiveLoan
         ]);
     }
 
@@ -223,6 +231,27 @@ class BookController extends Controller
         return $book->reservations()
             ->where('user_id', Auth::id())
             ->whereIn('status', ['pending', 'ready'])
+            ->exists();
+    }
+
+    /**
+     * Verificar si el usuario tiene un préstamo activo para este libro
+     * 
+     * Un usuario no puede tener el mismo libro prestado dos veces,
+     * incluso si hay otras copias disponibles (lógica de biblioteca real)
+     * 
+     * @param Book $book
+     * @return bool
+     */
+    private function userHasActiveLoan(Book $book): bool
+    {
+        if (!Auth::check()) {
+            return false;
+        }
+
+        return $book->loans()
+            ->where('user_id', Auth::id())
+            ->whereIn('book_loans.status', ['active', 'overdue'])
             ->exists();
     }
 
@@ -272,5 +301,29 @@ class BookController extends Controller
             'categories' => $categories,
             'filters' => $request->only(['search', 'category'])
         ]);
+    }
+
+    /**
+     * Obtener IDs de libros que el usuario autenticado tiene prestados
+     * 
+     * Retorna un array vacío si el usuario no está autenticado.
+     * Los estados considerados son 'active' y 'overdue'.
+     * 
+     * @return array Array de IDs de libros prestados
+     */
+    private function getUserLoanedBookIds(): array
+    {
+        if (!Auth::check()) {
+            return [];
+        }
+
+        return Auth::user()->bookLoans()
+            ->whereIn('book_loans.status', ['active', 'overdue'])
+            ->with('physicalCopy')
+            ->get()
+            ->pluck('physicalCopy.book_id')
+            ->unique()
+            ->values()
+            ->toArray();
     }
 }
