@@ -67,7 +67,6 @@ interface PageProps extends AppPageProps {
 const breadcrumbs = [
   { title: 'Dashboard', href: '/admin/dashboard' },
   { title: 'Usuarios', href: '/admin/users' },
-  { title: 'Importar Usuarios', href: '#' },
 ]
 
 // State

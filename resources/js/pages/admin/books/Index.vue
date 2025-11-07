@@ -22,7 +22,7 @@ import {
     DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import {
-    Plus,MoreHorizontal,Eye,Edit,Trash2,BookOpen,Download,Users,Library,BookMarked,FileText,BookCopy,Star,Calendar,Hash,FileDigit,Globe,Archive,TrendingUp,Zap,X
+    Plus, MoreHorizontal, Eye, Edit, Trash2, BookOpen, Download, Users, Library, BookMarked, FileText, BookCopy, Star, Calendar, Hash, FileDigit, Globe, Archive, TrendingUp, Zap, X
 } from 'lucide-vue-next'
 
 const breadcrumbs = [
@@ -164,6 +164,7 @@ const getCategories = (book: any) => {
 </script>
 
 <template>
+
     <Head title="Gestión de Libros" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="p-6 space-y-8">
@@ -186,7 +187,8 @@ const getCategories = (book: any) => {
                                 Nuevo Libro
                             </a>
                         </Button>
-                        <div class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
+                        <div
+                            class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20">
                             <Zap class="w-4 h-4 animate-pulse" />
                             <span class="text-sm font-medium">{{ books.data.length }} Libros</span>
                         </div>
@@ -310,11 +312,7 @@ const getCategories = (book: any) => {
             </div>
 
             <!-- FilterBar Component -->
-            <FilterBar
-                v-model="filters"
-                :config="filterConfig"
-                :data="filterData"
-            />
+            <FilterBar v-model="filters" :config="filterConfig" :data="filterData" />
 
             <!-- Results Count - Consistente con Categories -->
             <div class="text-sm text-muted-foreground">
@@ -322,69 +320,67 @@ const getCategories = (book: any) => {
             </div>
 
             <!-- Books Grid Mejorado -->
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                 <Card v-for="book in books.data" :key="book.id"
-                    class="group relative bg-card rounded-xl border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
-                    <!-- Featured Badge -->
+                    class="group relative bg-card/95 backdrop-blur-sm rounded-2xl border border-border hover:border-primary/40 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden">
+                    <!-- Badge Destacado -->
                     <div v-if="book.featured" class="absolute top-4 right-4 z-10">
-                        <Badge class="bg-amber-500 text-white border-0 shadow-lg">
-                            <Star class="w-3 h-3 mr-1 fill-current" />
+                        <Badge class="bg-amber-500 text-white border-0 shadow-lg animate-pulse">
+                            <Star class="w-3.5 h-3.5 mr-1 fill-current" />
                             Destacado
                         </Badge>
                     </div>
 
-                    <!-- Inactive Overlay -->
+                    <!-- Overlay Inactivo -->
                     <div v-if="!book.is_active"
-                        class="absolute inset-0 bg-background/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-xl">
-                        <Badge variant="destructive" class="text-lg py-2 px-4 border-0">
+                        class="absolute inset-0 bg-background/80 backdrop-blur-md z-20 flex items-center justify-center rounded-2xl">
+                        <Badge variant="destructive" class="text-lg py-2 px-4 border-0 shadow-md">
                             <Archive class="w-4 h-4 mr-2" />
                             Inactivo
                         </Badge>
                     </div>
 
-                    <CardHeader class="pb-4">
+                    <CardHeader class="pb-3 pt-5 px-5">
                         <div class="flex justify-between items-start gap-3">
-                            <div class="space-y-3 flex-1 min-w-0">
-                                <!-- Book Type Icon -->
-                                <div class="flex items-center justify-between mb-2">
-                                    <Badge :class="bookTypeColors[book.book_type]" class="border font-medium">
-                                        <component :is="bookTypeIcons[book.book_type]" class="w-3 h-3 mr-1" />
-                                        {{ bookTypeLabels[book.book_type] }}
-                                    </Badge>
-                                </div>
+                            <div class="space-y-2 flex-1 min-w-0">
+                                <!-- Tipo de libro -->
+                                <Badge :class="bookTypeColors[book.book_type]" class="border font-semibold shadow-sm">
+                                    <component :is="bookTypeIcons[book.book_type]" class="w-3.5 h-3.5 mr-1" />
+                                    {{ bookTypeLabels[book.book_type] }}
+                                </Badge>
 
-                                <!-- Title -->
+                                <!-- Título -->
                                 <CardTitle
-                                    class="text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors font-bold">
+                                    class="text-xl font-bold leading-snug line-clamp-2 transition-colors duration-200 group-hover:text-primary">
                                     {{ book.title }}
                                 </CardTitle>
 
-                                <!-- Publisher -->
-                                <CardDescription class="line-clamp-1 flex items-center gap-2">
-                                    <BookMarked class="w-4 h-4 flex-shrink-0" />
+                                <!-- Editorial -->
+                                <CardDescription class="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <BookMarked class="w-4 h-4 text-muted-foreground/80" />
                                     {{ getPublisherName(book) }}
                                 </CardDescription>
                             </div>
 
-                            <!-- Actions Menu -->
+                            <!-- Menú de acciones -->
                             <DropdownMenu>
                                 <DropdownMenuTrigger as-child>
-                                    <Button variant="ghost" size="sm"
-                                        class="w-9 h-9 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <Button variant="ghost" size="icon"
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-9 h-9 rounded-full hover:bg-primary/10">
                                         <MoreHorizontal class="w-4 h-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" class="w-48">
+                                <DropdownMenuContent align="end" class="w-52 shadow-lg">
                                     <DropdownMenuItem as-child>
                                         <a :href="`/admin/books/${book.id}`"
-                                            class="flex items-center cursor-pointer text-foreground">
+                                            class="flex items-center cursor-pointer text-foreground hover:text-primary">
                                             <Eye class="w-4 h-4 mr-2 text-blue-500" />
                                             Ver detalles
                                         </a>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem as-child>
                                         <a :href="`/admin/books/${book.id}/edit`"
-                                            class="flex items-center cursor-pointer text-foreground">
+                                            class="flex items-center cursor-pointer text-foreground hover:text-emerald-600">
                                             <Edit class="w-4 h-4 mr-2 text-emerald-500" />
                                             Editar libro
                                         </a>
@@ -410,73 +406,63 @@ const getCategories = (book: any) => {
                         </div>
                     </CardHeader>
 
-                    <CardContent class="pb-4 space-y-4">
-                        <!-- Categories -->
-                        <div class="flex flex-wrap gap-1.5">
-                            <Badge v-for="category in getCategories(book).slice(0, 2)" :key="category.id" variant="outline"
-                                class="text-xs bg-secondary/10 text-gray-700 dark:text-white border-secondary/20">
+                    <CardContent class="px-5 pb-5 space-y-4">
+                        <!-- Categorías -->
+                        <div class="flex flex-wrap gap-2">
+                            <Badge v-for="category in getCategories(book).slice(0, 2)" :key="category.id"
+                                variant="outline"
+                                class="text-xs bg-secondary/10 text-foreground border-secondary/20 rounded-full px-2.5 py-0.5">
                                 {{ category.name }}
                             </Badge>
                             <Badge v-if="getCategories(book).length > 2" variant="outline"
-                                class="text-xs bg-muted text-muted-foreground">
+                                class="text-xs bg-muted text-muted-foreground rounded-full">
                                 +{{ getCategories(book).length - 2 }}
                             </Badge>
                         </div>
 
-                        <!-- Stats Grid -->
+                        <!-- Stats -->
                         <div class="grid grid-cols-3 gap-3 text-center">
-                            <div class="space-y-1 p-2 bg-blue-500/10 rounded-lg">
+                            <div class="space-y-1 p-2 bg-blue-500/10 rounded-lg hover:bg-blue-500/20 transition">
                                 <Download class="w-4 h-4 text-blue-600 mx-auto" />
-                                <p class="text-sm font-bold text-foreground">{{ book.downloads_count || 0 }}</p>
+                                <p class="text-sm font-bold">{{ book.downloads_count || 0 }}</p>
                                 <p class="text-xs text-muted-foreground">Descargas</p>
                             </div>
-                            <div v-if="book.book_type !== 'digital'" class="space-y-1 p-2 bg-emerald-500/10 rounded-lg">
+                            <div v-if="book.book_type !== 'digital'"
+                                class="space-y-1 p-2 bg-emerald-500/10 rounded-lg hover:bg-emerald-500/20 transition">
                                 <BookCopy class="w-4 h-4 text-emerald-600 mx-auto" />
-                                <p class="text-sm font-bold text-foreground">{{ book.physical_copies_count || 0 }}</p>
+                                <p class="text-sm font-bold">{{ book.physical_copies_count || 0 }}</p>
                                 <p class="text-xs text-muted-foreground">Copias</p>
                             </div>
-                            <div v-else class="space-y-1 p-2 bg-gray-500/10 rounded-lg">
+                            <div v-else class="space-y-1 p-2 bg-gray-500/10 rounded-lg hover:bg-gray-500/20 transition">
                                 <FileDigit class="w-4 h-4 text-gray-600 mx-auto" />
                                 <p class="text-sm font-bold text-foreground">Digital</p>
                                 <p class="text-xs text-muted-foreground">Solo</p>
                             </div>
-                            <div class="space-y-1 p-2 bg-purple-500/10 rounded-lg">
+                            <div class="space-y-1 p-2 bg-purple-500/10 rounded-lg hover:bg-purple-500/20 transition">
                                 <Users class="w-4 h-4 text-purple-600 mx-auto" />
-                                <p class="text-sm font-bold text-foreground">{{ book.loans_count || 0 }}</p>
+                                <p class="text-sm font-bold">{{ book.loans_count || 0 }}</p>
                                 <p class="text-xs text-muted-foreground">Préstamos</p>
                             </div>
                         </div>
 
-                        <!-- Book Metadata -->
+                        <!-- Metadatos -->
                         <div class="space-y-2 text-sm">
-                            <div class="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
-                                <span class="text-muted-foreground flex items-center gap-1">
-                                    <Hash class="w-3 h-3" />
-                                    ISBN:
-                                </span>
-                                <span class="font-mono font-bold text-foreground">{{ book.isbn || 'N/A' }}</span>
-                            </div>
-                            <div class="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
-                                <span class="text-muted-foreground flex items-center gap-1">
-                                    <FileText class="w-3 h-3" />
-                                    Páginas:
-                                </span>
-                                <span class="font-bold text-foreground">{{ book.pages || 0 }}</span>
-                            </div>
-                            <div class="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
-                                <span class="text-muted-foreground flex items-center gap-1">
-                                    <Calendar class="w-3 h-3" />
-                                    Año:
-                                </span>
-                                <span class="font-bold text-foreground">{{ book.publication_year || 'N/A' }}</span>
+                            <div v-for="(value, label) in {
+                                ISBN: book.isbn || 'N/A',
+                                Páginas: book.pages || 0,
+                                Año: book.publication_year || 'N/A'
+                            }" :key="label"
+                                class="flex items-center justify-between p-2 bg-muted/40 rounded-lg hover:bg-muted/60 transition">
+                                <span class="text-muted-foreground font-medium">{{ label }}:</span>
+                                <span class="font-mono font-semibold text-foreground">{{ value }}</span>
                             </div>
                         </div>
                     </CardContent>
 
-                    <CardFooter class="pt-0">
+                    <CardFooter class="pt-0 px-5 pb-5">
                         <Button as-child variant="outline"
                             class="w-full border-primary/20 hover:bg-primary hover:text-white transition-all duration-200">
-                            <a :href="`/admin/books/${book.id}`" class="flex items-center gap-2">
+                            <a :href="`/admin/books/${book.id}`" class="flex items-center justify-center gap-2">
                                 <Eye class="w-4 h-4" />
                                 Ver Detalles
                             </a>
@@ -514,14 +500,9 @@ const getCategories = (book: any) => {
             <!-- Pagination - Consistente con Categories -->
             <div v-if="books.data.length > 0" class="flex justify-center">
                 <div class="flex gap-2">
-                    <Button v-for="(link, index) in books.links" :key="index" 
-                            :href="link.url" 
-                            :disabled="!link.url"
-                            :variant="link.active ? 'default' : 'outline'" 
-                            size="sm" 
-                            class="rounded-lg font-medium"
-                            v-html="link.label"
-                            preserve-scroll />
+                    <Button v-for="(link, index) in books.links" :key="index" :href="link.url" :disabled="!link.url"
+                        :variant="link.active ? 'default' : 'outline'" size="sm" class="rounded-lg font-medium"
+                        v-html="link.label" preserve-scroll />
                 </div>
             </div>
         </div>
