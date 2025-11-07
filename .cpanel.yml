@@ -1,0 +1,27 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/usuario/public_html
+
+    - /bin/cp -R * $DEPLOYPATH
+    - if [ ! -f $DEPLOYPATH/.env ]; then /bin/cp .env.example $DEPLOYPATH/.env; fi
+    - /bin/cp .htaccess $DEPLOYPATH/.htaccess
+
+    - /bin/mkdir -p $DEPLOYPATH/storage/framework/{sessions,views,cache}
+    - /bin/chmod -R 755 $DEPLOYPATH/storage
+    - /bin/chmod -R 755 $DEPLOYPATH/bootstrap/cache
+
+    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader
+    - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then cd $DEPLOYPATH && php artisan key:generate; fi
+
+    # Si Node está disponible
+    - cd $DEPLOYPATH && npm ci || echo "npm no disponible"
+    - cd $DEPLOYPATH && npm run build || echo "build omitido"
+
+    # Migraciones y seeders (solo si es la primera vez)
+    - cd $DEPLOYPATH && php artisan migrate --seed --force
+
+    - cd $DEPLOYPATH && php artisan config:cache
+    - cd $DEPLOYPATH && php artisan route:cache
+    - cd $DEPLOYPATH && php artisan view:cache
+    - cd $DEPLOYPATH && php artisan storage:link
