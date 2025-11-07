@@ -2,7 +2,7 @@
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
-import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { Form, Head, usePage, router } from '@inertiajs/vue3';
 
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -17,6 +17,7 @@ import { type BreadcrumbItem } from '@/types';
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
+    verificationStatus?: string;
 }
 
 defineProps<Props>();
@@ -30,6 +31,11 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = page.props.auth.user;
+
+// Función para reenviar verificación
+const resendVerification = () => {
+    router.post(send());
+};
 </script>
 
 <template>
@@ -80,21 +86,19 @@ const user = page.props.auth.user;
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
                         <p class="-mt-4 text-sm text-muted-foreground">
                             Your email address is unverified.
-                            <Link
-                                :href="send()"
-                                as="button"
+                            <button
+                                @click="resendVerification"
                                 class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                             >
                                 Click here to resend the verification email.
-                            </Link>
+                            </button>
                         </p>
 
                         <div
-                            v-if="status === 'verification-link-sent'"
+                            v-if="verificationStatus === 'verification-link-sent'"
                             class="mt-2 text-sm font-medium text-green-600"
                         >
-                            A new verification link has been sent to your email
-                            address.
+                            A new verification link has been sent to your email address.
                         </div>
                     </div>
 
@@ -102,8 +106,9 @@ const user = page.props.auth.user;
                         <Button
                             :disabled="processing"
                             data-test="update-profile-button"
-                            >Save</Button
                         >
+                            Save
+                        </Button>
 
                         <Transition
                             enter-active-class="transition ease-in-out"

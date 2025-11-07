@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Settings/ProfileController.php
 
 namespace App\Http\Controllers\Settings;
 
@@ -21,6 +22,7 @@ class ProfileController extends Controller
         return Inertia::render('settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'verificationStatus' => $request->session()->get('verificationStatus'),
         ]);
     }
 
@@ -29,15 +31,23 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+            $user->save();
+            
+            $user->sendEmailVerificationNotification();
+            
+            return redirect()->route('profile.edit')
+                ->with('verificationStatus', 'verification-link-sent');
         }
 
-        $request->user()->save();
+        $user->save();
 
-        return to_route('profile.edit');
+        return redirect()->route('profile.edit')
+            ->with('status', 'profile-updated');
     }
 
     /**

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Actions\Fortify\UpdateUserPassword;
+use App\Actions\Fortify\UpdateUserProfileInformation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -12,6 +14,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Response;
+
+
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -28,64 +33,55 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->configureActions();
-        $this->configureViews();
-        $this->configureRateLimiting();
-    }
-
-    /**
-     * Configure Fortify actions.
-     */
-    private function configureActions(): void
-    {
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
-    }
+        Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
+        Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
+        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
-    /**
-     * Configure Fortify views.
-     */
-    private function configureViews(): void
-    {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
-        ]));
-
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/ForgotPassword', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/VerifyEmail', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::registerView(fn () => Inertia::render('auth/Register'));
-
-        Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
-
-        Fortify::confirmPasswordView(fn () => Inertia::render('auth/ConfirmPassword'));
-    }
-
-    /**
-     * Configure rate limiting.
-     */
-    private function configureRateLimiting(): void
-    {
-        RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+        // Vistas de autenticación
+        Fortify::loginView(function () {
+            return inertia('auth/Login', [
+                'canResetPassword' => true,
+                'canRegister' => true,
+                'status' => session('status'),
+            ]);
         });
 
-        RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+        Fortify::registerView(function () {
+            return inertia('auth/Register');
+        });
 
-            return Limit::perMinute(5)->by($throttleKey);
+        Fortify::requestPasswordResetLinkView(function () {
+            return inertia('auth/ForgotPassword');
+        });
+
+        Fortify::resetPasswordView(function (Request $request) {
+            return inertia('auth/ResetPassword', [
+                'email' => $request->email,
+                'token' => $request->route('token'),
+            ]);
+        });
+
+        Fortify::verifyEmailView(function () {
+            return inertia('auth/VerifyEmail');
+        });
+
+        Fortify::confirmPasswordView(function () {
+            return inertia('auth/ConfirmPassword');
+        });
+
+        Fortify::twoFactorChallengeView(function () {
+            return inertia('auth/TwoFactorLogin');
+        });
+
+
+        RateLimiter::for('login', function (Request $request) {
+            $email = (string) $request->email;
+            return Limit::perMinute(5)->by($email . $request->ip());
+        });
+
+        RateLimiter::for('two-factor', function (Request $request) {
+            return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
     }
 }

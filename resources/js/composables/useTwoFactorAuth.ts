@@ -1,3 +1,4 @@
+// resources/js/composables/useTwoFactorAuth.ts
 import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
 import { computed, ref } from 'vue';
 

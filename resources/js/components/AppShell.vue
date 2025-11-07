@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
 
 interface Props {
     variant?: 'header' | 'sidebar';
@@ -8,7 +9,14 @@ interface Props {
 
 defineProps<Props>();
 
-const isOpen = usePage().props.sidebarOpen;
+// Aseguramos que isOpen sea siempre un booleano
+const isOpen = ref<boolean>(true);
+
+// Actualizamos isOpen cuando cambian las props
+onMounted(() => {
+    const page = usePage();
+    isOpen.value = Boolean(page.props.sidebarOpen);
+});
 </script>
 
 <template>

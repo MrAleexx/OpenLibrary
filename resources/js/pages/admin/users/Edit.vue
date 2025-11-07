@@ -1,0 +1,278 @@
+<!-- resources/js/pages/admin/users/Edit.vue -->
+<script setup lang="ts">
+import { reactive } from 'vue'
+import { router, Link } from '@inertiajs/vue3'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ArrowLeft, Save, User, Loader2
+} from 'lucide-vue-next'
+import AppLayout from '@/layouts/AppLayout.vue'
+import InputError from '@/components/InputError.vue'
+
+// Props
+const props = defineProps<{
+  user: any
+  userTypes: any[]
+  errors?: Record<string, string>
+}>()
+
+// Breadcrumbs
+const breadcrumbs = [
+  { title: 'Dashboard', href: '/admin/dashboard' },
+  { title: 'Usuarios', href: '/admin/users' },
+  { title: `Editar ${props.user.name}`, href: '#' },
+]
+
+// Form state
+const form = reactive({
+  name: props.user.name,
+  last_name: props.user.last_name,
+  email: props.user.email,
+  dni: props.user.dni,
+  phone: props.user.phone,
+  user_type: props.user.user_type,
+  institutional_email: props.user.institutional_email || '',
+  institutional_id: props.user.institutional_id || '',
+  membership_expires_at: props.user.membership_expires_at
+    ? new Date(props.user.membership_expires_at).toISOString().split('T')[0]
+    : '',
+  max_concurrent_loans: props.user.max_concurrent_loans,
+  can_download: props.user.can_download,
+  is_active: props.user.is_active,
+})
+
+// Loading state
+const loading = reactive({
+  submitting: false,
+  fields: {} as Record<string, boolean>
+})
+
+function validateField(field: string) {
+  loading.fields[field] = true
+  // Simular validación o debounce
+  setTimeout(() => {
+    loading.fields[field] = false
+  }, 500)
+}
+
+// Methods
+function submit() {
+  loading.submitting = true
+
+  router.put(`/admin/users/${props.user.id}`, form, {
+    preserveScroll: true,
+    onSuccess: () => {
+      loading.submitting = false
+    },
+    onError: () => {
+      loading.submitting = false
+    }
+  })
+}
+</script>
+
+<template>
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="min-h-screen bg-background">
+      <!-- Header Fijo -->
+      <div
+        class="border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-10">
+        <div class="p-6">
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <h1 class="text-3xl font-bold tracking-tight text-foreground">
+                Editar Usuario
+              </h1>
+              <p class="text-muted-foreground mt-1 flex items-center gap-2">
+                <User class="w-4 h-4" />
+                Actualiza la información de {{ user.name }} {{ user.last_name }}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" as-child>
+              <Link href="/admin/users">
+              <ArrowLeft class="h-4 w-4 mr-2" />
+              Volver a Usuarios
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido del Formulario -->
+      <div class="p-6 max-w-7xl mx-auto">
+        <form @submit.prevent="submit" class="space-y-6">
+          <!-- Información Personal -->
+          <Card class="bg-card border-border shadow-lg">
+            <CardHeader class="bg-muted/50 border-b border-border">
+              <CardTitle class="flex items-center gap-2 text-foreground">
+                <User class="h-5 w-5 text-primary" />
+                Información Personal
+              </CardTitle>
+              <CardDescription class="text-muted-foreground">
+                Información básica del usuario
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-4 pt-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Nombre -->
+                <div class="space-y-2">
+                  <Label for="name" class="text-foreground">Nombre *</Label>
+                  <Input id="name" v-model="form.name" placeholder="Ingresa el nombre"
+                    class="bg-background border-border focus:border-primary w-full" required />
+                  <InputError :message="errors?.name" />
+                </div>
+
+                <!-- Apellido -->
+                <div class="space-y-2">
+                  <Label for="last_name" class="text-foreground">Apellido *</Label>
+                  <Input id="last_name" v-model="form.last_name" placeholder="Ingresa el apellido"
+                    class="bg-background border-border focus:border-primary w-full" required />
+                  <InputError :message="errors?.last_name" />
+                </div>
+
+                <!-- Email -->
+                <Input id="email" v-model="form.email" type="email" placeholder="usuario@ejemplo.com" :class="[
+                  'bg-background border-border focus:border-primary w-full',
+                  errors?.email ? 'border-destructive focus:border-destructive' : ''
+                ]" required />
+
+                <!-- DNI -->
+                <div class="space-y-2">
+                  <Label for="dni" class="text-foreground">DNI *</Label>
+                  <Input id="dni" v-model="form.dni" placeholder="12345678" maxlength="8"
+                    class="bg-background border-border focus:border-primary w-full" required />
+                  <InputError :message="errors?.dni" />
+                </div>
+
+                <!-- Teléfono -->
+                <div class="space-y-2">
+                  <Label for="phone" class="text-foreground">Teléfono *</Label>
+                  <Input id="phone" v-model="form.phone" placeholder="987654321" maxlength="9"
+                    class="bg-background border-border focus:border-primary w-full" required />
+                  <InputError :message="errors?.phone" />
+                </div>
+
+                <!-- Tipo de Usuario -->
+                <div class="space-y-2">
+                  <Label for="user_type" class="text-foreground">Tipo de Usuario *</Label>
+                  <Select v-model:model-value="form.user_type">
+                    <SelectTrigger class="bg-background border-border focus:border-primary w-full">
+                      <SelectValue placeholder="Selecciona el tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="type in userTypes" :key="type.value" :value="type.value">
+                        {{ type.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <InputError :message="errors?.user_type" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Información Institucional -->
+          <Card class="bg-card border-border shadow-lg">
+            <CardHeader class="bg-muted/50 border-b border-border">
+              <CardTitle class="text-foreground">Información Institucional</CardTitle>
+              <CardDescription class="text-muted-foreground">
+                Información adicional para usuarios institucionales
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-4 pt-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Email Institucional -->
+                <div class="space-y-2">
+                  <Label for="institutional_email" class="text-foreground">Email Institucional</Label>
+                  <Input id="institutional_email" v-model="form.institutional_email" type="email"
+                    placeholder="usuario@institucion.edu.pe"
+                    class="bg-background border-border focus:border-primary w-full" />
+                  <InputError :message="errors?.institutional_email" />
+                </div>
+
+                <!-- Código Institucional -->
+                <div class="space-y-2">
+                  <Label for="institutional_id" class="text-foreground">Código Institucional</Label>
+                  <Input id="institutional_id" v-model="form.institutional_id" placeholder="Código o ID institucional"
+                    class="bg-background border-border focus:border-primary w-full" />
+                  <InputError :message="errors?.institutional_id" />
+                </div>
+
+                <!-- Fecha de Expiración de Membresía -->
+                <div class="space-y-2">
+                  <Label for="membership_expires_at" class="text-foreground">Membresía hasta</Label>
+                  <Input id="membership_expires_at" v-model="form.membership_expires_at" type="date"
+                    :min="new Date().toISOString().split('T')[0]"
+                    class="bg-background border-border focus:border-primary w-full" />
+                  <InputError :message="errors?.membership_expires_at" />
+                </div>
+
+                <!-- Máximo de Préstamos -->
+                <div class="space-y-2">
+                  <Label for="max_concurrent_loans" class="text-foreground">Máximo de Préstamos *</Label>
+                  <Input id="max_concurrent_loans" v-model="form.max_concurrent_loans" type="number" min="1" max="10"
+                    class="bg-background border-border focus:border-primary w-full" required />
+                  <InputError :message="errors?.max_concurrent_loans" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Configuración -->
+          <Card class="bg-card border-border shadow-lg">
+            <CardHeader class="bg-muted/50 border-b border-border">
+              <CardTitle class="text-foreground">Configuración</CardTitle>
+              <CardDescription class="text-muted-foreground">
+                Opciones de acceso y permisos del usuario
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-4 pt-6">
+              <!-- Checkboxes -->
+              <div class="flex flex-col gap-4 max-w-md">
+                <div class="flex items-center space-x-3">
+                  <Checkbox id="can_download" v-model:checked="form.can_download"
+                    class="data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                  <Label for="can_download" class="text-sm font-normal text-foreground cursor-pointer">
+                    Permitir descarga de libros digitales
+                  </Label>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <Checkbox id="is_active" v-model:checked="form.is_active"
+                    class="data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                  <Label for="is_active" class="text-sm font-normal text-foreground cursor-pointer">
+                    Usuario activo en el sistema
+                  </Label>
+                </div>
+              </div>
+              <InputError :message="errors?.can_download" />
+              <InputError :message="errors?.is_active" />
+            </CardContent>
+          </Card>
+
+          <!-- Actions -->
+          <Card class="bg-card border-border shadow-lg">
+            <CardFooter class="flex justify-between pt-6">
+              <Button variant="outline" type="button" as-child class="border-border hover:bg-accent">
+                <Link href="/admin/users">
+                Cancelar
+                </Link>
+              </Button>
+              <Button type="submit" :disabled="loading.submitting"
+                class="bg-primary text-primary-foreground hover:bg-primary/90 px-8">
+                <Loader2 v-if="loading.submitting" class="h-4 w-4 mr-2 animate-spin" />
+                <Save v-else class="h-4 w-4 mr-2" />
+                {{ loading.submitting ? 'Actualizando...' : 'Actualizar Usuario' }}
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
+      </div>
+    </div>
+  </AppLayout>
+</template>
