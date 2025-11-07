@@ -1,15 +1,10 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/usuario/public_html
-
+    - export DEPLOYPATH=/home/usersumak/public_html
     - /bin/cp -R * $DEPLOYPATH
     - if [ ! -f $DEPLOYPATH/.env ]; then /bin/cp .env.example $DEPLOYPATH/.env; fi
     - /bin/cp .htaccess $DEPLOYPATH/.htaccess
-
-    - /bin/mkdir -p $DEPLOYPATH/storage/framework/{sessions,views,cache}
-    - /bin/chmod -R 755 $DEPLOYPATH/storage
-    - /bin/chmod -R 755 $DEPLOYPATH/bootstrap/cache
 
     - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader
     - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then cd $DEPLOYPATH && php artisan key:generate; fi
