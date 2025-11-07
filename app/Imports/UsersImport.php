@@ -42,7 +42,7 @@ class UsersImport implements
         try {
             $formattedData = $this->formatRowData($row);
 
-            // ✅ SIEMPRE GENERAR ID AUTOMÁTICO (igual que en creación individual)
+            // SIEMPRE GENERAR ID AUTOMÁTICO (igual que en creación individual)
             $institutionalId = $this->generateInstitutionalId($formattedData['user_type']);
 
             $tempPassword = Str::random(12);
@@ -128,7 +128,6 @@ class UsersImport implements
             'student' => 'EST',
             'teacher' => 'DOC',
             'external' => 'EXT',
-            'staff' => 'PER'
         ];
 
         return $prefixes[$userType] ?? 'USU';
@@ -167,8 +166,10 @@ class UsersImport implements
             'docente' => 'teacher',
             'profesor' => 'teacher',
             'externo' => 'external',
-            'staff' => 'staff',
-            'personal' => 'staff',
+            'bibliotecario' => 'librarian',
+            'librarian' => 'librarian',
+            'administrador' => 'admin',
+            'admin' => 'admin',
         ];
 
         return $mapping[$userType] ?? $userType;
@@ -227,7 +228,7 @@ class UsersImport implements
             'email' => 'required|email|unique:users,email',
             'dni' => 'required|string|size:8|unique:users,dni',
             'phone' => 'required|string|size:9',
-            'user_type' => 'required|in:student,teacher,external,staff',
+            'user_type' => 'required|in:student,teacher,external,librarian,admin',
             'institutional_email' => 'nullable|email|unique:users,institutional_email',
             // ✅ REMOVED: 'institutional_id' => 'nullable|string|max:255',
             'membership_expires_at' => 'nullable|date|after:today',
@@ -247,7 +248,7 @@ class UsersImport implements
             'dni.unique' => 'El DNI :input ya existe en el sistema.',
             'dni.size' => 'El DNI debe tener exactamente 8 dígitos.',
             'phone.size' => 'El teléfono debe tener exactamente 9 dígitos.',
-            'user_type.in' => 'El tipo de usuario debe ser: student, teacher, external o staff.',
+            'user_type.in' => 'El tipo de usuario debe ser: student, teacher, external, librarian o admin.',
         ];
     }
 

@@ -80,7 +80,8 @@ class UserController extends Controller
                 'students' => User::where('user_type', 'student')->count(),
                 'teachers' => User::where('user_type', 'teacher')->count(),
                 'external_users' => User::where('user_type', 'external')->count(),
-                'staff_users' => User::where('user_type', 'staff')->count(),
+                'librarian_users' => User::where('user_type', 'librarian')->count(),
+                'admin_users' => User::where('user_type', 'admin')->count(),
             ]
         ]);
     }
@@ -95,7 +96,8 @@ class UserController extends Controller
                 ['value' => 'student', 'label' => 'Estudiante'],
                 ['value' => 'teacher', 'label' => 'Docente'],
                 ['value' => 'external', 'label' => 'Externo'],
-                ['value' => 'staff', 'label' => 'Staff'],
+                ['value' => 'librarian', 'label' => 'Bibliotecario'],
+                ['value' => 'admin', 'label' => 'Administrador'],
             ]
         ]);
     }
@@ -137,7 +139,6 @@ class UserController extends Controller
             'student' => 'EST',    // Estudiante
             'teacher' => 'DOC',    // Docente
             'external' => 'EXT',   // Externo
-            'staff' => 'PER'       // Personal
         ];
 
         return $prefixes[$userType] ?? 'USU'; // Usuario por defecto
@@ -154,7 +155,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email',
             'dni' => 'required|string|max:8|unique:users,dni',
             'phone' => 'required|string|max:9',
-            'user_type' => 'required|in:student,teacher,external,staff',
+            'user_type' => 'required|in:student,teacher,external,librarian,admin',
             'institutional_email' => 'nullable|email|unique:users,institutional_email',
             'membership_expires_at' => 'nullable|date|after:today',
             'max_concurrent_loans' => 'required|integer|min:1|max:10',
@@ -264,7 +265,8 @@ class UserController extends Controller
                 ['value' => 'student', 'label' => 'Estudiante'],
                 ['value' => 'teacher', 'label' => 'Docente'],
                 ['value' => 'external', 'label' => 'Externo'],
-                ['value' => 'staff', 'label' => 'Staff'],
+                ['value' => 'librarian', 'label' => 'Bibliotecario'],
+                ['value' => 'admin', 'label' => 'Administrador'],
             ]
         ]);
     }
@@ -280,7 +282,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'dni' => 'required|string|max:8|unique:users,dni,' . $user->id,
             'phone' => 'required|string|max:9',
-            'user_type' => 'required|in:student,teacher,external,staff',
+            'user_type' => 'required|in:student,teacher,external,librarian,admin',
             'institutional_email' => 'nullable|email|unique:users,institutional_email,' . $user->id,
             'institutional_id' => 'nullable|string|max:255',
             'membership_expires_at' => 'nullable|date|after:today',
@@ -396,46 +398,5 @@ class UserController extends Controller
             'user' => $user,
             'loans' => $loans
         ]);
-    }
-
-    /**
-     * Show import form
-     */
-    public function import()
-    {
-        return Inertia::render('admin/users/Import');
-    }
-
-    /**
-     * Process user import
-     */
-    public function processImport(Request $request)
-    {
-        $request->validate([
-            'import_file' => 'required|file|mimes:csv,txt,xlsx|max:10240'
-        ]);
-
-        // Aquí iría la lógica de importación
-        // Por ahora solo simulamos éxito
-
-        return back()->with('success', 'Archivo recibido para procesamiento. La importación comenzará en breve.');
-    }
-
-    /**
-     * Download import report
-     */
-    public function downloadImportReport()
-    {
-        // Lógica para generar y descargar reporte
-        return response()->json(['message' => 'Reporte descargado']);
-    }
-
-    /**
-     * Clear import session
-     */
-    public function clearImportSession()
-    {
-        // Lógica para limpiar sesión de importación
-        return back()->with('success', 'Sesión de importación limpiada exitosamente.');
     }
 }

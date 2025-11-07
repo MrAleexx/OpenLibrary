@@ -2,13 +2,16 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { router, Head, Link } from '@inertiajs/vue3'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle,
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import {MoreHorizontal,Eye,Edit,Users,User,Download,BookOpen,X,RefreshCw,Calendar,UserPlus,FileDown,UserCheck,UserX,Clock,Shield,Mail,IdCard,Library,TrendingUp,Zap,Hash
+import {
+  MoreHorizontal, Eye, Edit, Users, User, Download, BookOpen, X, RefreshCw, Calendar, UserPlus, FileDown, UserCheck, UserX, Clock, Shield, Mail, IdCard, Library, TrendingUp, Zap, Hash
 } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import FilterBar from '@/components/FilterBar.vue' // Importar el FilterBar
@@ -143,21 +146,24 @@ const userTypeLabels: any = {
   student: 'Estudiante',
   teacher: 'Docente',
   external: 'Externo',
-  staff: 'Staff'
+  librarian: 'Bibliotecario',
+  admin: 'Administrador'
 }
 
 const userTypeColors: any = {
   student: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800',
   teacher: 'bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-800',
   external: 'bg-orange-500/10 text-orange-600 border-orange-200 dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-800',
-  staff: 'bg-purple-500/10 text-purple-600 border-purple-200 dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-800'
+  librarian: 'bg-purple-500/10 text-purple-600 border-purple-200 dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-800',
+  admin: 'bg-red-500/10 text-red-600 border-red-200 dark:bg-red-500/20 dark:text-red-400 dark:border-red-800' // ✅ NUEVO
 }
 
 const userTypeIcons: any = {
   student: Users,
   teacher: Shield,
   external: User,
-  staff: IdCard
+  librarian: IdCard,
+  admin: Shield
 }
 
 // Format date
@@ -324,10 +330,7 @@ function isMembershipExpired(user: any) {
       </div>
 
       <!-- FilterBar Component -->
-      <FilterBar
-        v-model="filters"
-        :config="filterConfig"
-      />
+      <FilterBar v-model="filters" :config="filterConfig" />
 
       <!-- Results Count - Consistente con Books -->
       <div class="text-sm text-muted-foreground">

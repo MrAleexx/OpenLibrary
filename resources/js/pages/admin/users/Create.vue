@@ -70,7 +70,6 @@ watch(() => form.user_type, (newType) => {
         'student': 'EST',
         'teacher': 'DOC',
         'external': 'EXT',
-        'staff': 'PER'
     }
     
     const typeNames: Record<string, string> = {
@@ -79,7 +78,6 @@ watch(() => form.user_type, (newType) => {
         'student': 'Estudiante',
         'teacher': 'Docente',
         'external': 'Externo',
-        'staff': 'Personal'
     }
     
     autoIdInfo.prefix = prefixes[newType] || 'USU'

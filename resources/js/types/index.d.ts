@@ -42,7 +42,7 @@ export interface User {
     remember_token?: string | null;
     dni: string;
     phone: string;
-    user_type: 'student' | 'teacher' | 'external' | 'staff';
+    user_type: 'student' | 'teacher' | 'external';
     institutional_id?: string | null;
     membership_expires_at?: string | null;
     max_concurrent_loans: number;

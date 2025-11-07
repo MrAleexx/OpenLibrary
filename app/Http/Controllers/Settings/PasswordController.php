@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Settings/PasswordController.php
 
 namespace App\Http\Controllers\Settings;
 
@@ -19,20 +20,5 @@ class PasswordController extends Controller
         return Inertia::render('settings/Password');
     }
 
-    /**
-     * Update the user's password.
-     */
-    public function update(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
-        ]);
-
-        $request->user()->update([
-            'password' => $validated['password'],
-        ]);
-
-        return back();
-    }
+    // La actualización de la contraseña es manejada por Laravel\Fortify\Http\Controllers\PasswordController
 }

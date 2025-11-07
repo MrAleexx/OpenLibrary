@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import InputError from '@/components/InputError.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { edit } from '@/routes/user-password';
+import { edit, update } from '@/routes/user-password';
 import { Form, Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -26,7 +25,9 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Password settings" />
+        <Head>
+            <title>Password settings</title>
+        </Head>
 
         <SettingsLayout>
             <div class="space-y-6">
@@ -36,7 +37,7 @@ const currentPasswordInput = ref<HTMLInputElement | null>(null);
                 />
 
                 <Form
-                    v-bind="PasswordController.update.form()"
+                    v-bind="update.form()"
                     :options="{
                         preserveScroll: true,
                     }"

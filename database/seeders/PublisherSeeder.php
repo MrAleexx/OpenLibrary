@@ -16,7 +16,7 @@ class PublisherSeeder extends Seeder
     {
         $publishers = [
             ['name' => 'Editorial Nacional', 'city' => 'Lima', 'country' => 'Perú', 'is_active' => true],
-            ['name' => 'Fondo Editorial PUCP', 'city' => 'Lima', 'country' => 'Perú', 'is_active' => true],
+            ['name' => 'Fondo Editorial UPSJB', 'city' => 'Lima', 'country' => 'Perú', 'is_active' => true],
             ['name' => 'Editorial UNMSM', 'city' => 'Lima', 'country' => 'Perú', 'is_active' => true],
             ['name' => 'Penguin Random House', 'city' => 'Madrid', 'country' => 'España', 'is_active' => true],
             ['name' => 'HarperCollins', 'city' => 'New York', 'country' => 'USA', 'is_active' => true],

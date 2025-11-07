@@ -196,7 +196,7 @@ class UserImportController extends Controller
                 'ana.rodriguez@email.com',
                 '55667788',
                 '945678901',
-                'staff',
+                'librarian',
                 'ana.rodriguez@institution.edu.pe',
                 '',
                 '8',

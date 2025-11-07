@@ -1,12 +1,14 @@
 <!-- resources/js/components/FilterBar.vue -->
 <script setup lang="ts">
 import { ref, computed, watch, type Component } from 'vue'
-import {Filter,X,Search,BookMarked,FileText,Sparkles,Users,User,Shield,IdCard,Clock,UserCheck,UserX,BookOpen,BookCopy,Globe,Library
+import {
+  Filter, X, Search, BookMarked, FileText, Sparkles, Users, User, Shield, IdCard, Clock, UserCheck, UserX, BookOpen, BookCopy, Globe, Library
 } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
 // Tipos para la configuración del FilterBar
@@ -66,7 +68,8 @@ const defaultConfig = computed(() => {
             { value: 'student', label: 'Estudiante', icon: Users },
             { value: 'teacher', label: 'Docente', icon: Shield },
             { value: 'external', label: 'Externo', icon: User },
-            { value: 'staff', label: 'Staff', icon: IdCard }
+            { value: 'librarian', label: 'Bibliotecario', icon: IdCard },
+            { value: 'admin', label: 'Administrador', icon: Shield }
           ]
         },
         {
@@ -210,19 +213,19 @@ function clearFilters() {
 
 function getFilterDisplayValue(filterConfig: FilterConfig, value: string): string {
   if (!value) return filterConfig.placeholder || ''
-  
+
   if (filterConfig.key === 'category' && props.data?.categories) {
     const category = props.data.categories.find(cat => cat.id.toString() === value)
     return category?.name || value
   }
-  
+
   const option = filterConfig.options?.find(opt => opt.value === value)
   return option?.label || value
 }
 
 function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
   if (!value) return filterConfig.icon || Filter
-  
+
   const option = filterConfig.options?.find(opt => opt.value === value)
   return option?.icon || filterConfig.icon || Filter
 }
@@ -243,13 +246,8 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
             {{ activeFiltersCount }} activos
           </Badge>
         </div>
-        <Button 
-          v-if="activeFiltersCount > 0" 
-          variant="outline" 
-          size="sm" 
-          @click="clearFilters"
-          class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
-        >
+        <Button v-if="activeFiltersCount > 0" variant="outline" size="sm" @click="clearFilters"
+          class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
           <X class="h-4 w-4 mr-1" />
           Limpiar
         </Button>
@@ -258,38 +256,22 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
       <!-- Search -->
       <div class="relative">
         <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <Input 
-          v-model="localFilters.search" 
-          :placeholder="finalConfig.searchPlaceholder"
-          class="pl-10 bg-background border-border focus:border-primary" 
-        />
+        <Input v-model="localFilters.search" :placeholder="finalConfig.searchPlaceholder"
+          class="pl-10 bg-background border-border focus:border-primary" />
       </div>
 
       <!-- Filtros Dinámicos -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div 
-          v-for="filterItem in finalConfig.filters" 
-          :key="filterItem.key"
-          class="space-y-2"
-        >
+        <div v-for="filterItem in finalConfig.filters" :key="filterItem.key" class="space-y-2">
           <label class="text-sm font-medium text-foreground flex items-center gap-2">
-            <component 
-              :is="getFilterIcon(filterItem, localFilters[filterItem.key])" 
-              class="w-4 h-4 text-primary" 
-            />
+            <component :is="getFilterIcon(filterItem, localFilters[filterItem.key])" class="w-4 h-4 text-primary" />
             {{ filterItem.label }}
           </label>
-          <Select 
-            v-model="localFilters[filterItem.key]"
-            v-if="filterItem.type === 'select'"
-          >
+          <Select v-model="localFilters[filterItem.key]" v-if="filterItem.type === 'select'">
             <SelectTrigger class="bg-background border-border focus:border-primary">
               <SelectValue :placeholder="filterItem.placeholder">
                 <span class="flex items-center gap-2">
-                  <component 
-                    :is="getFilterIcon(filterItem, localFilters[filterItem.key])" 
-                    class="w-3 h-3" 
-                  />
+                  <component :is="getFilterIcon(filterItem, localFilters[filterItem.key])" class="w-3 h-3" />
                   {{ getFilterDisplayValue(filterItem, localFilters[filterItem.key]) }}
                 </span>
               </SelectValue>
@@ -301,11 +283,7 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
                   {{ filterItem.placeholder }}
                 </span>
               </SelectItem>
-              <SelectItem 
-                v-for="option in filterItem.options" 
-                :key="option.value" 
-                :value="option.value"
-              >
+              <SelectItem v-for="option in filterItem.options" :key="option.value" :value="option.value">
                 <span class="flex items-center gap-2">
                   <component :is="option.icon || filterItem.icon || Filter" class="w-3 h-3" />
                   {{ option.label }}
@@ -322,21 +300,14 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
           <Filter class="w-4 h-4" />
           <span>Filtros activos:</span>
           <template v-for="filterItem in finalConfig.filters" :key="filterItem.key">
-            <span 
-              v-if="localFilters[filterItem.key]"
-              class="bg-primary/10 text-primary px-2 py-1 rounded text-xs flex items-center gap-1"
-            >
-              <component 
-                :is="getFilterIcon(filterItem, localFilters[filterItem.key])" 
-                class="w-3 h-3" 
-              />
+            <span v-if="localFilters[filterItem.key]"
+              class="bg-primary/10 text-primary px-2 py-1 rounded text-xs flex items-center gap-1">
+              <component :is="getFilterIcon(filterItem, localFilters[filterItem.key])" class="w-3 h-3" />
               {{ filterItem.label }}: {{ getFilterDisplayValue(filterItem, localFilters[filterItem.key]) }}
             </span>
           </template>
-          <span 
-            v-if="localFilters.search" 
-            class="bg-secondary/10 text-secondary px-2 py-1 rounded text-xs flex items-center gap-1"
-          >
+          <span v-if="localFilters.search"
+            class="bg-secondary/10 text-secondary px-2 py-1 rounded text-xs flex items-center gap-1">
             <Search class="w-3 h-3" />
             Búsqueda: "{{ localFilters.search }}"
           </span>
