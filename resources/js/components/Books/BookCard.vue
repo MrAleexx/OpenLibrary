@@ -55,9 +55,12 @@ interface Book {
 
 interface Props {
     book: Book;
+    userHasLoaned?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    userHasLoaned: false
+});
 
 const { isInCart, addToCart, isLoading } = useCart();
 const page = usePage();
@@ -159,7 +162,7 @@ const coverImageUrl = computed(() => {
 const canAddToCart = computed(() => {
     const hasPhysical = props.book.book_type === 'physical' || props.book.book_type === 'both';
     const available = props.book.available_copies_count || 0;
-    return hasPhysical && available > 0 && isAuthenticated.value;
+    return hasPhysical && available > 0 && isAuthenticated.value && !props.userHasLoaned;
 });
 
 /**
@@ -246,6 +249,17 @@ const handleAddToCart = async (e: Event) => {
 
             <!-- Divider -->
             <div class="border-t border-border pt-3 space-y-2">
+                <!-- User Has Loaned Badge -->
+                <div 
+                    v-if="userHasLoaned"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-300 dark:border-blue-800 bg-blue-100 dark:bg-blue-900/30"
+                >
+                    <BookMarked class="w-4 h-4 flex-shrink-0 text-blue-700 dark:text-blue-400" />
+                    <span class="text-sm font-medium text-blue-700 dark:text-blue-400">
+                        Tienes un préstamo activo
+                    </span>
+                </div>
+
                 <!-- Availability Badge -->
                 <div 
                     class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors"

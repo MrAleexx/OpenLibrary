@@ -80,7 +80,7 @@ class ReservationController extends Controller
                 ->whereHas('physicalCopy', function ($query) use ($book) {
                     $query->where('book_id', $book->id);
                 })
-                ->where('status', 'active')
+                ->where('book_loans.status', 'active')
                 ->exists();
 
             if ($hasActiveLoan) {

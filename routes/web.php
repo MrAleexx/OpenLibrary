@@ -82,6 +82,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('cart.clear');
     
     // ============================================
+    // RUTAS DE PRÉSTAMOS
+    // ============================================
+    
+    // Ver mis préstamos
+    Route::get('/loans', [\App\Http\Controllers\LoanController::class, 'index'])
+        ->name('loans.index');
+    
+    // Solicitar renovación de préstamo (opcional)
+    Route::post('/loans/{loan}/renew', [\App\Http\Controllers\LoanController::class, 'requestRenewal'])
+        ->name('loans.renew');
+    
+    // ============================================
     // RUTAS DE RESERVAS DE LIBROS
     // ============================================
     

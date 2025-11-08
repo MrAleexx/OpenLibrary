@@ -26,10 +26,11 @@ class Book extends Model
         'is_active',
         'downloadable',
         'book_type',
-        'physical_copies_count', // Cambiado de total_physical_copies
-        'available_copies_count', // Cambiado de available_physical_copies
+        'total_physical_copies',      // ← Nombre real de la columna en DB
+        'available_physical_copies',  // ← Nombre real de la columna en DB
         'total_downloads',
         'total_views',
+        'total_loans',
         'featured',
         'search_metadata',
         'published_at',
@@ -42,14 +43,15 @@ class Book extends Model
         'published_at' => 'datetime',
         'publication_year' => 'integer',
         'pages' => 'integer',
-        'physical_copies_count' => 'integer',
-        'available_copies_count' => 'integer',
+        'total_physical_copies' => 'integer',      // ← Cast de columna real
+        'available_physical_copies' => 'integer',  // ← Cast de columna real
         'total_downloads' => 'integer',
         'total_views' => 'integer',
+        'total_loans' => 'integer',
     ];
 
     // Agregar URLs completas para las imágenes y PDFs
-    protected $appends = ['cover_url', 'pdf_url'];
+    protected $appends = ['cover_url', 'pdf_url', 'physical_copies_count', 'available_copies_count'];
 
     /**
      * Relationships
@@ -213,13 +215,31 @@ class Book extends Model
     }
 
     /**
+     * Accessor para physical_copies_count
+     * Mapea desde la columna real total_physical_copies
+     */
+    public function getPhysicalCopiesCountAttribute(): int
+    {
+        return $this->attributes['total_physical_copies'] ?? 0;
+    }
+
+    /**
+     * Accessor para available_copies_count
+     * Mapea desde la columna real available_physical_copies
+     */
+    public function getAvailableCopiesCountAttribute(): int
+    {
+        return $this->attributes['available_physical_copies'] ?? 0;
+    }
+
+    /**
      * Actualizar contadores de copias físicas
      */
     public function updatePhysicalCopiesCount(): void
     {
         $this->update([
-            'physical_copies_count' => $this->physicalCopies()->count(),
-            'available_copies_count' => $this->physicalCopies()->where('status', 'available')->count(),
+            'total_physical_copies' => $this->physicalCopies()->count(),
+            'available_physical_copies' => $this->physicalCopies()->where('status', 'available')->count(),
         ]);
     }
 }
