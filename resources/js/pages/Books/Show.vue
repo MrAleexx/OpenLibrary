@@ -35,7 +35,7 @@ interface Book {
     contributors?: Array<{
         id: number;
         full_name: string;
-        role: string;
+        contributor_type: string;
         sequence_number: number;
     }>;
     categories?: Array<{
@@ -113,7 +113,7 @@ const authors = computed(() => {
         return [];
     }
     return props.book.contributors
-        .filter(c => c.role === 'author')
+        .filter(c => c.contributor_type === 'author')
         .sort((a, b) => a.sequence_number - b.sequence_number);
 });
 
@@ -122,7 +122,7 @@ const editors = computed(() => {
         return [];
     }
     return props.book.contributors
-        .filter(c => c.role === 'editor')
+        .filter(c => c.contributor_type === 'editor')
         .sort((a, b) => a.sequence_number - b.sequence_number);
 });
 

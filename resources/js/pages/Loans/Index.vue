@@ -22,12 +22,14 @@ interface PhysicalCopy {
 interface BookLoan {
   id: number
   physical_copy: PhysicalCopy
-  loan_date: string
-  due_date: string
+  loan_date: string | null
+  due_date: string | null
   actual_return_date: string | null
-  status: 'active' | 'overdue' | 'returned'
+  status: 'pending_pickup' | 'ready_for_pickup' | 'active' | 'overdue' | 'returned' | 'cancelled'
   renewal_count: number
   notes: string | null
+  created_at: string
+  updated_at?: string
 }
 
 interface Props {
@@ -50,6 +52,10 @@ const breadcrumbs = [
 // Computed
 const hasActiveLoans = computed(() => props.activeLoans.length > 0)
 const hasOverdueLoans = computed(() => props.stats.overdue_loans > 0)
+const readyForPickupLoans = computed(() => 
+  props.activeLoans.filter(loan => loan.status === 'ready_for_pickup')
+)
+const hasReadyForPickup = computed(() => readyForPickupLoans.value.length > 0)
 
 // Helpers
 function formatDate(date: string): string {
@@ -60,7 +66,9 @@ function formatDate(date: string): string {
   })
 }
 
-function getDaysRemaining(dueDate: string): number {
+function getDaysRemaining(dueDate: string | null): number | null {
+  if (!dueDate) return null;
+  
   const due = new Date(dueDate)
   const today = new Date()
   const diffTime = due.getTime() - today.getTime()
@@ -68,12 +76,34 @@ function getDaysRemaining(dueDate: string): number {
 }
 
 function getLoanStatusBadge(loan: BookLoan) {
-  if (loan.status === 'returned') {
+  // Estados pendientes (sin fecha de préstamo aún)
+  if (loan.status === 'pending_pickup') {
+    return {
+      variant: 'outline' as const,
+      class: 'bg-yellow-500/10 text-yellow-600 border-yellow-200 dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-800',
+      label: 'Preparando tu libro',
+      icon: Clock
+    }
+  } else if (loan.status === 'ready_for_pickup') {
+    return {
+      variant: 'outline' as const,
+      class: 'bg-cyan-500/10 text-cyan-600 border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-400 dark:border-cyan-800 animate-pulse',
+      label: '¡Tu libro está listo!',
+      icon: CheckCircle
+    }
+  } else if (loan.status === 'returned') {
     return {
       variant: 'outline' as const,
       class: 'bg-green-500/10 text-green-600 border-green-200 dark:bg-green-500/20 dark:text-green-400 dark:border-green-800',
       label: 'Devuelto',
       icon: CheckCircle
+    }
+  } else if (loan.status === 'cancelled') {
+    return {
+      variant: 'outline' as const,
+      class: 'bg-gray-500/10 text-gray-600 border-gray-200 dark:bg-gray-500/20 dark:text-gray-400 dark:border-gray-800',
+      label: 'Cancelado',
+      icon: XCircle
     }
   } else if (loan.status === 'overdue') {
     return {
@@ -83,8 +113,18 @@ function getLoanStatusBadge(loan: BookLoan) {
       icon: XCircle
     }
   } else {
+    // Status: active
+    if (!loan.due_date) {
+      return {
+        variant: 'outline' as const,
+        class: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-800',
+        label: 'Activo',
+        icon: Clock
+      }
+    }
+    
     const daysLeft = getDaysRemaining(loan.due_date)
-    if (daysLeft <= 3) {
+    if (daysLeft !== null && daysLeft <= 3) {
       return {
         variant: 'outline' as const,
         class: 'bg-orange-500/10 text-orange-600 border-orange-200 dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-800',
@@ -157,6 +197,15 @@ function getBookCover(loan: BookLoan): string {
         </Card>
       </div>
 
+      <!-- Ready for Pickup Alert -->
+      <Alert v-if="hasReadyForPickup" class="mb-6 border-cyan-200 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-950">
+        <CheckCircle class="h-4 w-4 text-cyan-600" />
+        <AlertDescription class="text-cyan-900 dark:text-cyan-100">
+          <span class="font-semibold">¡Tienes {{ readyForPickupLoans.length }} libro(s) esperándote!</span>
+          <span class="ml-1">Tu(s) libro(s) ha(n) sido apartado(s) y está(n) listo(s) para recoger en biblioteca.</span>
+        </AlertDescription>
+      </Alert>
+
       <!-- Overdue Alert -->
       <Alert v-if="hasOverdueLoans" variant="destructive" class="mb-6">
         <AlertCircle class="h-4 w-4" />
@@ -211,18 +260,33 @@ function getBookCover(loan: BookLoan): string {
 
                 <!-- Dates -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                  <div class="flex items-center gap-2 text-muted-foreground">
+                  <!-- Fecha de préstamo (solo si existe) -->
+                  <div v-if="loan.loan_date" class="flex items-center gap-2 text-muted-foreground">
                     <Calendar class="w-4 h-4" />
                     <span>Prestado: {{ formatDate(loan.loan_date) }}</span>
                   </div>
-                  <div class="flex items-center gap-2">
+                  <div v-else class="flex items-center gap-2 text-muted-foreground">
+                    <Clock class="w-4 h-4" />
+                    <span>Solicitado: {{ formatDate(loan.created_at) }}</span>
+                  </div>
+                  
+                  <!-- Fecha de vencimiento (solo si existe) -->
+                  <div v-if="loan.due_date" class="flex items-center gap-2">
                     <Calendar class="w-4 h-4" :class="loan.status === 'overdue' ? 'text-red-600' : 'text-muted-foreground'" />
                     <span :class="loan.status === 'overdue' ? 'text-red-600 font-semibold' : 'text-muted-foreground'">
                       Vence: {{ formatDate(loan.due_date) }}
-                      <span v-if="loan.status !== 'overdue'" class="ml-1">
+                      <span v-if="loan.status !== 'overdue' && getDaysRemaining(loan.due_date) !== null" class="ml-1">
                         ({{ getDaysRemaining(loan.due_date) }} días)
                       </span>
                     </span>
+                  </div>
+                  <div v-else-if="loan.status === 'pending_pickup'" class="flex items-center gap-2 text-amber-600">
+                    <AlertCircle class="w-4 h-4" />
+                    <span class="font-medium">En preparación - Te avisaremos cuando esté listo</span>
+                  </div>
+                  <div v-else-if="loan.status === 'ready_for_pickup'" class="flex items-center gap-2 text-cyan-600 animate-pulse">
+                    <CheckCircle class="w-4 h-4" />
+                    <span class="font-bold">¡Tu libro te está esperando! Recógelo en biblioteca</span>
                   </div>
                 </div>
 
@@ -288,7 +352,17 @@ function getBookCover(loan: BookLoan): string {
                   {{ loan.physical_copy.book.title }}
                 </Link>
                 <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                  <span>{{ formatDate(loan.loan_date) }} - {{ formatDate(loan.actual_return_date || loan.due_date) }}</span>
+                  <!-- Mostrar fechas según disponibilidad -->
+                  <span v-if="loan.loan_date && loan.actual_return_date">
+                    {{ formatDate(loan.loan_date) }} - {{ formatDate(loan.actual_return_date) }}
+                  </span>
+                  <span v-else-if="loan.loan_date && loan.due_date">
+                    {{ formatDate(loan.loan_date) }} - {{ formatDate(loan.due_date) }}
+                  </span>
+                  <span v-else>
+                    {{ formatDate(loan.created_at) }}
+                  </span>
+                  
                   <Badge :class="getLoanStatusBadge(loan).class" class="h-5">
                     {{ getLoanStatusBadge(loan).label }}
                   </Badge>

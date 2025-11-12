@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserImportController;
+use App\Http\Controllers\Admin\LoanController;
+use App\Http\Controllers\Admin\ReservationController;
 
 // ========================================
 // Grupo principal: rutas protegidas del panel admin
@@ -83,5 +85,28 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         // RUTAS PARA CONTRASEÑAS TEMPORALES
         Route::get('/temp-passwords', [UserImportController::class, 'showTempPasswords'])->name('temp-passwords');
         Route::get('/temp-passwords/report', [UserImportController::class, 'downloadPasswordReport'])->name('temp-passwords.report');
+    });
+
+    // ===========================
+    // PRÉSTAMOS (LOANS)
+    // ===========================
+    Route::prefix('/admin/loans')->name('admin.loans.')->group(function () {
+        Route::get('/', [LoanController::class, 'index'])->name('index');
+        
+        // Gestión de estados del flujo
+        Route::post('/{loan}/mark-ready', [LoanController::class, 'markAsReady'])->name('mark-ready');
+        Route::post('/{loan}/activate', [LoanController::class, 'activateLoan'])->name('activate');
+        Route::post('/{loan}/cancel', [LoanController::class, 'cancelLoan'])->name('cancel');
+        Route::post('/{loan}/mark-returned', [LoanController::class, 'markAsReturned'])->name('mark-returned');
+    });
+
+    // ===========================
+    // RESERVAS (RESERVATIONS)
+    // ===========================
+    Route::prefix('/admin/reservations')->name('admin.reservations.')->group(function () {
+        Route::get('/', [ReservationController::class, 'index'])->name('index');
+        Route::post('/{reservation}/mark-ready', [ReservationController::class, 'markAsReady'])->name('mark-ready');
+        Route::post('/{reservation}/convert-to-loan', [ReservationController::class, 'convertToLoan'])->name('convert-to-loan');
+        Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('cancel');
     });
 });

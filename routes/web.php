@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\UserReservationController;
 use App\Http\Controllers\DownloadController;
 
 // Ruta principal que redirige según autenticación
@@ -97,8 +98,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // RUTAS DE RESERVAS DE LIBROS
     // ============================================
     
-    // Ver mis reservas
-    Route::get('/reservations', [ReservationController::class, 'index'])
+    // Ver mis reservas (Panel del usuario)
+    Route::get('/reservations', [UserReservationController::class, 'index'])
         ->name('reservations.index');
     
     // Crear nueva reserva
@@ -106,7 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('reservations.store');
     
     // Cancelar reserva
-    Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy'])
+    Route::delete('/reservations/{reservation}', [UserReservationController::class, 'destroy'])
         ->name('reservations.destroy');
     
     // ============================================

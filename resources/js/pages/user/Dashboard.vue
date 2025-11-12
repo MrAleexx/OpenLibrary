@@ -329,7 +329,7 @@ onMounted(() => {
             <!-- Quick Actions -->
             <div class="bg-card shadow-lg rounded-xl border border-border p-6 animate-slide-up" :class="{ 'animate-in': isVisible }" style="animation-delay: 0.6s;">
                 <h2 class="text-xl font-bold text-foreground mb-6">Acciones Rápidas</h2>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <a 
                         href="/books" 
                         class="group relative p-6 bg-background border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all duration-300 hover:-translate-y-1 text-center overflow-hidden"
@@ -379,6 +379,19 @@ onMounted(() => {
                                 <BookMarked class="w-6 h-6 text-secondary" />
                             </div>
                             <h3 class="font-semibold text-foreground group-hover:text-secondary transition-colors duration-300">Mis Préstamos</h3>
+                        </div>
+                    </a>
+
+                    <a 
+                        href="/reservations" 
+                        class="group relative p-6 bg-background border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all duration-300 hover:-translate-y-1 text-center overflow-hidden"
+                    >
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative z-10">
+                            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
+                                <Calendar class="w-6 h-6 text-primary" />
+                            </div>
+                            <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">Mis Reservas</h3>
                         </div>
                     </a>
                 </div>
