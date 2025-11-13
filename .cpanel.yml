@@ -1,48 +1,32 @@
 ---
 deployment:
   tasks:
-    # Ruta del proyecto en producción
     - export DEPLOYPATH=/home/usersumak/public_html
 
-    # Copia los archivos y carpetas esenciales del proyecto Laravel
-    - /bin/cp -r app $DEPLOYPATH
-    - /bin/cp -r bootstrap $DEPLOYPATH
-    - /bin/cp -r config $DEPLOYPATH
-    - /bin/cp -r database $DEPLOYPATH
-    - /bin/cp -r public $DEPLOYPATH
-    - /bin/cp -r resources $DEPLOYPATH
-    - /bin/cp -r routes $DEPLOYPATH
-    - /bin/cp -r lang $DEPLOYPATH
-    - /bin/cp artisan $DEPLOYPATH
-    - /bin/cp composer.json $DEPLOYPATH
-    - /bin/cp composer.lock $DEPLOYPATH
-    - /bin/cp package.json $DEPLOYPATH
-    - /bin/cp vite.config.* $DEPLOYPATH
-    - /bin/cp .htaccess $DEPLOYPATH
-    - /bin/cp .cpanel.yml $DEPLOYPATH
+    - echo "Iniciando despliegue hacia $DEPLOYPATH..."
 
-    # Si no existe .env, lo copia (no lo reemplaza si ya existe)
-    - if [ ! -f $DEPLOYPATH/.env ]; then /bin/cp .env.example $DEPLOYPATH/.env; fi
+    # Copia segura y completa con rsync
+    - /bin/rsync -av --delete --exclude='.git' --exclude='node_modules' --exclude='storage' ./ $DEPLOYPATH
 
-    # Instala dependencias PHP de forma optimizada
-    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+    # Copia manualmente archivos ocultos importantes
+    - /bin/cp -f .env.example $DEPLOYPATH/.env.example
+    - /bin/cp -f .htaccess $DEPLOYPATH/.htaccess
 
-    # Genera APP_KEY solo si falta
+    - echo "Archivos copiados."
+
+    # Instala dependencias PHP
+    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+    # Genera APP_KEY si falta
     - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then cd $DEPLOYPATH && php artisan key:generate; fi
 
-    # Limpia cachés antes de regenerarlas
+    # Limpia y cachea configuración
     - cd $DEPLOYPATH && php artisan optimize:clear
-
-    # Instala dependencias Node (si existe package.json y npm está disponible)
-    - if [ -f "$DEPLOYPATH/package.json" ]; then cd $DEPLOYPATH && npm ci && npm run build || echo "npm o build fallido"; fi
-
-    # Migraciones seguras
-    - cd $DEPLOYPATH && php artisan migrate --force || echo "Migraciones omitidas"
-
-    # Cachea configuración, rutas y vistas
     - cd $DEPLOYPATH && php artisan config:cache
     - cd $DEPLOYPATH && php artisan route:cache
     - cd $DEPLOYPATH && php artisan view:cache
 
-    # Enlace de almacenamiento (solo si no existe)
+    # Crea enlace de almacenamiento si no existe
     - if [ ! -L "$DEPLOYPATH/public/storage" ]; then cd $DEPLOYPATH && php artisan storage:link; fi
+
+    - echo "Despliegue completado correctamente."
