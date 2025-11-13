@@ -22,7 +22,7 @@ interface Book {
     };
     contributors?: Array<{
         full_name: string;
-        role: string;
+        contributor_type: string;
     }>;
     categories?: Array<{
         name: string;

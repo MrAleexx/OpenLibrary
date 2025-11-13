@@ -7,115 +7,120 @@ use App\Models\Book;
 use App\Models\Category;
 use App\Models\Publisher;
 use App\Models\Language;
+use App\Models\PhysicalCopy;
 use App\Models\BookDetail;
 use App\Models\BookContributor;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Controlador de administración de libros
+ * 
+ * Gestiona CRUD completo de libros del sistema incluyendo:
+ * - Listado con filtros y búsqueda
+ * - Creación con categorías, autores y detalles
+ * - Edición de datos y copias físicas
+ * - Eliminación (soft delete)
+ * - Gestión de imágenes de portada
+ */
 class BookController extends Controller
 {
-    public function index(Request $request)
+    // ===============================================
+    // CONSTANTES
+    // ===============================================
+
+    /**
+     * Configuración de paginación
+     */
+    private const BOOKS_PER_PAGE = 12;
+    private const RECENT_DOWNLOADS_LIMIT = 10;
+
+    /**
+     * Campos permitidos para ordenamiento
+     */
+    private const ALLOWED_SORT_FIELDS = [
+        'title',
+        'created_at',
+        'total_downloads',
+        'total_views',
+        'publication_year'
+    ];
+
+    /**
+     * Ordenamiento por defecto
+     */
+    private const DEFAULT_SORT_FIELD = 'created_at';
+    private const DEFAULT_SORT_DIRECTION = 'desc';
+
+    /**
+     * Estados de filtro de status
+     */
+    private const STATUS_ACTIVE = 'active';
+    private const STATUS_INACTIVE = 'inactive';
+    private const STATUS_FEATURED = 'featured';
+
+    /**
+     * Tipos de libro disponibles
+     */
+    private const BOOK_TYPE_DIGITAL = 'digital';
+    private const BOOK_TYPE_PHYSICAL = 'physical';
+    private const BOOK_TYPE_BOTH = 'both';
+
+    // ===============================================
+    // MÉTODOS PÚBLICOS
+    // ===============================================
+
+    /**
+     * Listar libros con filtros y paginación
+     * 
+     * @param Request $request Parámetros de filtrado y ordenamiento
+     * @return Response Vista Inertia con libros paginados
+     */
+    public function index(Request $request): Response
     {
-        $query = Book::with(['publisher', 'categories', 'details'])
-            ->withCount(['downloads', 'physicalCopies', 'loans']);
+        $query = $this->buildBooksQuery();
 
-        // Búsqueda
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('isbn', 'like', "%{$search}%")
-                    ->orWhereHas('contributors', function ($q) use ($search) {
-                        $q->where('full_name', 'like', "%{$search}%");
-                    });
-            });
-        }
+        $this->applyFilters($query, $request);
+        $this->applySorting($query, $request);
 
-        // Filtros
-        if ($request->has('category') && $request->category) {
-            $query->whereHas('categories', function ($q) use ($request) {
-                $q->where('categories.id', $request->category);
-            });
-        }
-
-        if ($request->has('book_type') && $request->book_type) {
-            $query->where('book_type', $request->book_type);
-        }
-
-        if ($request->has('status') && $request->status) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            } elseif ($request->status === 'featured') {
-                $query->where('featured', true);
-            }
-        }
-
-        // Ordenamiento
-        $sortField = $request->get('sort_field', 'created_at');
-        $sortDirection = $request->get('sort_direction', 'desc');
-
-        $allowedSortFields = ['title', 'created_at', 'total_downloads', 'total_views', 'publication_year'];
-        if (in_array($sortField, $allowedSortFields)) {
-            $query->orderBy($sortField, $sortDirection);
-        }
-
-        $books = $query->paginate(12)->withQueryString();
+        $books = $query->paginate(self::BOOKS_PER_PAGE)->withQueryString();
 
         return Inertia::render('admin/books/Index', [
             'books' => $books,
-            'filters' => $request->only(['search', 'category', 'book_type', 'status']),
-            'sort' => ['field' => $sortField, 'direction' => $sortDirection],
+            'filters' => $this->extractFilters($request),
+            'sort' => $this->extractSortParams($request),
             'categories' => Category::where('is_active', true)->get(),
-            'stats' => [
-                'total_books' => Book::count(),
-                'active_books' => Book::where('is_active', true)->count(),
-                'digital_books' => Book::where('book_type', 'digital')->count(),
-                'physical_books' => Book::where('book_type', 'physical')->count(),
-                'both_types' => Book::where('book_type', 'both')->count(),
-                'total_physical_copies' => \App\Models\PhysicalCopy::count(),
-                'available_copies' => \App\Models\PhysicalCopy::where('status', 'available')->count(),
-            ]
+            'stats' => $this->calculateStats(),
         ]);
     }
 
-    public function create()
+    /**
+     * Mostrar formulario de creación de libro
+     * 
+     * @return Response Vista Inertia con datos para formulario
+     */
+    public function create(): Response
     {
-        // Obtener solo categorías "hoja" (sin subcategorías) con su ruta completa
-        $selectableCategories = Category::where('is_active', true)
-            ->with('parent') // Cargar parent para construir la ruta
-            ->get()
-            ->filter(function ($category) {
-                return $category->isLeaf(); // Solo categorías sin hijos
-            })
-            ->map(function ($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'full_path' => $this->getCategoryFullPath($category),
-                    'breadcrumb' => $this->getCategoryBreadcrumb($category)
-                ];
-            })
-            ->sortBy('full_path')
-            ->values();
-
         return Inertia::render('admin/books/Create', [
-            'categories' => $selectableCategories,
+            'categories' => $this->getSelectableCategories(),
             'publishers' => Publisher::where('is_active', true)->get(),
             'languages' => Language::where('is_active', true)->get(),
-            'book_types' => [
-                ['value' => 'digital', 'label' => 'Digital'],
-                ['value' => 'physical', 'label' => 'Físico'],
-                ['value' => 'both', 'label' => 'Ambos'],
-            ],
+            'book_types' => $this->getBookTypes(),
         ]);
     }
 
-    public function show(Book $book)
+    /**
+     * Mostrar detalles de un libro
+     * 
+     * @param Book $book Libro a mostrar
+     * @return Response Vista Inertia con detalles del libro
+     */
+    public function show(Book $book): Response
     {
         $book->load([
             'publisher',
@@ -124,56 +129,42 @@ class BookController extends Controller
             'contributors',
             'physicalCopies',
             'downloads' => function ($query) {
-                $query->limit(10)->latest();
+                $query->limit(self::RECENT_DOWNLOADS_LIMIT)->latest();
             }
         ]);
 
         return Inertia::render('admin/books/Show', [
             'book' => $book,
-            'stats' => [
-                'total_downloads' => $book->downloads()->count(),
-                'total_loans' => $book->loans()->count(),
-                'total_views' => $book->total_views,
-            ]
+            'stats' => $this->getBookStats($book),
         ]);
     }
 
-    public function edit(Book $book)
+    /**
+     * Mostrar formulario de edición de libro
+     * 
+     * @param Book $book Libro a editar
+     * @return Response Vista Inertia con datos para edición
+     */
+    public function edit(Book $book): Response
     {
         $book->load(['categories', 'contributors', 'details']);
 
-        // Obtener solo categorías "hoja" (sin subcategorías) con su ruta completa
-        $selectableCategories = Category::where('is_active', true)
-            ->with('parent')
-            ->get()
-            ->filter(function ($category) {
-                return $category->isLeaf(); // Solo categorías sin hijos
-            })
-            ->map(function ($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'full_path' => $this->getCategoryFullPath($category),
-                    'breadcrumb' => $this->getCategoryBreadcrumb($category)
-                ];
-            })
-            ->sortBy('full_path')
-            ->values();
-
         return Inertia::render('admin/books/Edit', [
             'book' => $book,
-            'categories' => $selectableCategories,
+            'categories' => $this->getSelectableCategories(),
             'publishers' => Publisher::where('is_active', true)->get(),
             'languages' => Language::where('is_active', true)->get(),
-            'book_types' => [
-                ['value' => 'digital', 'label' => 'Digital'],
-                ['value' => 'physical', 'label' => 'Físico'],
-                ['value' => 'both', 'label' => 'Ambos'],
-            ],
+            'book_types' => $this->getBookTypes(),
         ]);
     }
 
-    public function toggleFeatured(Book $book)
+    /**
+     * Alternar estado destacado de un libro
+     * 
+     * @param Book $book Libro a modificar
+     * @return RedirectResponse
+     */
+    public function toggleFeatured(Book $book): RedirectResponse
     {
         $book->update(['featured' => !$book->featured]);
 
@@ -494,5 +485,239 @@ class BookController extends Controller
             },
             'Libro eliminado exitosamente.'
         );
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - QUERIES
+    // ===============================================
+
+    /**
+     * Construir query base para libros con relaciones
+     * 
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function buildBooksQuery()
+    {
+        return Book::with(['publisher', 'categories', 'details'])
+            ->withCount(['downloads', 'physicalCopies', 'loans']);
+    }
+
+    /**
+     * Obtener categorías seleccionables (solo hojas)
+     * 
+     * @return \Illuminate\Support\Collection
+     */
+    private function getSelectableCategories()
+    {
+        return Category::where('is_active', true)
+            ->with('parent')
+            ->get()
+            ->filter(function ($category) {
+                return $category->isLeaf();
+            })
+            ->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'full_path' => $this->getCategoryFullPath($category),
+                    'breadcrumb' => $this->getCategoryBreadcrumb($category)
+                ];
+            })
+            ->sortBy('full_path')
+            ->values();
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - FILTROS
+    // ===============================================
+
+    /**
+     * Aplicar filtros a la query de libros
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @return void
+     */
+    private function applyFilters($query, Request $request): void
+    {
+        $this->applySearchFilter($query, $request->input('search'));
+        $this->applyCategoryFilter($query, $request->input('category'));
+        $this->applyBookTypeFilter($query, $request->input('book_type'));
+        $this->applyStatusFilter($query, $request->input('status'));
+    }
+
+    /**
+     * Aplicar filtro de búsqueda
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $search
+     * @return void
+     */
+    private function applySearchFilter($query, ?string $search): void
+    {
+        if (empty($search)) {
+            return;
+        }
+
+        $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+                ->orWhere('isbn', 'like', "%{$search}%")
+                ->orWhereHas('contributors', function ($q) use ($search) {
+                    $q->where('full_name', 'like', "%{$search}%");
+                });
+        });
+    }
+
+    /**
+     * Aplicar filtro de categoría
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int|null $categoryId
+     * @return void
+     */
+    private function applyCategoryFilter($query, ?int $categoryId): void
+    {
+        if (empty($categoryId)) {
+            return;
+        }
+
+        $query->whereHas('categories', function ($q) use ($categoryId) {
+            $q->where('categories.id', $categoryId);
+        });
+    }
+
+    /**
+     * Aplicar filtro de tipo de libro
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $bookType
+     * @return void
+     */
+    private function applyBookTypeFilter($query, ?string $bookType): void
+    {
+        if (empty($bookType)) {
+            return;
+        }
+
+        $query->where('book_type', $bookType);
+    }
+
+    /**
+     * Aplicar filtro de estado
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $status
+     * @return void
+     */
+    private function applyStatusFilter($query, ?string $status): void
+    {
+        if (empty($status)) {
+            return;
+        }
+
+        switch ($status) {
+            case self::STATUS_ACTIVE:
+                $query->where('is_active', true);
+                break;
+            case self::STATUS_INACTIVE:
+                $query->where('is_active', false);
+                break;
+            case self::STATUS_FEATURED:
+                $query->where('featured', true);
+                break;
+        }
+    }
+
+    /**
+     * Aplicar ordenamiento a la query
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @return void
+     */
+    private function applySorting($query, Request $request): void
+    {
+        $sortField = $request->get('sort_field', self::DEFAULT_SORT_FIELD);
+        $sortDirection = $request->get('sort_direction', self::DEFAULT_SORT_DIRECTION);
+
+        if (in_array($sortField, self::ALLOWED_SORT_FIELDS)) {
+            $query->orderBy($sortField, $sortDirection);
+        }
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - HELPERS
+    // ===============================================
+
+    /**
+     * Extraer filtros del request
+     * 
+     * @param Request $request
+     * @return array
+     */
+    private function extractFilters(Request $request): array
+    {
+        return $request->only(['search', 'category', 'book_type', 'status']);
+    }
+
+    /**
+     * Extraer parámetros de ordenamiento
+     * 
+     * @param Request $request
+     * @return array
+     */
+    private function extractSortParams(Request $request): array
+    {
+        return [
+            'field' => $request->get('sort_field', self::DEFAULT_SORT_FIELD),
+            'direction' => $request->get('sort_direction', self::DEFAULT_SORT_DIRECTION),
+        ];
+    }
+
+    /**
+     * Calcular estadísticas del catálogo
+     * 
+     * @return array
+     */
+    private function calculateStats(): array
+    {
+        return [
+            'total_books' => Book::count(),
+            'active_books' => Book::where('is_active', true)->count(),
+            'digital_books' => Book::where('book_type', self::BOOK_TYPE_DIGITAL)->count(),
+            'physical_books' => Book::where('book_type', self::BOOK_TYPE_PHYSICAL)->count(),
+            'both_types' => Book::where('book_type', self::BOOK_TYPE_BOTH)->count(),
+            'total_physical_copies' => PhysicalCopy::count(),
+            'available_copies' => PhysicalCopy::where('status', 'available')->count(),
+        ];
+    }
+
+    /**
+     * Obtener estadísticas de un libro específico
+     * 
+     * @param Book $book
+     * @return array
+     */
+    private function getBookStats(Book $book): array
+    {
+        return [
+            'total_downloads' => $book->downloads()->count(),
+            'total_loans' => $book->loans()->count(),
+            'total_views' => $book->total_views,
+        ];
+    }
+
+    /**
+     * Obtener tipos de libro disponibles
+     * 
+     * @return array
+     */
+    private function getBookTypes(): array
+    {
+        return [
+            ['value' => self::BOOK_TYPE_DIGITAL, 'label' => 'Digital'],
+            ['value' => self::BOOK_TYPE_PHYSICAL, 'label' => 'Físico'],
+            ['value' => self::BOOK_TYPE_BOTH, 'label' => 'Ambos'],
+        ];
     }
 }

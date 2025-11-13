@@ -8,97 +8,119 @@ use App\Models\UserDownload;
 use App\Models\BookLoan;
 use App\Models\BookReservation;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Inertia\Response;
 use Carbon\Carbon;
 
+/**
+ * Controlador de administración de usuarios
+ * 
+ * Gestiona CRUD completo de usuarios del sistema incluyendo:
+ * - Listado con filtros y búsqueda
+ * - Creación con generación automática de ID institucional
+ * - Edición de datos y permisos
+ * - Activación/desactivación de cuentas
+ * - Visualización de actividad (préstamos, descargas, reservas)
+ */
 class UserController extends Controller
 {
+    // ===============================================
+    // CONSTANTES
+    // ===============================================
+
     /**
-     * Display a listing of the resource.
+     * Configuración de paginación
      */
-    public function index(Request $request)
+    private const USERS_PER_PAGE = 10;
+    private const RECENT_ACTIVITY_LIMIT = 10;
+
+    /**
+     * Límites de préstamos concurrentes
+     */
+    private const MIN_CONCURRENT_LOANS = 1;
+    private const MAX_CONCURRENT_LOANS = 10;
+    private const DEFAULT_CONCURRENT_LOANS = 3;
+
+    /**
+     * Configuración de contraseña temporal
+     */
+    private const TEMP_PASSWORD_LENGTH = 12;
+
+    /**
+     * Campos permitidos para ordenamiento
+     */
+    private const ALLOWED_SORT_FIELDS = [
+        'name',
+        'email',
+        'dni',
+        'created_at',
+        'last_login_at'
+    ];
+
+    /**
+     * Ordenamiento por defecto
+     */
+    private const DEFAULT_SORT_FIELD = 'created_at';
+    private const DEFAULT_SORT_DIRECTION = 'desc';
+
+    /**
+     * Estados de filtro
+     */
+    private const STATUS_ACTIVE = 'active';
+    private const STATUS_INACTIVE = 'inactive';
+    private const MEMBERSHIP_ACTIVE = 'active';
+    private const MEMBERSHIP_EXPIRED = 'expired';
+
+    /**
+     * Tipos de usuario disponibles
+     */
+    private const USER_TYPE_STUDENT = 'student';
+    private const USER_TYPE_TEACHER = 'teacher';
+    private const USER_TYPE_EXTERNAL = 'external';
+    private const USER_TYPE_LIBRARIAN = 'librarian';
+    private const USER_TYPE_ADMIN = 'admin';
+
+    // ===============================================
+    // MÉTODOS PÚBLICOS
+    // ===============================================
+
+    /**
+     * Listar usuarios con filtros y paginación
+     * 
+     * @param Request $request Parámetros de filtrado y ordenamiento
+     * @return Response Vista Inertia con usuarios paginados
+     */
+    public function index(Request $request): Response
     {
-        $query = User::with(['roles'])
-            ->withCount(['downloads', 'loans', 'reservations']);
+        $query = $this->buildUsersQuery();
 
-        // Búsqueda
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('dni', 'like', "%{$search}%")
-                    ->orWhere('institutional_id', 'like', "%{$search}%");
-            });
-        }
+        $this->applyFilters($query, $request);
+        $this->applySorting($query, $request);
 
-        // Filtros
-        if ($request->has('user_type') && $request->user_type) {
-            $query->where('user_type', $request->user_type);
-        }
-
-        if ($request->has('status') && $request->status) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
-        }
-
-        if ($request->has('membership_status') && $request->membership_status) {
-            if ($request->membership_status === 'active') {
-                $query->where('membership_expires_at', '>', now())
-                    ->orWhereNull('membership_expires_at');
-            } elseif ($request->membership_status === 'expired') {
-                $query->where('membership_expires_at', '<=', now());
-            }
-        }
-
-        // Ordenamiento
-        $sortField = $request->get('sort_field', 'created_at');
-        $sortDirection = $request->get('sort_direction', 'desc');
-
-        $allowedSortFields = ['name', 'email', 'dni', 'created_at', 'last_login_at'];
-        if (in_array($sortField, $allowedSortFields)) {
-            $query->orderBy($sortField, $sortDirection);
-        }
-
-        $users = $query->paginate(10)->withQueryString();
+        $users = $query->paginate(self::USERS_PER_PAGE)->withQueryString();
 
         return Inertia::render('admin/users/Index', [
             'users' => $users,
-            'filters' => $request->only(['search', 'user_type', 'status', 'membership_status']),
-            'sort' => ['field' => $sortField, 'direction' => $sortDirection],
-            'stats' => [
-                'total_users' => User::count(),
-                'active_users' => User::where('is_active', true)->count(),
-                'students' => User::where('user_type', 'student')->count(),
-                'teachers' => User::where('user_type', 'teacher')->count(),
-                'external_users' => User::where('user_type', 'external')->count(),
-                'librarian_users' => User::where('user_type', 'librarian')->count(),
-                'admin_users' => User::where('user_type', 'admin')->count(),
-            ]
+            'filters' => $this->extractFilters($request),
+            'sort' => $this->extractSortParams($request),
+            'stats' => $this->calculateStats(),
         ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Mostrar formulario de creación de usuario
+     * 
+     * @return Response Vista Inertia con datos para formulario
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('admin/users/Create', [
-            'userTypes' => [
-                ['value' => 'student', 'label' => 'Estudiante'],
-                ['value' => 'teacher', 'label' => 'Docente'],
-                ['value' => 'external', 'label' => 'Externo'],
-                ['value' => 'librarian', 'label' => 'Bibliotecario'],
-                ['value' => 'admin', 'label' => 'Administrador'],
-            ]
+            'userTypes' => $this->getUserTypes(),
         ]);
     }
 
@@ -145,7 +167,7 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource.
      */
     public function store(Request $request)
     {
@@ -158,7 +180,7 @@ class UserController extends Controller
             'user_type' => 'required|in:student,teacher,external,librarian,admin',
             'institutional_email' => 'nullable|email|unique:users,institutional_email',
             'membership_expires_at' => 'nullable|date|after:today',
-            'max_concurrent_loans' => 'required|integer|min:1|max:10',
+            'max_concurrent_loans' => 'required|integer|min:' . self::MIN_CONCURRENT_LOANS . '|max:' . self::MAX_CONCURRENT_LOANS,
             'can_download' => 'boolean',
             'is_active' => 'boolean',
         ]);
@@ -168,7 +190,7 @@ class UserController extends Controller
             $institutionalId = $this->generateInstitutionalId($request->user_type);
 
             // GENERAR CONTRASEÑA TEMPORAL
-            $tempPassword = Str::random(12);
+            $tempPassword = Str::random(self::TEMP_PASSWORD_LENGTH);
 
             $user = User::create([
                 'name' => $request->name,
@@ -398,5 +420,198 @@ class UserController extends Controller
             'user' => $user,
             'loans' => $loans
         ]);
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - QUERIES
+    // ===============================================
+
+    /**
+     * Construir query base para usuarios con relaciones
+     * 
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function buildUsersQuery()
+    {
+        return User::with(['roles'])
+            ->withCount(['downloads', 'loans', 'reservations']);
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - FILTROS
+    // ===============================================
+
+    /**
+     * Aplicar filtros a la query de usuarios
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @return void
+     */
+    private function applyFilters($query, Request $request): void
+    {
+        $this->applySearchFilter($query, $request->input('search'));
+        $this->applyUserTypeFilter($query, $request->input('user_type'));
+        $this->applyStatusFilter($query, $request->input('status'));
+        $this->applyMembershipStatusFilter($query, $request->input('membership_status'));
+    }
+
+    /**
+     * Aplicar filtro de búsqueda
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $search
+     * @return void
+     */
+    private function applySearchFilter($query, ?string $search): void
+    {
+        if (empty($search)) {
+            return;
+        }
+
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('dni', 'like', "%{$search}%")
+                ->orWhere('institutional_id', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Aplicar filtro de tipo de usuario
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $userType
+     * @return void
+     */
+    private function applyUserTypeFilter($query, ?string $userType): void
+    {
+        if (empty($userType)) {
+            return;
+        }
+
+        $query->where('user_type', $userType);
+    }
+
+    /**
+     * Aplicar filtro de estado
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $status
+     * @return void
+     */
+    private function applyStatusFilter($query, ?string $status): void
+    {
+        if (empty($status)) {
+            return;
+        }
+
+        if ($status === self::STATUS_ACTIVE) {
+            $query->where('is_active', true);
+        } elseif ($status === self::STATUS_INACTIVE) {
+            $query->where('is_active', false);
+        }
+    }
+
+    /**
+     * Aplicar filtro de estado de membresía
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string|null $membershipStatus
+     * @return void
+     */
+    private function applyMembershipStatusFilter($query, ?string $membershipStatus): void
+    {
+        if (empty($membershipStatus)) {
+            return;
+        }
+
+        if ($membershipStatus === self::MEMBERSHIP_ACTIVE) {
+            $query->where('membership_expires_at', '>', now())
+                ->orWhereNull('membership_expires_at');
+        } elseif ($membershipStatus === self::MEMBERSHIP_EXPIRED) {
+            $query->where('membership_expires_at', '<=', now());
+        }
+    }
+
+    /**
+     * Aplicar ordenamiento a la query
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @return void
+     */
+    private function applySorting($query, Request $request): void
+    {
+        $sortField = $request->get('sort_field', self::DEFAULT_SORT_FIELD);
+        $sortDirection = $request->get('sort_direction', self::DEFAULT_SORT_DIRECTION);
+
+        if (in_array($sortField, self::ALLOWED_SORT_FIELDS)) {
+            $query->orderBy($sortField, $sortDirection);
+        }
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - HELPERS
+    // ===============================================
+
+    /**
+     * Extraer filtros del request
+     * 
+     * @param Request $request
+     * @return array
+     */
+    private function extractFilters(Request $request): array
+    {
+        return $request->only(['search', 'user_type', 'status', 'membership_status']);
+    }
+
+    /**
+     * Extraer parámetros de ordenamiento
+     * 
+     * @param Request $request
+     * @return array
+     */
+    private function extractSortParams(Request $request): array
+    {
+        return [
+            'field' => $request->get('sort_field', self::DEFAULT_SORT_FIELD),
+            'direction' => $request->get('sort_direction', self::DEFAULT_SORT_DIRECTION),
+        ];
+    }
+
+    /**
+     * Calcular estadísticas de usuarios
+     * 
+     * @return array
+     */
+    private function calculateStats(): array
+    {
+        return [
+            'total_users' => User::count(),
+            'active_users' => User::where('is_active', true)->count(),
+            'students' => User::where('user_type', self::USER_TYPE_STUDENT)->count(),
+            'teachers' => User::where('user_type', self::USER_TYPE_TEACHER)->count(),
+            'external_users' => User::where('user_type', self::USER_TYPE_EXTERNAL)->count(),
+            'librarian_users' => User::where('user_type', self::USER_TYPE_LIBRARIAN)->count(),
+            'admin_users' => User::where('user_type', self::USER_TYPE_ADMIN)->count(),
+        ];
+    }
+
+    /**
+     * Obtener tipos de usuario disponibles
+     * 
+     * @return array
+     */
+    private function getUserTypes(): array
+    {
+        return [
+            ['value' => self::USER_TYPE_STUDENT, 'label' => 'Estudiante'],
+            ['value' => self::USER_TYPE_TEACHER, 'label' => 'Docente'],
+            ['value' => self::USER_TYPE_EXTERNAL, 'label' => 'Externo'],
+            ['value' => self::USER_TYPE_LIBRARIAN, 'label' => 'Bibliotecario'],
+            ['value' => self::USER_TYPE_ADMIN, 'label' => 'Administrador'],
+        ];
     }
 }

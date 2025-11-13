@@ -30,7 +30,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library, ShoppingCart, Clock } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library, ShoppingCart, Clock, Calendar, CalendarCheck } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import AppLogo from './AppLogo.vue';
 import { useCart } from '@/composables/useCart';
@@ -107,6 +107,11 @@ const userNavItems = computed<NavItem[]>(() => [
         href: '/loans',
         icon: Clock,
     },
+    {
+        title: 'Mis Reservas',
+        href: '/reservations',
+        icon: Calendar,
+    },
 ]);
 
 /**
@@ -138,6 +143,11 @@ const adminNavItems = computed<NavItem[]>(() => [
         title: 'Préstamos',
         href: '/admin/loans',
         icon: BookMarked,
+    },
+    {
+        title: 'Reservas',
+        href: '/admin/reservations',
+        icon: CalendarCheck,
     },
 ]);
 

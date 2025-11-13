@@ -45,7 +45,7 @@ interface Book {
     };
     contributors?: Array<{
         full_name: string;
-        role: string;
+        contributor_type: string;
     }>;
     categories?: Array<{
         name: string;
@@ -83,7 +83,7 @@ const authors = computed(() => {
     }
     
     const authorsList = props.book.contributors
-        .filter(c => c.role === 'author')
+        .filter(c => c.contributor_type === 'author')
         .map(c => c.full_name);
     
     return authorsList.length > 0 ? authorsList.join(', ') : 'Autor desconocido';

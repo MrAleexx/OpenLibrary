@@ -17,14 +17,14 @@ class LoanController extends Controller
     {
         $user = Auth::user();
 
-        // Get active loans with relationships
+        // Get active loans (including pending and ready states)
         $activeLoans = BookLoan::with([
             'physicalCopy.book:id,title,cover_image',
             'physicalCopy:id,book_id,barcode'
         ])
             ->where('user_id', $user->id)
-            ->whereIn('status', ['active', 'overdue'])
-            ->orderBy('due_date', 'asc')
+            ->whereIn('status', ['pending_pickup', 'ready_for_pickup', 'active', 'overdue'])
+            ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($loan) {
                 return [
@@ -38,23 +38,24 @@ class LoanController extends Controller
                             'cover_image' => $loan->physicalCopy->book->cover_url ?? null,
                         ]
                     ],
-                    'loan_date' => $loan->loan_date->toISOString(),
-                    'due_date' => $loan->due_date->toISOString(),
+                    'loan_date' => $loan->loan_date?->toISOString(),
+                    'due_date' => $loan->due_date?->toISOString(),
                     'actual_return_date' => $loan->actual_return_date?->toISOString(),
                     'status' => $loan->status,
                     'renewal_count' => $loan->renewal_count,
                     'notes' => $loan->notes,
+                    'created_at' => $loan->created_at->toISOString(),
                 ];
             });
 
-        // Get loan history (returned loans)
+        // Get loan history (returned and cancelled loans)
         $loanHistory = BookLoan::with([
             'physicalCopy.book:id,title,cover_image',
             'physicalCopy:id,book_id,barcode'
         ])
             ->where('user_id', $user->id)
-            ->where('status', 'returned')
-            ->orderBy('actual_return_date', 'desc')
+            ->whereIn('status', ['returned', 'cancelled'])
+            ->orderBy('updated_at', 'desc')
             ->limit(20)
             ->get()
             ->map(function ($loan) {
@@ -69,12 +70,14 @@ class LoanController extends Controller
                             'cover_image' => $loan->physicalCopy->book->cover_url ?? null,
                         ]
                     ],
-                    'loan_date' => $loan->loan_date->toISOString(),
-                    'due_date' => $loan->due_date->toISOString(),
+                    'loan_date' => $loan->loan_date?->toISOString(),
+                    'due_date' => $loan->due_date?->toISOString(),
                     'actual_return_date' => $loan->actual_return_date?->toISOString(),
                     'status' => $loan->status,
                     'renewal_count' => $loan->renewal_count,
                     'notes' => $loan->notes,
+                    'created_at' => $loan->created_at->toISOString(),
+                    'updated_at' => $loan->updated_at->toISOString(),
                 ];
             });
 

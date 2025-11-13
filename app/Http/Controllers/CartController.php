@@ -13,17 +13,35 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Controlador del Carrito de Préstamos
+ * 
+ * Responsabilidades:
+ * - Gestionar carrito de libros en sesión
+ * - Procesar checkout creando préstamos con estado pending_pickup
+ * - Validar disponibilidad y límites del usuario
+ * 
+ * Flujo de checkout:
+ * 1. Validar email verificado
+ * 2. Validar límite de préstamos
+ * 3. Crear préstamos en estado 'pending_pickup'
+ * 4. Reservar copias físicas
+ * 5. Actualizar contadores
+ * 
+ * @author Sistema de Biblioteca
+ * @version 2.0
+ */
 class CartController extends Controller
 {
     /**
-     * Periodo de préstamo predeterminado en días
+     * Estados de préstamo considerados como activos para límites
      */
-    private const LOAN_PERIOD_DAYS = 14;
-
-    /**
-     * Estados de préstamo considerados como activos
-     */
-    private const ACTIVE_LOAN_STATUSES = ['active', 'overdue'];
+    private const ACTIVE_LOAN_STATUSES = [
+        BookLoan::STATUS_PENDING_PICKUP,
+        BookLoan::STATUS_READY_FOR_PICKUP,
+        BookLoan::STATUS_ACTIVE,
+        BookLoan::STATUS_OVERDUE
+    ];
 
     /**
      * Mensajes de error estandarizados
@@ -33,7 +51,11 @@ class CartController extends Controller
     private const ERROR_ALREADY_ON_LOAN = 'Ya tienes un préstamo activo de este libro';
     private const ERROR_ALREADY_IN_CART = 'Este libro ya está en tu carrito';
     private const ERROR_EMAIL_NOT_VERIFIED = 'Debes verificar tu correo electrónico antes de hacer préstamos';
-    private const ERROR_SERVER = 'Error al procesar la solicitud';
+    private const ERROR_LOAN_LIMIT = 'Excedes el límite de préstamos simultáneos';
+
+    // ===============================================
+    // MÉTODOS PÚBLICOS
+    // ===============================================
 
     /**
      * Mostrar página del carrito de préstamos
@@ -43,7 +65,7 @@ class CartController extends Controller
     public function index(): Response
     {
         $user = auth()->user();
-        $activeLoansCount = $this->getActiveBookLoans();
+        $activeLoansCount = $this->getActiveLoansCount();
         $maxLoans = $user->max_concurrent_loans;
         $remainingLoans = $maxLoans - $activeLoansCount;
 
@@ -81,7 +103,7 @@ class CartController extends Controller
             $cart[] = $book->id;
             session()->put('cart', $cart);
 
-            $this->logCartAction('Book added to cart', $book, count($cart));
+            $this->logCartAction('Libro agregado al carrito', $book, count($cart));
 
             return response()->json([
                 'success' => true,
@@ -90,39 +112,29 @@ class CartController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error adding book to cart', [
-                'user_id' => auth()->id(),
-                'book_id' => $book->id,
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'error' => 'Error al agregar el libro al carrito',
-                'code' => 'SERVER_ERROR'
-            ], 500);
+            return $this->handleGenericError($e, 'agregar el libro al carrito', $book->id);
         }
     }
 
     /**
-     * Remove a book from cart
+     * Remover libro del carrito
+     * 
+     * @param Book $book
+     * @return JsonResponse
      */
     public function remove(Book $book): JsonResponse
     {
         try {
             $cart = session()->get('cart', []);
             
-            // Remove book from cart
+            // Remover libro del carrito
             $cart = array_values(array_filter($cart, function ($id) use ($book) {
                 return $id !== $book->id;
             }));
 
             session()->put('cart', $cart);
 
-            Log::info('Book removed from cart', [
-                'user_id' => auth()->id(),
-                'book_id' => $book->id,
-                'cart_count' => count($cart)
-            ]);
+            $this->logCartAction('Libro removido del carrito', $book, count($cart));
 
             return response()->json([
                 'success' => true,
@@ -145,134 +157,71 @@ class CartController extends Controller
     }
 
     /**
-     * Process checkout and create loans
+     * Procesar checkout y crear préstamos
+     * 
+     * Flujo nuevo:
+     * 1. Validaciones de usuario y límites
+     * 2. Crear préstamos en estado PENDING_PICKUP
+     * 3. Reservar copias físicas (status = 'reserved')
+     * 4. Decrementar contador de disponibilidad
+     * 5. Limpiar carrito
+     * 
+     * IMPORTANTE: Los préstamos inician como 'pending_pickup'
+     * El bibliotecario debe marcarlos como 'ready_for_pickup' 
+     * y luego 'active' cuando el usuario recoja el libro.
+     * 
+     * @param CheckoutRequest $request
+     * @return JsonResponse
      */
     public function checkout(CheckoutRequest $request): JsonResponse
     {
         try {
+            DB::beginTransaction();
+
             $bookIds = $request->validated()['book_ids'];
             $user = auth()->user();
 
-            // Verify user email is verified
+            // Validar email verificado
             if (!$user->hasVerifiedEmail()) {
-                return response()->json([
-                    'error' => 'Debes verificar tu correo electrónico antes de hacer préstamos',
-                    'code' => 'EMAIL_NOT_VERIFIED'
-                ], 422);
+                return $this->errorResponse(
+                    self::ERROR_EMAIL_NOT_VERIFIED,
+                    'EMAIL_NOT_VERIFIED',
+                    422
+                );
             }
 
-            // Check active loans limit
-            $activeLoansCount = $this->getActiveBookLoans();
-            $totalAfterCheckout = $activeLoansCount + count($bookIds);
-            $maxLoans = $user->max_concurrent_loans;
-
-            if ($totalAfterCheckout > $maxLoans) {
-                return response()->json([
-                    'error' => 'Excedes el límite de ' . $maxLoans . ' préstamos simultáneos',
-                    'code' => 'LOAN_LIMIT_EXCEEDED',
-                    'current_loans' => $activeLoansCount,
-                    'max_loans' => $maxLoans
-                ], 422);
+            // Validar límite de préstamos
+            $validation = $this->validateLoanLimits($user, count($bookIds));
+            if ($validation !== null) {
+                return $validation;
             }
 
-            // Use database transaction for data consistency
-            $loans = DB::transaction(function () use ($bookIds, $user) {
-                $createdLoans = [];
-                $loanDate = now();
-                $dueDate = now()->addDays(self::LOAN_PERIOD_DAYS);
+            // Crear préstamos
+            $loans = $this->createPendingLoans($bookIds, $user);
 
-                foreach ($bookIds as $bookId) {
-                    $book = Book::findOrFail($bookId);
-
-                    // Validate book is active
-                    if (!$book->is_active) {
-                        throw new \Exception("El libro '{$book->title}' no está disponible");
-                    }
-
-                    // Get available copy
-                    $availableCopy = $this->getAvailableCopy($book);
-                    if (!$availableCopy) {
-                        throw new \Exception("No hay copias disponibles de '{$book->title}'");
-                    }
-
-                    // Check user doesn't have active loan of this book
-                    $hasActiveLoan = $user->bookLoans()
-                        ->whereHas('physicalCopy', function ($query) use ($book) {
-                            $query->where('book_id', $book->id);
-                        })
-                        ->where('status', 'active')
-                        ->exists();
-
-                    if ($hasActiveLoan) {
-                        throw new \Exception("Ya tienes un préstamo activo de '{$book->title}'");
-                    }
-
-                    // Create loan
-                    $loan = BookLoan::create([
-                        'user_id' => $user->id,
-                        'physical_copy_id' => $availableCopy->id,
-                        'loan_date' => $loanDate,
-                        'due_date' => $dueDate,
-                        'status' => 'active',
-                        'renewal_count' => 0,
-                    ]);
-
-                    // Update physical copy status
-                    $availableCopy->update(['status' => 'loaned']);
-
-                    // Update book availability counters
-                    $book->decrement('available_physical_copies');
-                    
-                    // Update book statistics
-                    $book->increment('total_loans');
-
-                    $createdLoans[] = $loan->load(['physicalCopy.book.contributors', 'user']);
-
-                    Log::info('Loan created', [
-                        'loan_id' => $loan->id,
-                        'user_id' => $user->id,
-                        'book_id' => $book->id,
-                        'physical_copy_id' => $availableCopy->id,
-                        'due_date' => $dueDate
-                    ]);
-                }
-
-                return $createdLoans;
-            });
-
-            // Clear cart after successful checkout
+            // Limpiar carrito
             session()->forget('cart');
 
-            Log::info('Checkout completed successfully', [
-                'user_id' => $user->id,
-                'loans_count' => count($loans)
-            ]);
+            DB::commit();
+
+            $this->logCheckoutSuccess($user, count($loans));
 
             return response()->json([
                 'success' => true,
                 'loans' => $loans,
-                'message' => count($loans) === 1 
-                    ? 'Préstamo creado exitosamente' 
-                    : count($loans) . ' préstamos creados exitosamente',
-                'due_date' => $loans[0]->due_date->format('Y-m-d'),
+                'message' => $this->buildCheckoutMessage(count($loans)),
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Checkout failed', [
-                'user_id' => auth()->id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => $e->getMessage(),
-                'code' => 'CHECKOUT_FAILED'
-            ], 422);
+            DB::rollBack();
+            return $this->handleCheckoutError($e);
         }
     }
 
     /**
-     * Get cart items with full book details
+     * Obtener libros del carrito con detalles completos
+     * 
+     * @return JsonResponse
      */
     public function getItems(): JsonResponse
     {
@@ -297,27 +246,21 @@ class CartController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error getting cart items', [
-                'user_id' => auth()->id(),
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'error' => 'Error al obtener los libros del carrito',
-                'code' => 'SERVER_ERROR'
-            ], 500);
+            return $this->handleGenericError($e, 'obtener los libros del carrito');
         }
     }
 
     /**
-     * Clear all items from cart
+     * Limpiar todos los libros del carrito
+     * 
+     * @return JsonResponse
      */
     public function clear(): JsonResponse
     {
         try {
             session()->forget('cart');
 
-            Log::info('Cart cleared', [
+            Log::info('Carrito vaciado', [
                 'user_id' => auth()->id()
             ]);
 
@@ -327,31 +270,165 @@ class CartController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error clearing cart', [
-                'user_id' => auth()->id(),
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'error' => 'Error al vaciar el carrito',
-                'code' => 'SERVER_ERROR'
-            ], 500);
+            return $this->handleGenericError($e, 'vaciar el carrito');
         }
     }
 
+    // ===============================================
+    // MÉTODOS PRIVADOS - LÓGICA DE NEGOCIO
+    // ===============================================
+
     /**
-     * Get count of active book loans for authenticated user
+     * Crear préstamos en estado pending_pickup
+     * 
+     * @param array $bookIds IDs de libros
+     * @param \App\Models\User $user Usuario
+     * @return array Préstamos creados
+     * @throws \Exception Si hay algún problema
      */
-    private function getActiveBookLoans(): int
+    private function createPendingLoans(array $bookIds, $user): array
     {
-        return auth()->user()->bookLoans()
-            ->where('status', 'active')
-            ->count();
+        $createdLoans = [];
+
+        foreach ($bookIds as $bookId) {
+            $book = Book::findOrFail($bookId);
+
+            $this->validateBookForLoan($book, $user);
+
+            $availableCopy = $this->findAndReservePhysicalCopy($book);
+
+            $loan = $this->createLoan($user, $availableCopy);
+
+            $this->updateBookCounters($book);
+
+            $createdLoans[] = $loan->load(['physicalCopy.book.contributors', 'user']);
+
+            $this->logLoanCreation($loan, $book, $availableCopy);
+        }
+
+        return $createdLoans;
     }
 
     /**
-     * Get first available physical copy of a book
+     * Crear registro de préstamo en pending_pickup
+     * 
+     * @param \App\Models\User $user
+     * @param PhysicalCopy $physicalCopy
+     * @return BookLoan
      */
+    private function createLoan($user, PhysicalCopy $physicalCopy): BookLoan
+    {
+        return BookLoan::create([
+            'user_id' => $user->id,
+            'physical_copy_id' => $physicalCopy->id,
+            'loan_date' => null, // Se asignará cuando se active
+            'due_date' => null,  // Se asignará cuando se active
+            'status' => BookLoan::STATUS_PENDING_PICKUP,
+            'renewal_count' => 0,
+            'notes' => 'Préstamo creado desde carrito. Pendiente de preparación por bibliotecario.',
+        ]);
+    }
+
+    /**
+     * Buscar y reservar copia física disponible
+     * 
+     * @param Book $book
+     * @return PhysicalCopy
+     * @throws \Exception Si no hay copias disponibles
+     */
+    private function findAndReservePhysicalCopy(Book $book): PhysicalCopy
+    {
+        $availableCopy = $this->getAvailableCopy($book);
+
+        if (!$availableCopy) {
+            throw new \Exception("No hay copias disponibles de '{$book->title}'");
+        }
+
+        // Reservar la copia (no se presta hasta que esté ready)
+        $availableCopy->update(['status' => 'reserved']);
+
+        return $availableCopy;
+    }
+
+    /**
+     * Actualizar contadores del libro
+     * 
+     * @param Book $book
+     * @return void
+     */
+    private function updateBookCounters(Book $book): void
+    {
+        $book->decrement('available_physical_copies');
+        $book->increment('total_loans');
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - VALIDACIONES
+    // ===============================================
+
+    /**
+     * Validar límite de préstamos del usuario
+     * 
+     * @param \App\Models\User $user
+     * @param int $newLoansCount
+     * @return JsonResponse|null
+     */
+    private function validateLoanLimits($user, int $newLoansCount): ?JsonResponse
+    {
+        $activeLoansCount = $this->getActiveLoansCount();
+        $totalAfterCheckout = $activeLoansCount + $newLoansCount;
+        $maxLoans = $user->max_concurrent_loans;
+
+        if ($totalAfterCheckout > $maxLoans) {
+            return response()->json([
+                'error' => self::ERROR_LOAN_LIMIT . " ({$maxLoans})",
+                'code' => 'LOAN_LIMIT_EXCEEDED',
+                'current_loans' => $activeLoansCount,
+                'max_loans' => $maxLoans,
+                'requested' => $newLoansCount
+            ], 422);
+        }
+
+        return null;
+    }
+
+    /**
+     * Validar libro para préstamo
+     * 
+     * @param Book $book
+     * @param \App\Models\User $user
+     * @return void
+     * @throws \Exception Si el libro no es válido
+     */
+    private function validateBookForLoan(Book $book, $user): void
+    {
+        if (!$book->is_active) {
+            throw new \Exception("El libro '{$book->title}' no está disponible");
+        }
+
+        if ($this->userHasActiveLoanOf($book)) {
+            throw new \Exception("Ya tienes un préstamo activo de '{$book->title}'");
+        }
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - QUERIES
+    // ===============================================
+
+    /**
+     * Contar préstamos activos del usuario
+     * 
+     * Incluye todos los estados que cuentan como "activos"
+     * para el límite de préstamos simultáneos
+     * 
+     * @return int
+     */
+    private function getActiveLoansCount(): int
+    {
+        return auth()->user()->bookLoans()
+            ->whereIn('status', self::ACTIVE_LOAN_STATUSES)
+            ->count();
+    }
     /**
      * Obtener primera copia física disponible de un libro
      * 
@@ -366,77 +443,6 @@ class CartController extends Controller
     }
 
     /**
-     * Validar que el libro puede ser agregado al carrito
-     * 
-     * Verifica que el libro esté activo y tenga copias disponibles
-     * 
-     * @param Book $book
-     * @return JsonResponse|null Retorna JsonResponse si hay error, null si es válido
-     */
-    private function validateBookForCart(Book $book): ?JsonResponse
-    {
-        if (!$book->is_active) {
-            return response()->json([
-                'error' => self::ERROR_BOOK_NOT_ACTIVE,
-                'code' => 'BOOK_NOT_ACTIVE'
-            ], 422);
-        }
-
-        $availableCopy = $this->getAvailableCopy($book);
-        if (!$availableCopy) {
-            return response()->json([
-                'error' => self::ERROR_NO_COPIES,
-                'code' => 'NO_COPIES_AVAILABLE'
-            ], 422);
-        }
-
-        return null;
-    }
-
-    /**
-     * Validar que el usuario puede agregar el libro al carrito
-     * 
-     * Verifica:
-     * - No tiene préstamo activo del libro
-     * - El libro no está ya en el carrito
-     * - No excede el límite de préstamos
-     * 
-     * @param Book $book
-     * @return JsonResponse|null Retorna JsonResponse si hay error, null si es válido
-     */
-    private function validateUserCanAddToCart(Book $book): ?JsonResponse
-    {
-        // Verificar si ya tiene préstamo activo
-        if ($this->userHasActiveLoanOf($book)) {
-            return response()->json([
-                'error' => self::ERROR_ALREADY_ON_LOAN,
-                'code' => 'ALREADY_ON_LOAN'
-            ], 422);
-        }
-
-        $cart = session()->get('cart', []);
-
-        // Verificar si ya está en el carrito
-        if (in_array($book->id, $cart)) {
-            return response()->json([
-                'error' => self::ERROR_ALREADY_IN_CART,
-                'code' => 'ALREADY_IN_CART'
-            ], 422);
-        }
-
-        // Verificar límite de carrito
-        $maxLoans = auth()->user()->max_concurrent_loans;
-        if (count($cart) >= $maxLoans) {
-            return response()->json([
-                'error' => 'No puedes agregar más de ' . $maxLoans . ' libros al carrito',
-                'code' => 'CART_LIMIT_REACHED'
-            ], 422);
-        }
-
-        return null;
-    }
-
-    /**
      * Verificar si el usuario tiene un préstamo activo del libro
      * 
      * @param Book $book
@@ -448,25 +454,219 @@ class CartController extends Controller
             ->whereHas('physicalCopy', function ($query) use ($book) {
                 $query->where('book_id', $book->id);
             })
-            ->where('book_loans.status', 'active')
+            ->whereIn('status', self::ACTIVE_LOAN_STATUSES)
             ->exists();
     }
 
     /**
-     * Registrar acción del carrito en los logs
+     * Validar si el libro puede ser agregado al carrito
      * 
-     * @param string $message
+     * @param Book $book
+     * @return JsonResponse|null Null si es válido, JsonResponse con error si no
+     */
+    private function validateBookForCart(Book $book): ?JsonResponse
+    {
+        // Validar que el libro esté activo
+        if (!$book->is_active) {
+            return $this->errorResponse(
+                'Este libro no está disponible para préstamo',
+                'BOOK_NOT_ACTIVE',
+                422
+            );
+        }
+
+        // Validar que tenga copias disponibles
+        $availableCopy = $this->getAvailableCopy($book);
+        if (!$availableCopy) {
+            return $this->errorResponse(
+                'No hay copias disponibles de este libro',
+                'NO_COPIES_AVAILABLE',
+                422
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Validar si el usuario puede agregar el libro al carrito
+     * 
+     * @param Book $book
+     * @return JsonResponse|null Null si es válido, JsonResponse con error si no
+     */
+    private function validateUserCanAddToCart(Book $book): ?JsonResponse
+    {
+        $user = auth()->user();
+        $cart = session()->get('cart', []);
+
+        // Verificar si el libro ya está en el carrito
+        if (in_array($book->id, $cart)) {
+            return $this->errorResponse(
+                'Este libro ya está en tu carrito',
+                'BOOK_ALREADY_IN_CART',
+                422
+            );
+        }
+
+        // Validar que el usuario no tenga un préstamo activo del mismo libro
+        if ($this->userHasActiveLoanOf($book)) {
+            return $this->errorResponse(
+                'Ya tienes un préstamo activo de este libro',
+                'ACTIVE_LOAN_EXISTS',
+                422
+            );
+        }
+
+        // Validar límite de préstamos (actuales + carrito)
+        $activeLoansCount = $this->getActiveLoansCount();
+        $totalPotentialLoans = $activeLoansCount + count($cart) + 1;
+
+        if ($totalPotentialLoans > $user->max_concurrent_loans) {
+            return $this->errorResponse(
+                'Alcanzaste el límite de préstamos simultáneos (' . $user->max_concurrent_loans . ')',
+                'LOAN_LIMIT_REACHED',
+                422
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Registrar acción en el carrito
+     * 
+     * @param string $action
      * @param Book $book
      * @param int $cartCount
      * @return void
      */
-    private function logCartAction(string $message, Book $book, int $cartCount): void
+    private function logCartAction(string $action, Book $book, int $cartCount): void
     {
-        Log::info($message, [
+        Log::info($action, [
             'user_id' => auth()->id(),
             'book_id' => $book->id,
             'book_title' => $book->title,
             'cart_count' => $cartCount
+        ]);
+    }
+
+    /**
+     * Manejar error genérico en operación de carrito
+     * 
+     * @param \Exception $exception
+     * @param string $operation
+     * @param int|null $bookId
+     * @return JsonResponse
+     */
+    private function handleGenericError(\Exception $exception, string $operation, ?int $bookId = null): JsonResponse
+    {
+        Log::error("Error en operación de carrito: {$operation}", [
+            'user_id' => auth()->id(),
+            'book_id' => $bookId,
+            'error' => $exception->getMessage()
+        ]);
+
+        return $this->errorResponse(
+            "Error al {$operation}",
+            'SERVER_ERROR',
+            500
+        );
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - HELPERS
+    // ===============================================
+
+    /**
+     * Construir mensaje de checkout exitoso
+     * 
+     * @param int $count Cantidad de préstamos creados
+     * @return string
+     */
+    private function buildCheckoutMessage(int $count): string
+    {
+        if ($count === 1) {
+            return 'Préstamo creado exitosamente. El bibliotecario preparará tu libro.';
+        }
+
+        return "{$count} préstamos creados exitosamente. El bibliotecario preparará tus libros.";
+    }
+
+    /**
+     * Crear respuesta de error estandarizada
+     * 
+     * @param string $message
+     * @param string $code
+     * @param int $status
+     * @return JsonResponse
+     */
+    private function errorResponse(string $message, string $code, int $status): JsonResponse
+    {
+        return response()->json([
+            'error' => $message,
+            'code' => $code
+        ], $status);
+    }
+
+    /**
+     * Manejar error en checkout
+     * 
+     * @param \Exception $exception
+     * @return JsonResponse
+     */
+    private function handleCheckoutError(\Exception $exception): JsonResponse
+    {
+        Log::error('Checkout failed', [
+            'user_id' => auth()->id(),
+            'error' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString()
+        ]);
+
+        return $this->errorResponse(
+            $exception->getMessage(),
+            'CHECKOUT_FAILED',
+            422
+        );
+    }
+
+    // ===============================================
+    // MÉTODOS PRIVADOS - LOGGING
+    // ===============================================
+
+    /**
+     * Registrar creación de préstamo
+     * 
+     * @param BookLoan $loan
+     * @param Book $book
+     * @param PhysicalCopy $copy
+     * @return void
+     */
+    private function logLoanCreation(BookLoan $loan, Book $book, PhysicalCopy $copy): void
+    {
+        Log::info('Préstamo creado en estado pending_pickup', [
+            'loan_id' => $loan->id,
+            'user_id' => $loan->user_id,
+            'book_id' => $book->id,
+            'book_title' => $book->title,
+            'physical_copy_id' => $copy->id,
+            'status' => BookLoan::STATUS_PENDING_PICKUP,
+        ]);
+    }
+
+    /**
+     * Registrar checkout exitoso
+     * 
+     * @param \App\Models\User $user
+     * @param int $loansCount
+     * @return void
+     */
+    private function logCheckoutSuccess($user, int $loansCount): void
+    {
+        Log::info('Checkout completado exitosamente', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'loans_created' => $loansCount,
+            'timestamp' => now()->toIso8601String(),
         ]);
     }
 }
