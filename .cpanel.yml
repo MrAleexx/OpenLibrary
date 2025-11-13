@@ -1,22 +1,38 @@
 ---
 deployment:
   tasks:
+    # Ruta del proyecto en producción
     - export DEPLOYPATH=/home/usersumak/public_html
+
+    # Copia solo los archivos necesarios al servidor
     - /bin/cp -R * $DEPLOYPATH
+
+    # Si no existe .env, lo copia (no lo reemplaza si ya existe)
     - if [ ! -f $DEPLOYPATH/.env ]; then /bin/cp .env.example $DEPLOYPATH/.env; fi
+
+    # Copia el .htaccess (importante para Apache y rutas limpias)
     - /bin/cp .htaccess $DEPLOYPATH/.htaccess
 
-    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader
+    # Instala dependencias PHP de forma optimizada
+    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+    # Genera APP_KEY solo si falta
     - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then cd $DEPLOYPATH && php artisan key:generate; fi
 
-    # Si Node está disponible
-    - cd $DEPLOYPATH && npm ci || echo "npm no disponible"
-    - cd $DEPLOYPATH && npm run build || echo "build omitido"
+    # Limpia cachés antes de regenerarlas (evita errores de rutas o config)
+    - cd $DEPLOYPATH && php artisan optimize:clear
 
-    # Migraciones y seeders (solo si es la primera vez)
-    - cd $DEPLOYPATH && php artisan migrate --seed --force
+    # Instala dependencias Node (si existe package.json y npm está disponible)
+    - if [ -f "$DEPLOYPATH/package.json" ]; then cd $DEPLOYPATH && npm ci && npm run build || echo "npm o build fallido"; fi
 
+    # Migraciones (solo aplicarlas si estás seguro)
+    # Recomendado: solo migrar automáticamente si NO hay cambios destructivos
+    - cd $DEPLOYPATH && php artisan migrate --force || echo "Migraciones omitidas"
+
+    # Cachea configuración, rutas y vistas
     - cd $DEPLOYPATH && php artisan config:cache
     - cd $DEPLOYPATH && php artisan route:cache
     - cd $DEPLOYPATH && php artisan view:cache
-    - cd $DEPLOYPATH && php artisan storage:link
+
+    # Enlace de almacenamiento (solo si no existe)
+    - if [ ! -L "$DEPLOYPATH/public/storage" ]; then cd $DEPLOYPATH && php artisan storage:link; fi
