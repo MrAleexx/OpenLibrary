@@ -25,14 +25,15 @@ createInertiaApp({
     },
     setup({ el, App, props, plugin }) {
         const app = createApp({
-            render: () => h(Suspense, null, {
-                default: () => h(App, props),
-                fallback: () => h('div', { class: 'loading' }, 'Loading...')
-            })
+            render: () =>
+                h(Suspense, null, {
+                    default: () => h(App, props),
+                    fallback: () =>
+                        h('div', { class: 'loading' }, 'Loading...'),
+                }),
         });
 
-        app.use(plugin)
-            .mount(el);
+        app.use(plugin).mount(el);
 
         // Manejo global de errores
         app.config.errorHandler = (error, vm, info) => {

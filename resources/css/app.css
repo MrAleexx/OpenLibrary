@@ -93,43 +93,43 @@
     /* ===== COLORES BASE ===== */
     --background: hsl(0 0% 100%);
     --foreground: hsl(222 47% 11%);
-    
+
     /* ===== SUPERFICIES ===== */
     --card: hsl(0 0% 100%);
     --card-foreground: hsl(222 47% 11%);
     --popover: hsl(0 0% 100%);
     --popover-foreground: hsl(222 47% 11%);
-    
+
     /* ===== COLORES PRIMARIOS - Azul profesional ===== */
     --primary: hsl(221 83% 53%);
     --primary-foreground: hsl(210 40% 98%);
-    
+
     /* ===== COLORES SECUNDARIOS - Verde éxito ===== */
     --secondary: hsl(142 76% 36%);
     --secondary-foreground: hsl(355 100% 98%);
-    
+
     /* ===== ESTADOS Y NEUTRALES ===== */
     --muted: hsl(210 40% 96%);
     --muted-foreground: hsl(215 16% 47%);
     --accent: hsl(210 40% 94%);
     --accent-foreground: hsl(222 47% 11%);
-    
+
     /* ===== ESTADOS DE ALERTA ===== */
     --destructive: hsl(0 84% 60%);
     --destructive-foreground: hsl(210 40% 98%);
-    
+
     /* ===== BORDES E INPUTS ===== */
     --border: hsl(214 32% 91%);
     --input: hsl(214 32% 91%);
     --ring: hsl(221 83% 53%);
-    
+
     /* ===== GRÁFICOS ===== */
-    --chart-1: hsl(221 83% 53%);    /* Primary Blue */
-    --chart-2: hsl(142 76% 36%);    /* Secondary Green */
-    --chart-3: hsl(33 95% 53%);     /* Warning Orange */
-    --chart-4: hsl(262 83% 58%);    /* Purple */
-    --chart-5: hsl(346 84% 61%);    /* Pink/Red */
-    
+    --chart-1: hsl(221 83% 53%); /* Primary Blue */
+    --chart-2: hsl(142 76% 36%); /* Secondary Green */
+    --chart-3: hsl(33 95% 53%); /* Warning Orange */
+    --chart-4: hsl(262 83% 58%); /* Purple */
+    --chart-5: hsl(346 84% 61%); /* Pink/Red */
+
     /* ===== SIDEBAR ===== */
     --sidebar-background: hsl(210 40% 98%);
     --sidebar-foreground: hsl(222 47% 11%);
@@ -139,7 +139,7 @@
     --sidebar-accent-foreground: hsl(222 47% 11%);
     --sidebar-border: hsl(214 32% 91%);
     --sidebar-ring: hsl(221 83% 53%);
-    
+
     --radius: 0.5rem;
 }
 
@@ -147,43 +147,43 @@
     /* ===== COLORES BASE ===== */
     --background: hsl(222 47% 11%);
     --foreground: hsl(210 40% 98%);
-    
+
     /* ===== SUPERFICIES ===== */
     --card: hsl(222 47% 11%);
     --card-foreground: hsl(210 40% 98%);
     --popover: hsl(222 47% 11%);
     --popover-foreground: hsl(210 40% 98%);
-    
+
     /* ===== COLORES PRIMARIOS - Azul más vibrante en oscuro ===== */
     --primary: hsl(217 91% 65%);
     --primary-foreground: hsl(222 47% 11%);
-    
+
     /* ===== COLORES SECUNDARIOS - Verde más brillante ===== */
     --secondary: hsl(142 72% 45%);
     --secondary-foreground: hsl(222 47% 11%);
-    
+
     /* ===== ESTADOS Y NEUTRALES ===== */
     --muted: hsl(217 33% 17%);
     --muted-foreground: hsl(215 20% 65%);
     --accent: hsl(217 33% 22%);
     --accent-foreground: hsl(210 40% 98%);
-    
+
     /* ===== ESTADOS DE ALERTA ===== */
     --destructive: hsl(0 84% 60%);
     --destructive-foreground: hsl(210 40% 98%);
-    
+
     /* ===== BORDES E INPUTS ===== */
     --border: hsl(217 33% 17%);
     --input: hsl(217 33% 17%);
     --ring: hsl(217 91% 65%);
-    
+
     /* ===== GRÁFICOS ===== */
-    --chart-1: hsl(217 91% 65%);    /* Primary Blue */
-    --chart-2: hsl(142 72% 45%);    /* Secondary Green */
-    --chart-3: hsl(33 95% 60%);     /* Warning Orange */
-    --chart-4: hsl(262 83% 65%);    /* Purple */
-    --chart-5: hsl(346 84% 68%);    /* Pink/Red */
-    
+    --chart-1: hsl(217 91% 65%); /* Primary Blue */
+    --chart-2: hsl(142 72% 45%); /* Secondary Green */
+    --chart-3: hsl(33 95% 60%); /* Warning Orange */
+    --chart-4: hsl(262 83% 65%); /* Purple */
+    --chart-5: hsl(346 84% 68%); /* Pink/Red */
+
     /* ===== SIDEBAR ===== */
     --sidebar-background: hsl(222 47% 8%);
     --sidebar-foreground: hsl(210 40% 98%);

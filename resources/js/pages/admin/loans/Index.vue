@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { 
-    BookOpen, Search, Filter, Clock, Package, CheckCircle, 
-    XCircle, AlertTriangle, Calendar, User, BookMarked, RefreshCw
+import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    AlertTriangle,
+    BookMarked,
+    BookOpen,
+    CheckCircle,
+    Clock,
+    Filter,
+    Package,
+    RefreshCw,
+    Search,
+    User,
+    XCircle,
 } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface PhysicalCopy {
     id: number;
@@ -34,7 +43,13 @@ interface Loan {
     loan_date: string | null;
     due_date: string | null;
     return_date: string | null;
-    status: 'pending_pickup' | 'ready_for_pickup' | 'active' | 'overdue' | 'returned' | 'cancelled';
+    status:
+        | 'pending_pickup'
+        | 'ready_for_pickup'
+        | 'active'
+        | 'overdue'
+        | 'returned'
+        | 'cancelled';
     renewal_count: number;
     user: LoanUser;
     physical_copy: PhysicalCopy;
@@ -85,7 +100,9 @@ const processingId = ref<number | null>(null);
 // ===============================================
 
 const hasFilters = computed(() => {
-    return props.filters.status || props.filters.search || props.filters.user_id;
+    return (
+        props.filters.status || props.filters.search || props.filters.user_id
+    );
 });
 
 // ===============================================
@@ -98,10 +115,10 @@ const hasFilters = computed(() => {
 const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
     });
 };
 
@@ -122,62 +139,62 @@ const getDaysUntilDue = (dueDate: string | null): number => {
  */
 const getStatusBadge = (loan: Loan) => {
     const daysRemaining = getDaysUntilDue(loan.due_date);
-    
+
     switch (loan.status) {
         case 'pending_pickup':
             return {
                 text: 'Pendiente Preparación',
                 icon: Clock,
-                class: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-800'
+                class: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-800',
             };
         case 'ready_for_pickup':
             return {
                 text: 'Listo para Recoger',
                 icon: Package,
-                class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800'
+                class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800',
             };
         case 'active':
             if (daysRemaining <= 0) {
                 return {
                     text: 'Vencido',
                     icon: AlertTriangle,
-                    class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800'
+                    class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800',
                 };
             } else if (daysRemaining <= 3) {
                 return {
                     text: `Por Vencer (${daysRemaining}d)`,
                     icon: AlertTriangle,
-                    class: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800'
+                    class: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800',
                 };
             }
             return {
                 text: 'Activo',
                 icon: BookOpen,
-                class: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800'
+                class: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800',
             };
         case 'overdue':
             return {
                 text: 'Vencido',
                 icon: XCircle,
-                class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800 animate-pulse'
+                class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800 animate-pulse',
             };
         case 'returned':
             return {
                 text: 'Devuelto',
                 icon: CheckCircle,
-                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800'
+                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800',
             };
         case 'cancelled':
             return {
                 text: 'Cancelado',
                 icon: XCircle,
-                class: 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400 border border-slate-300 dark:border-slate-800'
+                class: 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-400 border border-slate-300 dark:border-slate-800',
             };
         default:
             return {
                 text: 'Desconocido',
                 icon: AlertTriangle,
-                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800'
+                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800',
             };
     }
 };
@@ -192,34 +209,36 @@ const getAvailableActions = (loan: Loan) => {
                 {
                     label: 'Marcar como Listo',
                     action: () => markAsReady(loan.id),
-                    color: 'bg-green-600 hover:bg-green-700'
+                    color: 'bg-green-600 hover:bg-green-700',
                 },
                 {
                     label: 'Cancelar',
                     action: () => cancelLoan(loan.id),
-                    color: 'bg-red-600 hover:bg-red-700'
-                }
+                    color: 'bg-red-600 hover:bg-red-700',
+                },
             ];
         case 'ready_for_pickup':
             return [
                 {
                     label: 'Confirmar Entrega',
                     action: () => confirmHandover(loan.id),
-                    color: 'bg-blue-600 hover:bg-blue-700'
+                    color: 'bg-blue-600 hover:bg-blue-700',
                 },
                 {
                     label: 'Cancelar',
                     action: () => cancelLoan(loan.id),
-                    color: 'bg-red-600 hover:bg-red-700'
-                }
+                    color: 'bg-red-600 hover:bg-red-700',
+                },
             ];
         case 'active':
         case 'overdue':
-            return [{
-                label: 'Marcar como Devuelto',
-                action: () => markAsReturned(loan.id),
-                color: 'bg-green-600 hover:bg-green-700'
-            }];
+            return [
+                {
+                    label: 'Marcar como Devuelto',
+                    action: () => markAsReturned(loan.id),
+                    color: 'bg-green-600 hover:bg-green-700',
+                },
+            ];
         default:
             return [];
     }
@@ -234,14 +253,18 @@ const getAvailableActions = (loan: Loan) => {
  */
 const markAsReady = (loanId: number) => {
     if (!confirm('¿Marcar este préstamo como listo para recoger?')) return;
-    
+
     processingId.value = loanId;
-    router.post(`/admin/loans/${loanId}/mark-ready`, {}, {
-        preserveScroll: true,
-        onFinish: () => {
-            processingId.value = null;
-        }
-    });
+    router.post(
+        `/admin/loans/${loanId}/mark-ready`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+        },
+    );
 };
 
 /**
@@ -249,14 +272,18 @@ const markAsReady = (loanId: number) => {
  */
 const confirmHandover = (loanId: number) => {
     if (!confirm('¿Confirmar que el usuario recogió el libro?')) return;
-    
+
     processingId.value = loanId;
-    router.post(`/admin/loans/${loanId}/activate`, {}, {
-        preserveScroll: true,
-        onFinish: () => {
-            processingId.value = null;
-        }
-    });
+    router.post(
+        `/admin/loans/${loanId}/activate`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+        },
+    );
 };
 
 /**
@@ -264,14 +291,18 @@ const confirmHandover = (loanId: number) => {
  */
 const markAsReturned = (loanId: number) => {
     if (!confirm('¿Marcar este préstamo como devuelto?')) return;
-    
+
     processingId.value = loanId;
-    router.post(`/admin/loans/${loanId}/mark-returned`, {}, {
-        preserveScroll: true,
-        onFinish: () => {
-            processingId.value = null;
-        }
-    });
+    router.post(
+        `/admin/loans/${loanId}/mark-returned`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+        },
+    );
 };
 
 /**
@@ -280,27 +311,35 @@ const markAsReturned = (loanId: number) => {
 const cancelLoan = (loanId: number) => {
     const reason = prompt('Ingrese la razón de la cancelación:');
     if (!reason || reason.trim() === '') return;
-    
+
     processingId.value = loanId;
-    router.post(`/admin/loans/${loanId}/cancel`, { reason: reason.trim() }, {
-        preserveScroll: true,
-        onFinish: () => {
-            processingId.value = null;
-        }
-    });
+    router.post(
+        `/admin/loans/${loanId}/cancel`,
+        { reason: reason.trim() },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+        },
+    );
 };
 
 /**
  * Aplicar filtros
  */
 const applyFilters = () => {
-    router.get('/admin/loans', {
-        status: selectedStatus.value || undefined,
-        search: searchQuery.value || undefined,
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    router.get(
+        '/admin/loans',
+        {
+            status: selectedStatus.value || undefined,
+            search: searchQuery.value || undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
 };
 
 /**
@@ -317,98 +356,189 @@ const clearFilters = () => {
     <AppLayout title="Gestión de Préstamos" :breadcrumbs="breadcrumbs">
         <Head title="Gestión de Préstamos" />
 
-        <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="container mx-auto max-w-7xl px-4 py-8">
             <!-- Header -->
             <div class="mb-8">
-                <div class="flex items-center justify-between mb-6">
+                <div class="mb-6 flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="p-3 bg-primary/10 rounded-xl">
-                            <BookMarked class="w-8 h-8 text-primary" />
+                        <div class="rounded-xl bg-primary/10 p-3">
+                            <BookMarked class="h-8 w-8 text-primary" />
                         </div>
                         <div>
-                            <h1 class="text-3xl font-bold text-foreground">Gestión de Préstamos</h1>
-                            <p class="text-muted-foreground">Administra todos los préstamos del sistema</p>
+                            <h1 class="text-3xl font-bold text-foreground">
+                                Gestión de Préstamos
+                            </h1>
+                            <p class="text-muted-foreground">
+                                Administra todos los préstamos del sistema
+                            </p>
                         </div>
                     </div>
                     <button
                         @click="applyFilters"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                        class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                     >
-                        <RefreshCw class="w-4 h-4" />
+                        <RefreshCw class="h-4 w-4" />
                         Actualizar
                     </button>
                 </div>
 
                 <!-- Estadísticas -->
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                    <div class="bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <p class="text-xs text-muted-foreground mb-1">Total</p>
-                        <p class="text-2xl font-bold text-foreground">{{ stats.total }}</p>
+                <div
+                    class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8"
+                >
+                    <div
+                        class="rounded-xl border border-border bg-card p-4 shadow-sm"
+                    >
+                        <p class="mb-1 text-xs text-muted-foreground">Total</p>
+                        <p class="text-2xl font-bold text-foreground">
+                            {{ stats.total }}
+                        </p>
                     </div>
-                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800 shadow-sm">
-                        <p class="text-xs text-yellow-700 dark:text-yellow-400 mb-1">Pendientes</p>
-                        <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{{ stats.pending_pickup }}</p>
+                    <div
+                        class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm dark:border-yellow-800 dark:bg-yellow-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-yellow-700 dark:text-yellow-400"
+                        >
+                            Pendientes
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-yellow-900 dark:text-yellow-100"
+                        >
+                            {{ stats.pending_pickup }}
+                        </p>
                     </div>
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm">
-                        <p class="text-xs text-blue-700 dark:text-blue-400 mb-1">Listos</p>
-                        <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{{ stats.ready_for_pickup }}</p>
+                    <div
+                        class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-blue-700 dark:text-blue-400"
+                        >
+                            Listos
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-blue-900 dark:text-blue-100"
+                        >
+                            {{ stats.ready_for_pickup }}
+                        </p>
                     </div>
-                    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800 shadow-sm">
-                        <p class="text-xs text-green-700 dark:text-green-400 mb-1">Activos</p>
-                        <p class="text-2xl font-bold text-green-900 dark:text-green-100">{{ stats.active }}</p>
+                    <div
+                        class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm dark:border-green-800 dark:bg-green-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-green-700 dark:text-green-400"
+                        >
+                            Activos
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-green-900 dark:text-green-100"
+                        >
+                            {{ stats.active }}
+                        </p>
                     </div>
-                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 shadow-sm">
-                        <p class="text-xs text-red-700 dark:text-red-400 mb-1">Vencidos</p>
-                        <p class="text-2xl font-bold text-red-900 dark:text-red-100">{{ stats.overdue }}</p>
+                    <div
+                        class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-900/20"
+                    >
+                        <p class="mb-1 text-xs text-red-700 dark:text-red-400">
+                            Vencidos
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-red-900 dark:text-red-100"
+                        >
+                            {{ stats.overdue }}
+                        </p>
                     </div>
-                    <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-200 dark:border-orange-800 shadow-sm">
-                        <p class="text-xs text-orange-700 dark:text-orange-400 mb-1">Por Vencer</p>
-                        <p class="text-2xl font-bold text-orange-900 dark:text-orange-100">{{ stats.overdue_soon }}</p>
+                    <div
+                        class="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm dark:border-orange-800 dark:bg-orange-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-orange-700 dark:text-orange-400"
+                        >
+                            Por Vencer
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-orange-900 dark:text-orange-100"
+                        >
+                            {{ stats.overdue_soon }}
+                        </p>
                     </div>
-                    <div class="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                        <p class="text-xs text-gray-700 dark:text-gray-400 mb-1">Devueltos</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ stats.returned }}</p>
+                    <div
+                        class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-gray-700 dark:text-gray-400"
+                        >
+                            Devueltos
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-gray-900 dark:text-gray-100"
+                        >
+                            {{ stats.returned }}
+                        </p>
                     </div>
-                    <div class="bg-slate-50 dark:bg-slate-900/20 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <p class="text-xs text-slate-700 dark:text-slate-400 mb-1">Cancelados</p>
-                        <p class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ stats.cancelled || 0 }}</p>
+                    <div
+                        class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-slate-700 dark:text-slate-400"
+                        >
+                            Cancelados
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-slate-900 dark:text-slate-100"
+                        >
+                            {{ stats.cancelled || 0 }}
+                        </p>
                     </div>
                 </div>
             </div>
 
             <!-- Filtros -->
-            <div class="bg-card rounded-xl border border-border p-6 mb-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-4">
-                    <Filter class="w-5 h-5 text-muted-foreground" />
-                    <h2 class="text-lg font-semibold text-foreground">Filtros</h2>
+            <div
+                class="mb-6 rounded-xl border border-border bg-card p-6 shadow-sm"
+            >
+                <div class="mb-4 flex items-center gap-2">
+                    <Filter class="h-5 w-5 text-muted-foreground" />
+                    <h2 class="text-lg font-semibold text-foreground">
+                        Filtros
+                    </h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <!-- Búsqueda -->
                     <div>
-                        <label class="block text-sm font-medium text-foreground mb-2">
-                            <Search class="w-4 h-4 inline mr-1" />
+                        <label
+                            class="mb-2 block text-sm font-medium text-foreground"
+                        >
+                            <Search class="mr-1 inline h-4 w-4" />
                             Buscar
                         </label>
                         <input
                             v-model="searchQuery"
                             type="text"
                             placeholder="Usuario, DNI, libro..."
-                            class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                            class="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary"
                             @keyup.enter="applyFilters"
                         />
                     </div>
 
                     <!-- Estado -->
                     <div>
-                        <label class="block text-sm font-medium text-foreground mb-2">Estado</label>
+                        <label
+                            class="mb-2 block text-sm font-medium text-foreground"
+                            >Estado</label
+                        >
                         <select
                             v-model="selectedStatus"
-                            class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+                            class="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary"
                             @change="applyFilters"
                         >
                             <option value="">Todos</option>
-                            <option value="pending_pickup">Pendiente Preparación</option>
-                            <option value="ready_for_pickup">Listo para Recoger</option>
+                            <option value="pending_pickup">
+                                Pendiente Preparación
+                            </option>
+                            <option value="ready_for_pickup">
+                                Listo para Recoger
+                            </option>
                             <option value="active">Activo</option>
                             <option value="overdue">Vencido</option>
                             <option value="returned">Devuelto</option>
@@ -420,14 +550,14 @@ const clearFilters = () => {
                     <div class="flex items-end gap-2">
                         <button
                             @click="applyFilters"
-                            class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                            class="rounded-lg bg-primary px-6 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                         >
                             Aplicar
                         </button>
                         <button
                             v-if="hasFilters"
                             @click="clearFilters"
-                            class="px-6 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-medium"
+                            class="rounded-lg bg-muted px-6 py-2 font-medium text-muted-foreground transition-colors hover:bg-muted/80"
                         >
                             Limpiar
                         </button>
@@ -436,34 +566,73 @@ const clearFilters = () => {
             </div>
 
             <!-- Tabla de Préstamos -->
-            <div class="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            <div
+                class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            >
                 <div class="overflow-x-auto">
                     <table class="w-full">
-                        <thead class="bg-muted/50 border-b border-border">
+                        <thead class="border-b border-border bg-muted/50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuario</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Libro</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estado</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Fecha Préstamo</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Vencimiento</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Acciones</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Usuario
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Libro
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Estado
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Fecha Préstamo
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Vencimiento
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Acciones
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
-                            <tr 
-                                v-for="loan in loans.data" 
+                            <tr
+                                v-for="loan in loans.data"
                                 :key="loan.id"
-                                class="hover:bg-muted/30 transition-colors"
+                                class="transition-colors hover:bg-muted/30"
                             >
                                 <!-- Usuario -->
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-                                            <User class="w-5 h-5 text-primary" />
+                                        <div
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10"
+                                        >
+                                            <User
+                                                class="h-5 w-5 text-primary"
+                                            />
                                         </div>
                                         <div>
-                                            <p class="font-medium text-foreground text-sm">{{ loan.user.name }} {{ loan.user.last_name }}</p>
-                                            <p class="text-xs text-muted-foreground">DNI: {{ loan.user.dni }}</p>
+                                            <p
+                                                class="text-sm font-medium text-foreground"
+                                            >
+                                                {{ loan.user.name }}
+                                                {{ loan.user.last_name }}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                DNI: {{ loan.user.dni }}
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
@@ -471,63 +640,115 @@ const clearFilters = () => {
                                 <!-- Libro -->
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <img 
-                                            :src="loan.physical_copy.book.cover_url || '/images/book-placeholder.svg'" 
+                                        <img
+                                            :src="
+                                                loan.physical_copy.book
+                                                    .cover_url ||
+                                                '/images/book-placeholder.svg'
+                                            "
                                             :alt="loan.physical_copy.book.title"
-                                            class="w-10 h-14 object-cover rounded shadow-sm"
-                                            @error="(e) => { const img = e.target as HTMLImageElement; if (!img.src.includes('placeholder')) img.src = '/images/book-placeholder.svg'; }"
+                                            class="h-14 w-10 rounded object-cover shadow-sm"
+                                            @error="
+                                                (e) => {
+                                                    const img =
+                                                        e.target as HTMLImageElement;
+                                                    if (
+                                                        !img.src.includes(
+                                                            'placeholder',
+                                                        )
+                                                    )
+                                                        img.src =
+                                                            '/images/book-placeholder.svg';
+                                                }
+                                            "
                                         />
                                         <div class="max-w-xs">
-                                            <p class="font-medium text-foreground text-sm line-clamp-2">{{ loan.physical_copy.book.title }}</p>
-                                            <p class="text-xs text-muted-foreground">Copia #{{ loan.physical_copy.copy_number }}</p>
+                                            <p
+                                                class="line-clamp-2 text-sm font-medium text-foreground"
+                                            >
+                                                {{
+                                                    loan.physical_copy.book
+                                                        .title
+                                                }}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                Copia #{{
+                                                    loan.physical_copy
+                                                        .copy_number
+                                                }}
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
 
                                 <!-- Estado -->
                                 <td class="px-4 py-4">
-                                    <span 
+                                    <span
                                         :class="getStatusBadge(loan).class"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
                                     >
-                                        <component :is="getStatusBadge(loan).icon" class="w-3.5 h-3.5" />
+                                        <component
+                                            :is="getStatusBadge(loan).icon"
+                                            class="h-3.5 w-3.5"
+                                        />
                                         {{ getStatusBadge(loan).text }}
                                     </span>
                                 </td>
 
                                 <!-- Fecha Préstamo -->
-                                <td class="px-4 py-4 text-sm text-muted-foreground">
+                                <td
+                                    class="px-4 py-4 text-sm text-muted-foreground"
+                                >
                                     {{ formatDate(loan.loan_date) }}
                                 </td>
 
                                 <!-- Vencimiento -->
                                 <td class="px-4 py-4 text-sm">
-                                    <span 
+                                    <span
                                         v-if="loan.due_date"
-                                        :class="getDaysUntilDue(loan.due_date) <= 3 && loan.status === 'active' 
-                                            ? 'text-red-600 dark:text-red-400 font-semibold' 
-                                            : 'text-muted-foreground'"
+                                        :class="
+                                            getDaysUntilDue(loan.due_date) <=
+                                                3 && loan.status === 'active'
+                                                ? 'font-semibold text-red-600 dark:text-red-400'
+                                                : 'text-muted-foreground'
+                                        "
                                     >
                                         {{ formatDate(loan.due_date) }}
-                                        <span v-if="loan.status === 'active'" class="block text-xs">
-                                            ({{ getDaysUntilDue(loan.due_date) }} días)
+                                        <span
+                                            v-if="loan.status === 'active'"
+                                            class="block text-xs"
+                                        >
+                                            ({{
+                                                getDaysUntilDue(loan.due_date)
+                                            }}
+                                            días)
                                         </span>
                                     </span>
-                                    <span v-else class="text-muted-foreground">-</span>
+                                    <span v-else class="text-muted-foreground"
+                                        >-</span
+                                    >
                                 </td>
 
                                 <!-- Acciones -->
                                 <td class="px-4 py-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <button
-                                            v-for="(actionItem, index) in getAvailableActions(loan)"
+                                            v-for="(
+                                                actionItem, index
+                                            ) in getAvailableActions(loan)"
                                             :key="index"
                                             @click="actionItem.action"
                                             :disabled="processingId === loan.id"
                                             :class="actionItem.color"
-                                            class="px-3 py-1.5 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            class="rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            {{ processingId === loan.id ? 'Procesando...' : actionItem.label }}
+                                            {{
+                                                processingId === loan.id
+                                                    ? 'Procesando...'
+                                                    : actionItem.label
+                                            }}
                                         </button>
                                     </div>
                                 </td>
@@ -538,28 +759,42 @@ const clearFilters = () => {
 
                 <!-- Empty State -->
                 <div v-if="loans.data.length === 0" class="p-12 text-center">
-                    <BookOpen class="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <h3 class="text-xl font-semibold text-foreground mb-2">No se encontraron préstamos</h3>
+                    <BookOpen
+                        class="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50"
+                    />
+                    <h3 class="mb-2 text-xl font-semibold text-foreground">
+                        No se encontraron préstamos
+                    </h3>
                     <p class="text-muted-foreground">
-                        {{ hasFilters ? 'Intenta ajustar los filtros' : 'Aún no hay préstamos en el sistema' }}
+                        {{
+                            hasFilters
+                                ? 'Intenta ajustar los filtros'
+                                : 'Aún no hay préstamos en el sistema'
+                        }}
                     </p>
                 </div>
 
                 <!-- Paginación -->
-                <div v-if="loans.last_page > 1" class="px-6 py-4 border-t border-border">
+                <div
+                    v-if="loans.last_page > 1"
+                    class="border-t border-border px-6 py-4"
+                >
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-muted-foreground">
-                            Mostrando {{ loans.data.length }} de {{ loans.total }} préstamos
+                            Mostrando {{ loans.data.length }} de
+                            {{ loans.total }} préstamos
                         </p>
                         <div class="flex gap-2">
                             <Link
                                 v-for="page in loans.last_page"
                                 :key="page"
                                 :href="`/admin/loans?page=${page}`"
-                                :class="page === loans.current_page 
-                                    ? 'bg-primary text-primary-foreground' 
-                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'"
-                                class="px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+                                :class="
+                                    page === loans.current_page
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                "
+                                class="rounded-lg px-3 py-1 text-sm font-medium transition-colors"
                                 preserve-state
                             >
                                 {{ page }}

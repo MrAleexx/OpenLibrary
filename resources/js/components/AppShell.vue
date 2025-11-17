@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
 interface Props {
     variant?: 'header' | 'sidebar';

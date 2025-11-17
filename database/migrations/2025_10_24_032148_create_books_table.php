@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -54,7 +55,11 @@ return new class extends Migration
             $table->index(['is_active', 'featured', 'book_type']);
             $table->index(['access_level', 'is_active']);
             $table->index(['copyright_status', 'downloadable']);
-            $table->fullText(['title', 'search_metadata']);
+            
+            // Índice fulltext solo para MySQL/PostgreSQL (no SQLite)
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->fullText(['title', 'search_metadata']);
+            }
         });
     }
 

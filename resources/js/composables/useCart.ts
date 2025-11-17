@@ -1,5 +1,4 @@
-import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 export interface Book {
     id: number;
@@ -30,7 +29,7 @@ const error = ref<string | null>(null);
 // Initialize cart from localStorage (will be synced with backend later)
 const initializeCart = () => {
     if (typeof window === 'undefined') return;
-    
+
     try {
         const stored = localStorage.getItem(CART_STORAGE_KEY);
         if (stored) {
@@ -46,14 +45,17 @@ const initializeCart = () => {
 // Sync cart with backend session
 const syncCartWithBackend = async () => {
     if (typeof window === 'undefined') return;
-    
+
     try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        
+        const csrfToken =
+            document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content') || '';
+
         const response = await fetch('/cart/items', {
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
             },
@@ -63,7 +65,7 @@ const syncCartWithBackend = async () => {
         if (response.ok) {
             const data = await response.json();
             const backendBookIds = data.books.map((book: any) => book.id);
-            
+
             // Update local cart with backend data (source of truth)
             cartItems.value = backendBookIds;
             saveCart();
@@ -76,14 +78,16 @@ const syncCartWithBackend = async () => {
 // Save cart to localStorage
 const saveCart = () => {
     if (typeof window === 'undefined') return;
-    
+
     try {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems.value));
-        
+
         // Dispatch custom event for other components to listen
-        window.dispatchEvent(new CustomEvent('cart-updated', {
-            detail: { count: cartItems.value.length }
-        }));
+        window.dispatchEvent(
+            new CustomEvent('cart-updated', {
+                detail: { count: cartItems.value.length },
+            }),
+        );
     } catch (e) {
         console.error('Error saving cart to localStorage:', e);
     }
@@ -105,7 +109,9 @@ export function useCart() {
     const count = computed(() => cartItems.value.length);
     const isEmpty = computed(() => cartItems.value.length === 0);
     const isFull = computed(() => cartItems.value.length >= MAX_CART_ITEMS);
-    const remainingSlots = computed(() => Math.max(0, MAX_CART_ITEMS - cartItems.value.length));
+    const remainingSlots = computed(() =>
+        Math.max(0, MAX_CART_ITEMS - cartItems.value.length),
+    );
 
     /**
      * Check if a book is in the cart
@@ -123,13 +129,16 @@ export function useCart() {
 
         try {
             // Call backend to validate and add to session (backend is source of truth)
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            
+            const csrfToken =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content') || '';
+
             const response = await fetch(`/cart/add/${bookId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -152,7 +161,6 @@ export function useCart() {
             await syncCartWithBackend();
 
             return true;
-
         } catch (e) {
             console.error('Error adding to cart:', e);
             error.value = 'Error de conexión al agregar libro';
@@ -175,13 +183,16 @@ export function useCart() {
 
         try {
             // Call backend
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            
+            const csrfToken =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content') || '';
+
             const response = await fetch(`/cart/remove/${bookId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -196,7 +207,8 @@ export function useCart() {
                     window.location.href = '/login';
                     return false;
                 }
-                error.value = data.error || 'Error al remover libro del carrito';
+                error.value =
+                    data.error || 'Error al remover libro del carrito';
                 return false;
             }
 
@@ -204,7 +216,6 @@ export function useCart() {
             await syncCartWithBackend();
 
             return true;
-
         } catch (e) {
             console.error('Error removing from cart:', e);
             error.value = 'Error de conexión al remover libro';
@@ -226,12 +237,15 @@ export function useCart() {
         error.value = null;
 
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            
+            const csrfToken =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content') || '';
+
             const response = await fetch('/cart/items', {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -241,7 +255,8 @@ export function useCart() {
             const data = await response.json();
 
             if (!response.ok) {
-                error.value = data.error || 'Error al obtener items del carrito';
+                error.value =
+                    data.error || 'Error al obtener items del carrito';
                 return [];
             }
 
@@ -254,7 +269,6 @@ export function useCart() {
                 ...book,
                 dueDate: dueDateStr,
             }));
-
         } catch (e) {
             console.error('Error getting cart items:', e);
             error.value = 'Error de conexión al obtener items';
@@ -267,7 +281,11 @@ export function useCart() {
     /**
      * Checkout - create loans from cart
      */
-    const checkout = async (): Promise<{ success: boolean; message?: string; error?: string }> => {
+    const checkout = async (): Promise<{
+        success: boolean;
+        message?: string;
+        error?: string;
+    }> => {
         if (isEmpty.value) {
             error.value = 'Tu carrito está vacío';
             return { success: false, error: error.value };
@@ -277,13 +295,16 @@ export function useCart() {
         error.value = null;
 
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            
+            const csrfToken =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content') || '';
+
             const response = await fetch('/cart/checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -312,7 +333,6 @@ export function useCart() {
                 success: true,
                 message: data.message || 'Préstamos creados exitosamente',
             };
-
         } catch (e) {
             console.error('Error during checkout:', e);
             error.value = 'Error de conexión durante el checkout';
@@ -327,14 +347,17 @@ export function useCart() {
      */
     const clearCart = async (): Promise<boolean> => {
         try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            
+            const csrfToken =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content') || '';
+
             // Call backend to clear session
             const response = await fetch('/cart/clear', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -348,9 +371,8 @@ export function useCart() {
             // Clear local state regardless of backend response
             cartItems.value = [];
             saveCart();
-            
-            return true;
 
+            return true;
         } catch (e) {
             console.error('Error clearing cart:', e);
             // Still clear local cart even if backend fails
@@ -366,8 +388,8 @@ export function useCart() {
     const syncWithServer = async () => {
         // This can be called when app loads to ensure cart is in sync
         const items = await getCartItems();
-        const serverBookIds = items.map(item => item.id);
-        
+        const serverBookIds = items.map((item) => item.id);
+
         // Update local cart with server data
         cartItems.value = serverBookIds;
         saveCart();

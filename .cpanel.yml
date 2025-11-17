@@ -22,10 +22,19 @@ deployment:
     - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install \
         --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
+    # Instala dependencias Node.js y compila assets
+    - echo "Instalando dependencias de Node.js..."
+    - cd $DEPLOYPATH && npm install --production=false
+    - echo "Compilando assets de frontend (Vue/Inertia)..."
+    - cd $DEPLOYPATH && npm run build
+
     # Genera APP_KEY solo si falta en el .env existente
     - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then \
         cd $DEPLOYPATH && php artisan key:generate; \
       fi
+
+    # Ejecuta migraciones pendientes
+    - cd $DEPLOYPATH && php artisan migrate --force
 
     # Limpia y cachea configuración
     - cd $DEPLOYPATH && php artisan optimize:clear

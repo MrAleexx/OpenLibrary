@@ -27,13 +27,25 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCart } from '@/composables/useCart';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Home, Users, BookMarked, Library, ShoppingCart, Clock, Calendar, CalendarCheck } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import {
+    BookMarked,
+    BookOpen,
+    Calendar,
+    CalendarCheck,
+    Clock,
+    Folder,
+    Home,
+    LayoutGrid,
+    Library,
+    ShoppingCart,
+    Users,
+} from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
-import { useCart } from '@/composables/useCart';
 
 // Definir la interfaz para el usuario y sus roles
 interface Role {
@@ -71,12 +83,12 @@ const userRoles = computed(() => user.value?.roles || []);
 
 /**
  * Verificar si el usuario tiene privilegios de administración
- * 
+ *
  * @returns {boolean} true si el usuario es admin o librarian
  */
 const isAdminOrLibrarian = computed(() => {
-    return userRoles.value.some((role: Role) => 
-        role.name === 'admin' || role.name === 'librarian'
+    return userRoles.value.some(
+        (role: Role) => role.name === 'admin' || role.name === 'librarian',
     );
 });
 

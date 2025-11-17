@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { 
-    Calendar, Search, Filter, Clock, CheckCircle, 
-    XCircle, AlertCircle, User, BookMarked, RefreshCw,
-    Package, ArrowRight, Ban
+import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    AlertCircle,
+    Ban,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Filter,
+    Package,
+    RefreshCw,
+    Search,
+    User,
+    XCircle,
 } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Book {
     id: number;
@@ -142,12 +150,12 @@ const getCopyNumber = (reservation: Reservation): string | null => {
 const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'short', 
+    return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
 };
 
@@ -157,9 +165,9 @@ const formatDate = (dateString: string | null): string => {
 const formatDateShort = (dateString: string | null): string => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-        month: 'short', 
-        day: 'numeric'
+    return date.toLocaleDateString('es-ES', {
+        month: 'short',
+        day: 'numeric',
     });
 };
 
@@ -179,17 +187,18 @@ const getDaysRemaining = (expirationDate: string): number => {
  */
 const getStatusBadge = (reservation: Reservation) => {
     const daysRemaining = getDaysRemaining(reservation.expiration_date);
-    
+
     switch (reservation.status) {
         case 'pending':
             // En cola esperando que se devuelva una copia
-            const queueInfo = reservation.queue_position && reservation.total_in_queue 
-                ? ` - Posición ${reservation.queue_position}/${reservation.total_in_queue}`
-                : '';
+            const queueInfo =
+                reservation.queue_position && reservation.total_in_queue
+                    ? ` - Posición ${reservation.queue_position}/${reservation.total_in_queue}`
+                    : '';
             return {
                 text: `En Cola de Espera${queueInfo}`,
                 icon: Clock,
-                class: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-800'
+                class: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-300 dark:border-yellow-800',
             };
         case 'ready':
             // Libro apartado - usuario ya fue notificado - esperando que llegue
@@ -197,43 +206,43 @@ const getStatusBadge = (reservation: Reservation) => {
                 return {
                     text: `Usuario Notificado - Expira Hoy`,
                     icon: AlertCircle,
-                    class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800 animate-pulse'
+                    class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800 animate-pulse',
                 };
             } else if (daysRemaining <= 2) {
                 return {
                     text: `Usuario Notificado - ${daysRemaining}d restantes`,
                     icon: Package,
-                    class: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800'
+                    class: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800',
                 };
             }
             return {
                 text: `Usuario Notificado - ${daysRemaining}d restantes`,
                 icon: Package,
-                class: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800'
+                class: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800',
             };
         case 'collected':
             return {
                 text: 'Libro Entregado',
                 icon: CheckCircle,
-                class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800'
+                class: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800',
             };
         case 'expired':
             return {
                 text: 'Expirado - No llegó a recoger',
                 icon: XCircle,
-                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800'
+                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800',
             };
         case 'cancelled':
             return {
                 text: 'Cancelado',
                 icon: Ban,
-                class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800'
+                class: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800',
             };
         default:
             return {
                 text: 'Desconocido',
                 icon: AlertCircle,
-                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800'
+                class: 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-800',
             };
     }
 };
@@ -251,8 +260,8 @@ const getAvailableActions = (reservation: Reservation) => {
                     label: 'Cancelar Reserva',
                     action: () => cancelReservation(reservation.id),
                     color: 'bg-red-600 hover:bg-red-700',
-                    icon: XCircle
-                }
+                    icon: XCircle,
+                },
             ];
         case 'ready':
             // El libro está apartado - el usuario ya fue notificado
@@ -262,14 +271,14 @@ const getAvailableActions = (reservation: Reservation) => {
                     label: 'Registrar Entrega',
                     action: () => convertToLoan(reservation.id),
                     color: 'bg-green-600 hover:bg-green-700',
-                    icon: Package
+                    icon: Package,
                 },
                 {
                     label: 'Cancelar Reserva',
                     action: () => cancelReservation(reservation.id),
                     color: 'bg-red-600 hover:bg-red-700',
-                    icon: XCircle
-                }
+                    icon: XCircle,
+                },
             ];
         default:
             return [];
@@ -286,50 +295,74 @@ const getAvailableActions = (reservation: Reservation) => {
 const markAsReady = (reservationId: number) => {
     // Esta función ya no se usa porque eliminamos el botón "Activar"
     // Las reservas pending se activan automáticamente cuando se devuelve un libro
-    console.warn('markAsReady está deshabilitado. Use sistema FIFO automático.');
+    console.warn(
+        'markAsReady está deshabilitado. Use sistema FIFO automático.',
+    );
 };
 
 /**
  * Registrar entrega física del libro al usuario
  */
 const convertToLoan = (reservationId: number) => {
-    if (!confirm('¿El usuario está presente para recoger su libro? Se registrará la entrega y se creará el préstamo.')) return;
-    
+    if (
+        !confirm(
+            '¿El usuario está presente para recoger su libro? Se registrará la entrega y se creará el préstamo.',
+        )
+    )
+        return;
+
     processingId.value = reservationId;
-    router.post(`/admin/reservations/${reservationId}/convert-to-loan`, {}, {
-        preserveScroll: true,
-        onFinish: () => {
-            processingId.value = null;
-        }
-    });
+    router.post(
+        `/admin/reservations/${reservationId}/convert-to-loan`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+        },
+    );
 };
 
 /**
  * Cancelar reserva
  */
 const cancelReservation = (reservationId: number) => {
-    if (!confirm('¿Cancelar esta reserva? Si estaba lista, la copia volverá a estar disponible y se notificará a la siguiente persona en cola.')) return;
-    
+    if (
+        !confirm(
+            '¿Cancelar esta reserva? Si estaba lista, la copia volverá a estar disponible y se notificará a la siguiente persona en cola.',
+        )
+    )
+        return;
+
     processingId.value = reservationId;
-    router.post(`/admin/reservations/${reservationId}/cancel`, {}, {
-        preserveScroll: true,
-        onFinish: () => {
-            processingId.value = null;
-        }
-    });
+    router.post(
+        `/admin/reservations/${reservationId}/cancel`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processingId.value = null;
+            },
+        },
+    );
 };
 
 /**
  * Aplicar filtros
  */
 const applyFilters = () => {
-    router.get('/admin/reservations', {
-        status: selectedStatus.value || undefined,
-        search: searchQuery.value || undefined,
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    router.get(
+        '/admin/reservations',
+        {
+            status: selectedStatus.value || undefined,
+            search: searchQuery.value || undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
 };
 
 /**
@@ -346,103 +379,186 @@ const clearFilters = () => {
     <AppLayout title="Gestión de Reservas" :breadcrumbs="breadcrumbs">
         <Head title="Gestión de Reservas" />
 
-        <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="container mx-auto max-w-7xl px-4 py-8">
             <!-- Header -->
             <div class="mb-8">
-                <div class="flex items-center justify-between mb-6">
+                <div class="mb-6 flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                            <Calendar class="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                        <div
+                            class="rounded-xl bg-purple-100 p-3 dark:bg-purple-900/30"
+                        >
+                            <Calendar
+                                class="h-8 w-8 text-purple-600 dark:text-purple-400"
+                            />
                         </div>
                         <div>
-                            <h1 class="text-3xl font-bold text-foreground">Gestión de Reservas</h1>
-                            <p class="text-muted-foreground">Administra la cola de reservas del sistema</p>
+                            <h1 class="text-3xl font-bold text-foreground">
+                                Gestión de Reservas
+                            </h1>
+                            <p class="text-muted-foreground">
+                                Administra la cola de reservas del sistema
+                            </p>
                         </div>
                     </div>
                     <button
                         @click="applyFilters"
-                        class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
                     >
-                        <RefreshCw class="w-4 h-4" />
+                        <RefreshCw class="h-4 w-4" />
                         Actualizar
                     </button>
                 </div>
 
                 <!-- Estadísticas -->
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <div class="bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <p class="text-xs text-muted-foreground mb-1">Total</p>
-                        <p class="text-2xl font-bold text-foreground">{{ stats.total }}</p>
+                <div
+                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6"
+                >
+                    <div
+                        class="rounded-xl border border-border bg-card p-4 shadow-sm"
+                    >
+                        <p class="mb-1 text-xs text-muted-foreground">Total</p>
+                        <p class="text-2xl font-bold text-foreground">
+                            {{ stats.total }}
+                        </p>
                     </div>
-                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800 shadow-sm">
-                        <p class="text-xs text-yellow-700 dark:text-yellow-400 mb-1">En Cola</p>
-                        <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{{ stats.pending }}</p>
+                    <div
+                        class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm dark:border-yellow-800 dark:bg-yellow-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-yellow-700 dark:text-yellow-400"
+                        >
+                            En Cola
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-yellow-900 dark:text-yellow-100"
+                        >
+                            {{ stats.pending }}
+                        </p>
                     </div>
-                    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-200 dark:border-green-800 shadow-sm">
-                        <p class="text-xs text-green-700 dark:text-green-400 mb-1">Listas</p>
-                        <p class="text-2xl font-bold text-green-900 dark:text-green-100">{{ stats.ready }}</p>
+                    <div
+                        class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm dark:border-green-800 dark:bg-green-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-green-700 dark:text-green-400"
+                        >
+                            Listas
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-green-900 dark:text-green-100"
+                        >
+                            {{ stats.ready }}
+                        </p>
                     </div>
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm">
-                        <p class="text-xs text-blue-700 dark:text-blue-400 mb-1">Recogidas</p>
-                        <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{{ stats.collected }}</p>
+                    <div
+                        class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-blue-700 dark:text-blue-400"
+                        >
+                            Recogidas
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-blue-900 dark:text-blue-100"
+                        >
+                            {{ stats.collected }}
+                        </p>
                     </div>
-                    <div class="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                        <p class="text-xs text-gray-700 dark:text-gray-400 mb-1">Expiradas</p>
-                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ stats.expired }}</p>
+                    <div
+                        class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20"
+                    >
+                        <p
+                            class="mb-1 text-xs text-gray-700 dark:text-gray-400"
+                        >
+                            Expiradas
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-gray-900 dark:text-gray-100"
+                        >
+                            {{ stats.expired }}
+                        </p>
                     </div>
-                    <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 shadow-sm">
-                        <p class="text-xs text-red-700 dark:text-red-400 mb-1">Canceladas</p>
-                        <p class="text-2xl font-bold text-red-900 dark:text-red-100">{{ stats.cancelled }}</p>
+                    <div
+                        class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-900/20"
+                    >
+                        <p class="mb-1 text-xs text-red-700 dark:text-red-400">
+                            Canceladas
+                        </p>
+                        <p
+                            class="text-2xl font-bold text-red-900 dark:text-red-100"
+                        >
+                            {{ stats.cancelled }}
+                        </p>
                     </div>
                 </div>
             </div>
 
             <!-- Alerta de Reservas Listas -->
-            <div 
+            <div
                 v-if="stats.ready > 0"
-                class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 mb-6"
+                class="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20"
             >
                 <div class="flex items-center gap-3">
-                    <AlertCircle class="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0" />
+                    <AlertCircle
+                        class="h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400"
+                    />
                     <div>
-                        <p class="font-semibold text-orange-900 dark:text-orange-100">
-                            {{ stats.ready }} {{ stats.ready === 1 ? 'usuario notificado' : 'usuarios notificados' }}
+                        <p
+                            class="font-semibold text-orange-900 dark:text-orange-100"
+                        >
+                            {{ stats.ready }}
+                            {{
+                                stats.ready === 1
+                                    ? 'usuario notificado'
+                                    : 'usuarios notificados'
+                            }}
                         </p>
                         <p class="text-sm text-orange-700 dark:text-orange-300">
-                            Estos usuarios fueron notificados de que su libro está apartado. Cuando lleguen a la biblioteca, registra la entrega haciendo clic en "Registrar Entrega".
+                            Estos usuarios fueron notificados de que su libro
+                            está apartado. Cuando lleguen a la biblioteca,
+                            registra la entrega haciendo clic en "Registrar
+                            Entrega".
                         </p>
                     </div>
                 </div>
             </div>
 
             <!-- Filtros -->
-            <div class="bg-card rounded-xl border border-border p-6 mb-6 shadow-sm">
-                <div class="flex items-center gap-2 mb-4">
-                    <Filter class="w-5 h-5 text-muted-foreground" />
-                    <h2 class="text-lg font-semibold text-foreground">Filtros</h2>
+            <div
+                class="mb-6 rounded-xl border border-border bg-card p-6 shadow-sm"
+            >
+                <div class="mb-4 flex items-center gap-2">
+                    <Filter class="h-5 w-5 text-muted-foreground" />
+                    <h2 class="text-lg font-semibold text-foreground">
+                        Filtros
+                    </h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <!-- Búsqueda -->
                     <div>
-                        <label class="block text-sm font-medium text-foreground mb-2">
-                            <Search class="w-4 h-4 inline mr-1" />
+                        <label
+                            class="mb-2 block text-sm font-medium text-foreground"
+                        >
+                            <Search class="mr-1 inline h-4 w-4" />
                             Buscar
                         </label>
                         <input
                             v-model="searchQuery"
                             type="text"
                             placeholder="Usuario, DNI, libro..."
-                            class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-purple-500"
                             @keyup.enter="applyFilters"
                         />
                     </div>
 
                     <!-- Estado -->
                     <div>
-                        <label class="block text-sm font-medium text-foreground mb-2">Estado</label>
+                        <label
+                            class="mb-2 block text-sm font-medium text-foreground"
+                            >Estado</label
+                        >
                         <select
                             v-model="selectedStatus"
-                            class="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-purple-500"
                             @change="applyFilters"
                         >
                             <option value="">Todos</option>
@@ -458,14 +574,14 @@ const clearFilters = () => {
                     <div class="flex items-end gap-2">
                         <button
                             @click="applyFilters"
-                            class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                            class="rounded-lg bg-purple-600 px-6 py-2 font-medium text-white transition-colors hover:bg-purple-700"
                         >
                             Aplicar
                         </button>
                         <button
                             v-if="hasFilters"
                             @click="clearFilters"
-                            class="px-6 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-medium"
+                            class="rounded-lg bg-muted px-6 py-2 font-medium text-muted-foreground transition-colors hover:bg-muted/80"
                         >
                             Limpiar
                         </button>
@@ -474,46 +590,108 @@ const clearFilters = () => {
             </div>
 
             <!-- Tabla de Reservas -->
-            <div class="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            <div
+                class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            >
                 <div class="overflow-x-auto">
                     <table class="w-full">
-                        <thead class="bg-muted/50 border-b border-border">
+                        <thead class="border-b border-border bg-muted/50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Posición</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Usuario</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Libro</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estado</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Reservado</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Expira</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Acciones</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Posición
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Usuario
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Libro
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Estado
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Reservado
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Expira
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Acciones
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
-                            <tr 
-                                v-for="reservation in reservations.data" 
+                            <tr
+                                v-for="reservation in reservations.data"
                                 :key="reservation.id"
-                                class="hover:bg-muted/30 transition-colors"
+                                class="transition-colors hover:bg-muted/30"
                             >
                                 <!-- Posición en Cola -->
                                 <td class="px-4 py-4">
-                                    <div v-if="reservation.status === 'pending' && reservation.queue_position" class="text-center">
-                                        <div class="inline-flex items-center justify-center w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                                            <span class="font-bold text-yellow-700 dark:text-yellow-400">#{{ reservation.queue_position }}</span>
+                                    <div
+                                        v-if="
+                                            reservation.status === 'pending' &&
+                                            reservation.queue_position
+                                        "
+                                        class="text-center"
+                                    >
+                                        <div
+                                            class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30"
+                                        >
+                                            <span
+                                                class="font-bold text-yellow-700 dark:text-yellow-400"
+                                                >#{{
+                                                    reservation.queue_position
+                                                }}</span
+                                            >
                                         </div>
-                                        <p class="text-xs text-muted-foreground mt-1">de {{ reservation.total_in_queue }}</p>
+                                        <p
+                                            class="mt-1 text-xs text-muted-foreground"
+                                        >
+                                            de {{ reservation.total_in_queue }}
+                                        </p>
                                     </div>
-                                    <span v-else class="text-muted-foreground">-</span>
+                                    <span v-else class="text-muted-foreground"
+                                        >-</span
+                                    >
                                 </td>
 
                                 <!-- Usuario -->
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center shrink-0">
-                                            <User class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                        <div
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30"
+                                        >
+                                            <User
+                                                class="h-5 w-5 text-purple-600 dark:text-purple-400"
+                                            />
                                         </div>
                                         <div>
-                                            <p class="font-medium text-foreground text-sm">{{ reservation.user.name }} {{ reservation.user.last_name }}</p>
-                                            <p class="text-xs text-muted-foreground">DNI: {{ reservation.user.dni }}</p>
+                                            <p
+                                                class="text-sm font-medium text-foreground"
+                                            >
+                                                {{ reservation.user.name }}
+                                                {{ reservation.user.last_name }}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                DNI: {{ reservation.user.dni }}
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
@@ -521,63 +699,126 @@ const clearFilters = () => {
                                 <!-- Libro -->
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <img 
-                                            :src="getBookCoverUrl(reservation)" 
+                                        <img
+                                            :src="getBookCoverUrl(reservation)"
                                             :alt="getBookTitle(reservation)"
-                                            class="w-10 h-14 object-cover rounded shadow-sm"
-                                            @error="(e) => { const img = e.target as HTMLImageElement; if (!img.src.includes('placeholder')) img.src = '/images/book-placeholder.svg'; }"
+                                            class="h-14 w-10 rounded object-cover shadow-sm"
+                                            @error="
+                                                (e) => {
+                                                    const img =
+                                                        e.target as HTMLImageElement;
+                                                    if (
+                                                        !img.src.includes(
+                                                            'placeholder',
+                                                        )
+                                                    )
+                                                        img.src =
+                                                            '/images/book-placeholder.svg';
+                                                }
+                                            "
                                         />
                                         <div class="max-w-xs">
-                                            <p class="font-medium text-foreground text-sm line-clamp-2">{{ getBookTitle(reservation) }}</p>
-                                            <p v-if="getCopyNumber(reservation)" class="text-xs text-muted-foreground">Copia #{{ getCopyNumber(reservation) }}</p>
+                                            <p
+                                                class="line-clamp-2 text-sm font-medium text-foreground"
+                                            >
+                                                {{ getBookTitle(reservation) }}
+                                            </p>
+                                            <p
+                                                v-if="
+                                                    getCopyNumber(reservation)
+                                                "
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                Copia #{{
+                                                    getCopyNumber(reservation)
+                                                }}
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
 
                                 <!-- Estado -->
                                 <td class="px-4 py-4">
-                                    <span 
-                                        :class="getStatusBadge(reservation).class"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap"
+                                    <span
+                                        :class="
+                                            getStatusBadge(reservation).class
+                                        "
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap"
                                     >
-                                        <component :is="getStatusBadge(reservation).icon" class="w-3.5 h-3.5" />
+                                        <component
+                                            :is="
+                                                getStatusBadge(reservation).icon
+                                            "
+                                            class="h-3.5 w-3.5"
+                                        />
                                         {{ getStatusBadge(reservation).text }}
                                     </span>
                                 </td>
 
                                 <!-- Fecha Reserva -->
-                                <td class="px-4 py-4 text-sm text-muted-foreground">
-                                    {{ formatDateShort(reservation.reservation_date) }}
+                                <td
+                                    class="px-4 py-4 text-sm text-muted-foreground"
+                                >
+                                    {{
+                                        formatDateShort(
+                                            reservation.reservation_date,
+                                        )
+                                    }}
                                 </td>
 
                                 <!-- Fecha Expiración -->
                                 <td class="px-4 py-4 text-sm">
-                                    <span 
+                                    <span
                                         v-if="reservation.status === 'ready'"
-                                        :class="getDaysRemaining(reservation.expiration_date) <= 1 
-                                            ? 'text-red-600 dark:text-red-400 font-semibold' 
-                                            : getDaysRemaining(reservation.expiration_date) <= 2
-                                            ? 'text-orange-600 dark:text-orange-400'
-                                            : 'text-muted-foreground'"
+                                        :class="
+                                            getDaysRemaining(
+                                                reservation.expiration_date,
+                                            ) <= 1
+                                                ? 'font-semibold text-red-600 dark:text-red-400'
+                                                : getDaysRemaining(
+                                                        reservation.expiration_date,
+                                                    ) <= 2
+                                                  ? 'text-orange-600 dark:text-orange-400'
+                                                  : 'text-muted-foreground'
+                                        "
                                     >
-                                        {{ formatDateShort(reservation.expiration_date) }}
+                                        {{
+                                            formatDateShort(
+                                                reservation.expiration_date,
+                                            )
+                                        }}
                                     </span>
-                                    <span v-else class="text-muted-foreground">-</span>
+                                    <span v-else class="text-muted-foreground"
+                                        >-</span
+                                    >
                                 </td>
 
                                 <!-- Acciones -->
                                 <td class="px-4 py-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <button
-                                            v-for="(actionItem, index) in getAvailableActions(reservation)"
+                                            v-for="(
+                                                actionItem, index
+                                            ) in getAvailableActions(
+                                                reservation,
+                                            )"
                                             :key="index"
                                             @click="actionItem.action"
-                                            :disabled="processingId === reservation.id"
+                                            :disabled="
+                                                processingId === reservation.id
+                                            "
                                             :class="actionItem.color"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            <component :is="actionItem.icon" class="w-3.5 h-3.5" />
-                                            {{ processingId === reservation.id ? 'Procesando...' : actionItem.label }}
+                                            <component
+                                                :is="actionItem.icon"
+                                                class="h-3.5 w-3.5"
+                                            />
+                                            {{
+                                                processingId === reservation.id
+                                                    ? 'Procesando...'
+                                                    : actionItem.label
+                                            }}
                                         </button>
                                     </div>
                                 </td>
@@ -587,29 +828,46 @@ const clearFilters = () => {
                 </div>
 
                 <!-- Empty State -->
-                <div v-if="reservations.data.length === 0" class="p-12 text-center">
-                    <Calendar class="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <h3 class="text-xl font-semibold text-foreground mb-2">No se encontraron reservas</h3>
+                <div
+                    v-if="reservations.data.length === 0"
+                    class="p-12 text-center"
+                >
+                    <Calendar
+                        class="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50"
+                    />
+                    <h3 class="mb-2 text-xl font-semibold text-foreground">
+                        No se encontraron reservas
+                    </h3>
                     <p class="text-muted-foreground">
-                        {{ hasFilters ? 'Intenta ajustar los filtros' : 'Aún no hay reservas en el sistema' }}
+                        {{
+                            hasFilters
+                                ? 'Intenta ajustar los filtros'
+                                : 'Aún no hay reservas en el sistema'
+                        }}
                     </p>
                 </div>
 
                 <!-- Paginación -->
-                <div v-if="reservations.last_page > 1" class="px-6 py-4 border-t border-border">
+                <div
+                    v-if="reservations.last_page > 1"
+                    class="border-t border-border px-6 py-4"
+                >
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-muted-foreground">
-                            Mostrando {{ reservations.data.length }} de {{ reservations.total }} reservas
+                            Mostrando {{ reservations.data.length }} de
+                            {{ reservations.total }} reservas
                         </p>
                         <div class="flex gap-2">
                             <Link
                                 v-for="page in reservations.last_page"
                                 :key="page"
                                 :href="`/admin/reservations?page=${page}`"
-                                :class="page === reservations.current_page 
-                                    ? 'bg-purple-600 text-white' 
-                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'"
-                                class="px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+                                :class="
+                                    page === reservations.current_page
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                "
+                                class="rounded-lg px-3 py-1 text-sm font-medium transition-colors"
                                 preserve-state
                             >
                                 {{ page }}

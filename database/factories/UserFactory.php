@@ -23,11 +23,19 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= 'password',
+            'is_temp_password' => false,
             'remember_token' => Str::random(10),
+            'dni' => fake()->unique()->numerify('########'),
+            'phone' => fake()->numerify('#########'),
+            'user_type' => fake()->randomElement(['student', 'teacher', 'external', 'librarian', 'admin']),
+            'max_concurrent_loans' => 3,
+            'can_download' => true,
+            'is_active' => true,
             'two_factor_secret' => Str::random(10),
             'two_factor_recovery_codes' => Str::random(10),
             'two_factor_confirmed_at' => now(),

@@ -1,10 +1,10 @@
 <!-- resources/js/pages/admin/categories/Create.vue -->
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
 import { BreadcrumbItem } from '@/types';
-import { ArrowLeft, Save, ChevronUp, ChevronDown } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ArrowLeft, ChevronDown, ChevronUp, Save } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface ParentCategory {
     id: number;
@@ -78,32 +78,38 @@ const decrementOrder = () => {
     <Head title="Crear Categoría" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="p-6 max-w-4xl mx-auto">
+        <div class="mx-auto max-w-4xl p-6">
             <!-- Header -->
             <div class="mb-8">
-                <div class="flex items-center gap-4 mb-4">
+                <div class="mb-4 flex items-center gap-4">
                     <Link
                         href="/admin/categories"
-                        class="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent"
+                        class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
-                        <ArrowLeft class="w-5 h-5" />
+                        <ArrowLeft class="h-5 w-5" />
                     </Link>
                     <div>
-                        <h1 class="text-3xl font-bold text-foreground">Crear Nueva Categoría</h1>
-                        <p class="text-muted-foreground mt-2">
-                            Agrega una nueva categoría o subcategoría a tu biblioteca
+                        <h1 class="text-3xl font-bold text-foreground">
+                            Crear Nueva Categoría
+                        </h1>
+                        <p class="mt-2 text-muted-foreground">
+                            Agrega una nueva categoría o subcategoría a tu
+                            biblioteca
                         </p>
                     </div>
                 </div>
             </div>
 
             <!-- Form -->
-            <div class="bg-card rounded-xl border border-border shadow-lg p-6">
+            <div class="rounded-xl border border-border bg-card p-6 shadow-lg">
                 <form @submit.prevent="submit" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <!-- Nombre -->
                         <div class="space-y-2">
-                            <label for="name" class="block text-sm font-medium text-foreground">
+                            <label
+                                for="name"
+                                class="block text-sm font-medium text-foreground"
+                            >
                                 Nombre de la Categoría *
                             </label>
                             <input
@@ -112,14 +118,17 @@ const decrementOrder = () => {
                                 type="text"
                                 required
                                 @input="generateSlug"
-                                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary focus:outline-none"
                                 placeholder="Ej: Ciencias de la Computación"
                             />
                         </div>
 
                         <!-- Slug -->
                         <div class="space-y-2">
-                            <label for="slug" class="block text-sm font-medium text-foreground">
+                            <label
+                                for="slug"
+                                class="block text-sm font-medium text-foreground"
+                            >
                                 Slug *
                             </label>
                             <input
@@ -127,25 +136,30 @@ const decrementOrder = () => {
                                 v-model="form.slug"
                                 type="text"
                                 required
-                                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground font-mono"
+                                class="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-foreground focus:border-transparent focus:ring-2 focus:ring-primary focus:outline-none"
                                 placeholder="Ej: ciencias-computacion"
                             />
                         </div>
 
                         <!-- Categoría Padre -->
                         <div class="space-y-2">
-                            <label for="parent_id" class="block text-sm font-medium text-foreground">
+                            <label
+                                for="parent_id"
+                                class="block text-sm font-medium text-foreground"
+                            >
                                 Categoría Padre
                             </label>
                             <select
                                 id="parent_id"
                                 v-model="form.parent_id"
-                                class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary focus:outline-none"
                             >
-                                <option :value="null">Ninguna (Categoría Principal)</option>
-                                <option 
-                                    v-for="parent in parentCategories" 
-                                    :key="parent.id" 
+                                <option :value="null">
+                                    Ninguna (Categoría Principal)
+                                </option>
+                                <option
+                                    v-for="parent in parentCategories"
+                                    :key="parent.id"
                                     :value="parent.id"
                                 >
                                     {{ parent.name }}
@@ -155,7 +169,10 @@ const decrementOrder = () => {
 
                         <!-- Orden - Mejorado con controles -->
                         <div class="space-y-2">
-                            <label for="sort_order" class="block text-sm font-medium text-foreground">
+                            <label
+                                for="sort_order"
+                                class="block text-sm font-medium text-foreground"
+                            >
                                 Orden de Visualización
                             </label>
                             <div class="flex items-center gap-2">
@@ -163,20 +180,20 @@ const decrementOrder = () => {
                                     type="button"
                                     @click="decrementOrder"
                                     :disabled="form.sort_order <= 1"
-                                    class="p-2 border border-border rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="rounded-lg border border-border p-2 transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <ChevronDown class="w-4 h-4" />
+                                    <ChevronDown class="h-4 w-4" />
                                 </button>
-                                
+
                                 <select
                                     id="sort_order"
                                     v-model.number="form.sort_order"
                                     required
-                                    class="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                                    class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary focus:outline-none"
                                 >
-                                    <option 
-                                        v-for="order in availableOrders" 
-                                        :key="order" 
+                                    <option
+                                        v-for="order in availableOrders"
+                                        :key="order"
                                         :value="order"
                                         :selected="order === form.sort_order"
                                     >
@@ -187,28 +204,34 @@ const decrementOrder = () => {
                                 <button
                                     type="button"
                                     @click="incrementOrder"
-                                    :disabled="form.sort_order >= props.nextSortOrder"
-                                    class="p-2 border border-border rounded-lg hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    :disabled="
+                                        form.sort_order >= props.nextSortOrder
+                                    "
+                                    class="rounded-lg border border-border p-2 transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    <ChevronUp class="w-4 h-4" />
+                                    <ChevronUp class="h-4 w-4" />
                                 </button>
                             </div>
                             <p class="text-xs text-muted-foreground">
-                                Las categorías se mostrarán en este orden en la navegación
+                                Las categorías se mostrarán en este orden en la
+                                navegación
                             </p>
                         </div>
                     </div>
 
                     <!-- Descripción -->
                     <div class="space-y-2">
-                        <label for="description" class="block text-sm font-medium text-foreground">
+                        <label
+                            for="description"
+                            class="block text-sm font-medium text-foreground"
+                        >
                             Descripción
                         </label>
                         <textarea
                             id="description"
                             v-model="form.description"
                             rows="3"
-                            class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary focus:outline-none"
                             placeholder="Descripción opcional de la categoría..."
                         ></textarea>
                     </div>
@@ -219,26 +242,31 @@ const decrementOrder = () => {
                             id="is_active"
                             v-model="form.is_active"
                             type="checkbox"
-                            class="w-4 h-4 text-primary border-border rounded focus:ring-primary focus:ring-2"
+                            class="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary"
                         />
-                        <label for="is_active" class="text-sm font-medium text-foreground">
+                        <label
+                            for="is_active"
+                            class="text-sm font-medium text-foreground"
+                        >
                             Categoría activa
                         </label>
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex items-center justify-end gap-4 pt-6 border-t border-border">
+                    <div
+                        class="flex items-center justify-end gap-4 border-t border-border pt-6"
+                    >
                         <Link
                             href="/admin/categories"
-                            class="px-4 py-2 text-foreground border border-border rounded-lg hover:bg-accent transition-colors"
+                            class="rounded-lg border border-border px-4 py-2 text-foreground transition-colors hover:bg-accent"
                         >
                             Cancelar
                         </Link>
                         <button
                             type="submit"
-                            class="bg-primary text-primary-foreground px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+                            class="flex items-center gap-2 rounded-lg bg-primary px-6 py-2 text-primary-foreground shadow-lg shadow-primary/25 transition-colors hover:bg-primary/90"
                         >
-                            <Save class="w-4 h-4" />
+                            <Save class="h-4 w-4" />
                             Crear Categoría
                         </button>
                     </div>
@@ -246,19 +274,26 @@ const decrementOrder = () => {
             </div>
 
             <!-- Información del orden -->
-            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
                 <div class="flex items-start gap-3">
-                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                        <span class="text-blue-600 text-sm font-bold">i</span>
+                    <div
+                        class="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-blue-100"
+                    >
+                        <span class="text-sm font-bold text-blue-600">i</span>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-blue-900">Sobre el orden de categorías</h3>
-                        <p class="text-blue-700 text-sm mt-1">
-                            El orden determina la posición en que aparecerán las categorías en la navegación. 
-                            Las categorías se ordenan de menor a mayor número.
+                        <h3 class="font-semibold text-blue-900">
+                            Sobre el orden de categorías
+                        </h3>
+                        <p class="mt-1 text-sm text-blue-700">
+                            El orden determina la posición en que aparecerán las
+                            categorías en la navegación. Las categorías se
+                            ordenan de menor a mayor número.
                         </p>
-                        <p class="text-blue-700 text-sm mt-1">
-                            <strong>Orden actual sugerido:</strong> {{ form.sort_order }} de {{ props.nextSortOrder }} posiciones disponibles
+                        <p class="mt-1 text-sm text-blue-700">
+                            <strong>Orden actual sugerido:</strong>
+                            {{ form.sort_order }} de
+                            {{ props.nextSortOrder }} posiciones disponibles
                         </p>
                     </div>
                 </div>

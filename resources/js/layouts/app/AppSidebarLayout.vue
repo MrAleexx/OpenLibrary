@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import type { BreadcrumbItemType } from '@/types';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface Props {
     breadcrumbs?: BreadcrumbItemType[];
@@ -33,17 +33,25 @@ onBeforeUnmount(() => {
         <Transition name="fade" mode="out-in">
             <div v-if="isLoaded" class="flex h-full w-full">
                 <AppSidebar />
-                <AppContent variant="sidebar" class="flex-1 min-w-0">
+                <AppContent variant="sidebar" class="min-w-0 flex-1">
                     <AppSidebarHeader :breadcrumbs="breadcrumbs" />
                     <Suspense>
                         <template #default>
                             <slot />
                         </template>
                         <template #fallback>
-                            <div class="flex h-full items-center justify-center">
+                            <div
+                                class="flex h-full items-center justify-center"
+                            >
                                 <div class="text-center">
-                                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto"></div>
-                                    <p class="mt-2 text-sm text-muted-foreground">Cargando...</p>
+                                    <div
+                                        class="mx-auto h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-primary"
+                                    ></div>
+                                    <p
+                                        class="mt-2 text-sm text-muted-foreground"
+                                    >
+                                        Cargando...
+                                    </p>
                                 </div>
                             </div>
                         </template>

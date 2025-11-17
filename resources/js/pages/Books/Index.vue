@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
 import BookCard from '@/components/Books/BookCard.vue';
 import BookFilters from '@/components/Books/BookFilters.vue';
-import { BookOpen, ChevronLeft, ChevronRight, Library, Sparkles } from 'lucide-vue-next';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import {
+    BookOpen,
+    ChevronLeft,
+    ChevronRight,
+    Library,
+    Sparkles,
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Book {
@@ -63,7 +69,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    userLoanedBookIds: () => []
+    userLoanedBookIds: () => [],
 });
 
 const breadcrumbs = [
@@ -79,8 +85,12 @@ const lastPage = computed(() => props.books.last_page);
 const paginationRange = computed(() => {
     const range = [];
     const delta = 2; // Páginas a mostrar a cada lado de la actual
-    
-    for (let i = Math.max(2, currentPage.value - delta); i <= Math.min(lastPage.value - 1, currentPage.value + delta); i++) {
+
+    for (
+        let i = Math.max(2, currentPage.value - delta);
+        i <= Math.min(lastPage.value - 1, currentPage.value + delta);
+        i++
+    ) {
         range.push(i);
     }
 
@@ -101,7 +111,10 @@ const paginationRange = computed(() => {
 
 const resultText = computed(() => {
     const from = (currentPage.value - 1) * props.books.per_page + 1;
-    const to = Math.min(currentPage.value * props.books.per_page, totalBooks.value);
+    const to = Math.min(
+        currentPage.value * props.books.per_page,
+        totalBooks.value,
+    );
     return `Mostrando ${from}-${to} de ${totalBooks.value} libros`;
 });
 </script>
@@ -110,28 +123,38 @@ const resultText = computed(() => {
     <Head title="Catálogo de Libros" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="p-6 space-y-8">
+        <div class="space-y-8 p-6">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-4xl font-bold text-foreground flex items-center gap-3">
-                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                            <Library class="w-6 h-6 text-primary" />
+                    <h1
+                        class="flex items-center gap-3 text-4xl font-bold text-foreground"
+                    >
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"
+                        >
+                            <Library class="h-6 w-6 text-primary" />
                         </div>
                         Catálogo de Libros
                     </h1>
-                    <p class="text-muted-foreground mt-2 flex items-center gap-2">
-                        <BookOpen class="w-4 h-4" />
+                    <p
+                        class="mt-2 flex items-center gap-2 text-muted-foreground"
+                    >
+                        <BookOpen class="h-4 w-4" />
                         Explora nuestra colección de libros físicos y digitales
                     </p>
                 </div>
 
                 <!-- Stats Badge -->
-                <div class="hidden md:flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary rounded-xl border border-primary/20">
-                    <Sparkles class="w-5 h-5" />
+                <div
+                    class="hidden items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-6 py-3 text-primary md:flex"
+                >
+                    <Sparkles class="h-5 w-5" />
                     <div class="text-right">
                         <p class="text-2xl font-bold">{{ totalBooks }}</p>
-                        <p class="text-xs text-primary/80">Libros disponibles</p>
+                        <p class="text-xs text-primary/80">
+                            Libros disponibles
+                        </p>
                     </div>
                 </div>
             </div>
@@ -147,57 +170,73 @@ const resultText = computed(() => {
             </div>
 
             <!-- Books Grid -->
-            <div v-if="hasBooks" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                <BookCard 
-                    v-for="book in books.data" 
-                    :key="book.id" 
+            <div
+                v-if="hasBooks"
+                class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+            >
+                <BookCard
+                    v-for="book in books.data"
+                    :key="book.id"
                     :book="book"
                     :user-has-loaned="userLoanedBookIds.includes(book.id)"
                 />
             </div>
 
             <!-- Empty State -->
-            <div v-else class="flex flex-col items-center justify-center py-20 space-y-4">
-                <div class="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
-                    <BookOpen class="w-10 h-10 text-muted-foreground" />
+            <div
+                v-else
+                class="flex flex-col items-center justify-center space-y-4 py-20"
+            >
+                <div
+                    class="flex h-20 w-20 items-center justify-center rounded-full bg-muted"
+                >
+                    <BookOpen class="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 class="text-xl font-semibold text-foreground">No se encontraron libros</h3>
-                <p class="text-muted-foreground text-center max-w-md">
-                    No hay libros que coincidan con los filtros seleccionados. 
+                <h3 class="text-xl font-semibold text-foreground">
+                    No se encontraron libros
+                </h3>
+                <p class="max-w-md text-center text-muted-foreground">
+                    No hay libros que coincidan con los filtros seleccionados.
                     Intenta ajustar tus criterios de búsqueda.
                 </p>
                 <Link
                     href="/books"
-                    class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                     Ver todos los libros
                 </Link>
             </div>
 
             <!-- Pagination -->
-            <div v-if="hasBooks && lastPage > 1" class="flex items-center justify-center gap-2 pt-8">
+            <div
+                v-if="hasBooks && lastPage > 1"
+                class="flex items-center justify-center gap-2 pt-8"
+            >
                 <!-- Previous Button -->
                 <Link
                     v-if="books.links[0].url"
                     :href="books.links[0].url"
                     preserve-scroll
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 transition-colors hover:bg-muted"
                 >
-                    <ChevronLeft class="w-4 h-4" />
+                    <ChevronLeft class="h-4 w-4" />
                     <span class="hidden sm:inline">Anterior</span>
                 </Link>
                 <button
                     v-else
                     disabled
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background opacity-50 cursor-not-allowed"
+                    class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 opacity-50"
                 >
-                    <ChevronLeft class="w-4 h-4" />
+                    <ChevronLeft class="h-4 w-4" />
                     <span class="hidden sm:inline">Anterior</span>
                 </button>
 
                 <!-- Page Numbers -->
                 <div class="flex items-center gap-1">
-                    <template v-for="(page, index) in paginationRange" :key="index">
+                    <template
+                        v-for="(page, index) in paginationRange"
+                        :key="index"
+                    >
                         <span
                             v-if="page === '...'"
                             class="px-4 py-2 text-muted-foreground"
@@ -208,13 +247,13 @@ const resultText = computed(() => {
                             v-else-if="page !== currentPage"
                             :href="`/books?page=${page}`"
                             preserve-scroll
-                            class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-muted"
                         >
                             {{ page }}
                         </Link>
                         <button
                             v-else
-                            class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-foreground font-medium"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary font-medium text-primary-foreground"
                         >
                             {{ page }}
                         </button>
@@ -226,18 +265,18 @@ const resultText = computed(() => {
                     v-if="books.links[books.links.length - 1].url"
                     :href="books.links[books.links.length - 1].url!"
                     preserve-scroll
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 transition-colors hover:bg-muted"
                 >
                     <span class="hidden sm:inline">Siguiente</span>
-                    <ChevronRight class="w-4 h-4" />
+                    <ChevronRight class="h-4 w-4" />
                 </Link>
                 <button
                     v-else
                     disabled
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background opacity-50 cursor-not-allowed"
+                    class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 opacity-50"
                 >
                     <span class="hidden sm:inline">Siguiente</span>
-                    <ChevronRight class="w-4 h-4" />
+                    <ChevronRight class="h-4 w-4" />
                 </button>
             </div>
         </div>
@@ -262,9 +301,19 @@ const resultText = computed(() => {
     animation-fill-mode: both;
 }
 
-.grid > *:nth-child(1) { animation-delay: 0.05s; }
-.grid > *:nth-child(2) { animation-delay: 0.1s; }
-.grid > *:nth-child(3) { animation-delay: 0.15s; }
-.grid > *:nth-child(4) { animation-delay: 0.2s; }
-.grid > *:nth-child(5) { animation-delay: 0.25s; }
+.grid > *:nth-child(1) {
+    animation-delay: 0.05s;
+}
+.grid > *:nth-child(2) {
+    animation-delay: 0.1s;
+}
+.grid > *:nth-child(3) {
+    animation-delay: 0.15s;
+}
+.grid > *:nth-child(4) {
+    animation-delay: 0.2s;
+}
+.grid > *:nth-child(5) {
+    animation-delay: 0.25s;
+}
 </style>

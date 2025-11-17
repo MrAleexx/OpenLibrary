@@ -159,12 +159,12 @@ declare module '@/routes' {
 
 declare module '@/actions/App/Http/Controllers/Settings/ProfileController' {
     export const update: {
-        form(): any;
+        form: () => any;
     };
     export default {
         update: {
-            form(): any;
-        }
+            form: () => any,
+        },
     };
 }
 
@@ -212,29 +212,29 @@ export interface AdminCategoryEditProps {
 }
 
 interface FlashMessages {
-  success?: string;
-  error?: string;
-  import_results?: {
-    total_rows: number;
-    imported: number;
-    skipped: number;
-    errors: Array<{
-      row: number;
-      field: string;
-      error: string;
-      value: string;
-      type: string;
+    success?: string;
+    error?: string;
+    import_results?: {
+        total_rows: number;
+        imported: number;
+        skipped: number;
+        errors: Array<{
+            row: number;
+            field: string;
+            error: string;
+            value: string;
+            type: string;
+        }>;
+        has_errors: boolean;
+    };
+    import_errors?: Array<{
+        row: number;
+        field: string;
+        error: string;
+        value: string;
     }>;
-    has_errors: boolean;
-  };
-  import_errors?: Array<{
-    row: number;
-    field: string;
-    error: string;
-    value: string;
-  }>;
 }
 
 interface PageProps {
-  flash?: FlashMessages;
+    flash?: FlashMessages;
 }
