@@ -1,44 +1,14 @@
----
 deployment:
   tasks:
     - export DEPLOYPATH=/home/usersumak/public_html
-
-    - echo "Iniciando despliegue hacia $DEPLOYPATH..."
-
-    # Copia segura con rsync (sin .git, node_modules ni .env)
     - /bin/rsync -av --delete \
         --exclude='.git' \
         --exclude='node_modules' \
         --exclude='.env' \
-        --exclude='storage' \
-        ./ $DEPLOYPATH
-
-    # Copia manualmente archivos ocultos importantes
-    - /bin/cp -f .htaccess $DEPLOYPATH/.htaccess
-
-    - echo "Archivos copiados (excepto .env)."
-
-    # Instala dependencias PHP
-    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install \
-        --no-dev --prefer-dist --no-interaction --optimize-autoloader
-
-    # Genera APP_KEY solo si falta en el .env existente
+        ./public/ $DEPLOYPATH/
     - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then \
         cd $DEPLOYPATH && php artisan key:generate; \
       fi
-
-    # Ejecuta migraciones pendientes
+    - cd $DEPLOYPATH && composer install --no-dev
     - cd $DEPLOYPATH && php artisan migrate --force
-
-    # Limpia y cachea configuración
-    - cd $DEPLOYPATH && php artisan optimize:clear
-    - cd $DEPLOYPATH && php artisan config:cache
-    - cd $DEPLOYPATH && php artisan route:cache
-    - cd $DEPLOYPATH && php artisan view:cache
-
-    # Crea enlace de almacenamiento si no existe
-    - if [ ! -L "$DEPLOYPATH/public/storage" ]; then \
-        cd $DEPLOYPATH && php artisan storage:link; \
-      fi
-
-    - echo "Despliegue completado correctamente (sin modificar .env)."
+    - cd $DEPLOYPATH && php artisan cache:clear
