@@ -10,10 +10,11 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\UserReservationController;
 use App\Http\Controllers\DownloadController;
+use Illuminate\Support\Facades\Auth;
 
 // Ruta principal que redirige según autenticación
 Route::get('/', function () {
-    if (auth()->check()) {
+    if (auth::check()) {
         return redirect('/dashboard');
     }
     
@@ -26,7 +27,7 @@ Route::get('/', function () {
 Route::get('/welcome', function () {
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
-        'isAuthenticated' => auth()->check(),
+        'isAuthenticated' => auth::check(),
     ]);
 })->name('welcome.page');
 

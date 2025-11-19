@@ -1,14 +1,73 @@
 deployment:
   tasks:
+    - export APPDIR=/home/usersumak/app/openlibrary
     - export DEPLOYPATH=/home/usersumak/public_html
-    - /bin/rsync -av --delete \
+
+    # 1) Si no existe APPDIR, clonamos (fallback). Si existe, actualizamos desde la rama main.
+    - |
+      if [ ! -d "$APPDIR" ]; then
+        mkdir -p "$(dirname "$APPDIR")"
+        git clone --depth=1 https://github.com/MrAleexx/OpenLibrary.git "$APPDIR"
+      else
+        cd "$APPDIR" || exit 1
+        git fetch --all --prune
+        git reset --hard origin/main
+      fi
+
+    # 2) Asegurarnos de que exista .env (se recomienda gestionarlo manualmente en cPanel File Manager)
+    - |
+      if [ ! -f "$APPDIR/.env" ]; then
+        echo "WARNING: no se encontró $APPDIR/.env — crea el .env de producción antes de proceder" >&2
+      fi
+
+    # 3) Instalar dependencias PHP en APPDIR (no en public_html)
+    - |
+      cd "$APPDIR" || exit 1
+      composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction || exit 1
+
+    # 4) Compilar assets: si hay node disponible, compilar; si no, esperar que build se haga localmente
+    - |
+      cd "$APPDIR" || exit 1
+      if command -v npm >/dev/null 2>&1; then
+        npm ci && npm run build || echo "Warning: npm build failed or not available on server"
+      else
+        echo "Node/npm no disponible en servidor — compilar assets localmente y subir public/"
+      fi
+
+    # 5) Generar APP_KEY si hace falta
+    - |
+      if ! grep -q "^APP_KEY=" "$APPDIR/.env" 2>/dev/null || [ "$(grep "^APP_KEY=" "$APPDIR/.env" | cut -d'=' -f2)" = "" ]; then
+        cd "$APPDIR" && php artisan key:generate --force
+      fi
+
+    # 6) Ejecutar migraciones y cachés (ejecutar en APPDIR)
+    - |
+      cd "$APPDIR" || exit 1
+      php artisan migrate --force || echo "Warning: migrations failed"
+      php artisan config:cache || true
+      php artisan route:cache || true
+      php artisan view:cache || true
+
+    # 7) Sincronizar solo public/ al web root (public_html)
+    - |
+      /bin/rsync -av --delete \
         --exclude='.git' \
         --exclude='node_modules' \
         --exclude='.env' \
-        ./public/ $DEPLOYPATH/
-    - if ! grep -q "APP_KEY=base64" $DEPLOYPATH/.env; then \
-        cd $DEPLOYPATH && php artisan key:generate; \
-      fi
-    - cd $DEPLOYPATH && composer install --no-dev
-    - cd $DEPLOYPATH && php artisan migrate --force
-    - cd $DEPLOYPATH && php artisan cache:clear
+        --exclude='vendor' \
+        "$APPDIR/public/" "$DEPLOYPATH/"
+
+    # 8) Crear enlace de storage (si corresponde) desde APPDIR — esto dejará public/storage apuntando al storage del proyecto
+    - |
+      cd "$APPDIR" || exit 1
+      php artisan storage:link --force || echo "Warning: storage:link failed"
+
+    # 9) Ajustar permisos mínimos
+    - |
+      chmod -R 775 "$APPDIR/storage" "$APPDIR/bootstrap/cache" || true
+      chown -R usersumak:usersumak "$APPDIR/storage" "$APPDIR/bootstrap/cache" || true
+
+    # 10) Limpieza final
+    - |
+      cd "$APPDIR" || exit 1
+      php artisan optimize:clear || true

@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useCart } from '@/composables/useCart';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
+import { type NavItem, type AppPageProps } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookMarked,
@@ -58,14 +58,7 @@ interface User {
     [key: string]: any;
 }
 
-interface PageProps {
-    auth: {
-        user: User | null;
-    };
-    [key: string]: any;
-}
-
-const page = usePage<PageProps>();
+const page = usePage<AppPageProps>();
 
 // ===============================================
 // GESTIÓN DE ROLES Y PERMISOS

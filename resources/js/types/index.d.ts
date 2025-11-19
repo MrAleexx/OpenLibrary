@@ -235,6 +235,6 @@ interface FlashMessages {
     }>;
 }
 
-interface PageProps {
+export interface AppFlashPageProps {
     flash?: FlashMessages;
 }
