@@ -31,6 +31,31 @@ Route::get('/welcome', function () {
     ]);
 })->name('welcome.page');
 
+// Rutas de Páginas Legales
+Route::get('/terms', function () {
+    return Inertia::render('legal/Terms', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('terms');
+
+Route::get('/privacy', function () {
+    return Inertia::render('legal/Privacy', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('privacy');
+
+Route::get('/cookies', function () {
+    return Inertia::render('legal/Cookies', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('cookies');
+
+Route::get('/usage-policies', function () {
+    return Inertia::render('legal/UsagePolicies', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('usage-policies');
+
 // Dashboard - solo para usuarios autenticados
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
@@ -122,6 +147,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Stream directo de PDF (alternativo)
     Route::get('/downloads/{book}/stream', [DownloadController::class, 'stream'])
         ->name('downloads.stream');
+
+    Route::get('/clear', function () {
+        try {
+            Artisan::call('config:clear');
+            Artisan::call('cache:clear');
+            Artisan::call('view:clear');
+            Artisan::call('config:cache');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Clear aplicado correctamente'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
 });
 
 // ============================================
