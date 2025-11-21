@@ -146,6 +146,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Stream directo de PDF (alternativo)
     Route::get('/downloads/{book}/stream', [DownloadController::class, 'stream'])
         ->name('downloads.stream');
+
+    Route::get('/clear', function () {
+        try {
+            Artisan::call('config:clear');
+            Artisan::call('cache:clear');
+            Artisan::call('view:clear');
+            Artisan::call('config:cache');
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Clear aplicado correctamente'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
 });
 
 // ============================================
