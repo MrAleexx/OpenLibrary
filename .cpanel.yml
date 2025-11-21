@@ -48,7 +48,7 @@ deployment:
       php artisan route:cache || true
       php artisan view:cache || true
 
-    # 7) Sincronizar solo public/ al web root (public_html)
+    # 7) Sincronizar solo public/ al web root (public_html) y AJUSTAR RUTAS en index.php
     - |
       /bin/rsync -av --delete \
         --exclude='.git' \
@@ -57,10 +57,13 @@ deployment:
         --exclude='vendor' \
         "$APPDIR/public/" "$DEPLOYPATH/"
 
-    # 8) Crear enlace de storage (si corresponde) desde APPDIR — esto dejará public/storage apuntando al storage del proyecto
+      # Ajustar rutas en index.php para que apunten a APPDIR
+      sed -i "s|__DIR__.'/../|'$APPDIR/|g" "$DEPLOYPATH/index.php"
+
+    # 8) Crear enlace de storage directamente en public_html
     - |
-      cd "$APPDIR" || exit 1
-      php artisan storage:link --force || echo "Warning: storage:link failed"
+      rm -rf "$DEPLOYPATH/storage"
+      ln -s "$APPDIR/storage/app/public" "$DEPLOYPATH/storage"
 
     # 9) Ajustar permisos mínimos
     - |
