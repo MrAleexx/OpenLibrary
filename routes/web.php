@@ -30,6 +30,31 @@ Route::get('/welcome', function () {
     ]);
 })->name('welcome.page');
 
+// Rutas de Páginas Legales
+Route::get('/terms', function () {
+    return Inertia::render('legal/Terms', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('terms');
+
+Route::get('/privacy', function () {
+    return Inertia::render('legal/Privacy', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('privacy');
+
+Route::get('/cookies', function () {
+    return Inertia::render('legal/Cookies', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('cookies');
+
+Route::get('/usage-policies', function () {
+    return Inertia::render('legal/UsagePolicies', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('usage-policies');
+
 // Dashboard - solo para usuarios autenticados
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
