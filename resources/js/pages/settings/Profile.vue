@@ -2,7 +2,7 @@
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
-import { Form, Head, usePage, router } from '@inertiajs/vue3';
+import { Form, Head, router, usePage } from '@inertiajs/vue3';
 
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -95,10 +95,13 @@ const resendVerification = () => {
                         </p>
 
                         <div
-                            v-if="verificationStatus === 'verification-link-sent'"
+                            v-if="
+                                verificationStatus === 'verification-link-sent'
+                            "
                             class="mt-2 text-sm font-medium text-green-600"
                         >
-                            A new verification link has been sent to your email address.
+                            A new verification link has been sent to your email
+                            address.
                         </div>
                     </div>
 

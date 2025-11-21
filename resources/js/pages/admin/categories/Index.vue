@@ -1,14 +1,26 @@
 <!-- resources/js/pages/admin/categories/Index.vue -->
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { BreadcrumbItem, Category } from '@/types'; 
 import CategoryTreeNode from '@/components/CategoryTreeNode.vue';
-import { 
-    Plus, Edit, Trash2, Folder, FolderOpen, Eye, EyeOff, Search, 
-    Filter, ListTree, Table, GripVertical, History, X 
+import AppLayout from '@/layouts/AppLayout.vue';
+import { BreadcrumbItem, Category } from '@/types';
+import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    Edit,
+    Eye,
+    EyeOff,
+    Filter,
+    Folder,
+    FolderOpen,
+    GripVertical,
+    History,
+    ListTree,
+    Plus,
+    Search,
+    Table,
+    Trash2,
+    X,
 } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Props {
     categories: Category[];
@@ -38,24 +50,36 @@ const filteredCategories = computed(() => {
 
     // Filtro por búsqueda
     if (searchQuery.value) {
-        filtered = filtered.filter(category =>
-            category.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-            category.slug.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-            (category.description && category.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
+        filtered = filtered.filter(
+            (category) =>
+                category.name
+                    .toLowerCase()
+                    .includes(searchQuery.value.toLowerCase()) ||
+                category.slug
+                    .toLowerCase()
+                    .includes(searchQuery.value.toLowerCase()) ||
+                (category.description &&
+                    category.description
+                        .toLowerCase()
+                        .includes(searchQuery.value.toLowerCase())),
         );
     }
 
     // Filtro por estado
     if (filterStatus.value !== 'all') {
-        filtered = filtered.filter(category =>
-            filterStatus.value === 'active' ? category.is_active : !category.is_active
+        filtered = filtered.filter((category) =>
+            filterStatus.value === 'active'
+                ? category.is_active
+                : !category.is_active,
         );
     }
 
     // Filtro por tipo
     if (filterType.value !== 'all') {
-        filtered = filtered.filter(category =>
-            filterType.value === 'parent' ? category.parent_id === null : category.parent_id !== null
+        filtered = filtered.filter((category) =>
+            filterType.value === 'parent'
+                ? category.parent_id === null
+                : category.parent_id !== null,
         );
     }
 
@@ -64,13 +88,18 @@ const filteredCategories = computed(() => {
 
 // Computed: Categorías organizadas en árbol (solo categorías raíz)
 const rootCategories = computed(() => {
-    return props.categories.filter(cat => cat.parent_id === null)
+    return props.categories
+        .filter((cat) => cat.parent_id === null)
         .sort((a, b) => a.sort_order - b.sort_order);
 });
 
 // Funciones
 const deleteCategory = (category: Category) => {
-    if (confirm(`¿Estás seguro de que quieres eliminar la categoría "${category.name}"?`)) {
+    if (
+        confirm(
+            `¿Estás seguro de que quieres eliminar la categoría "${category.name}"?`,
+        )
+    ) {
         router.delete(`/admin/categories/${category.id}`);
     }
 };
@@ -92,8 +121,8 @@ const viewHistory = async (category: Category) => {
             action: 'created',
             description: 'Categoría creada',
             user: { name: 'Administrador' },
-            created_at: '2024-01-15 10:30:00'
-        }
+            created_at: '2024-01-15 10:30:00',
+        },
     ];
     showHistoryModal.value = true;
 };
@@ -113,14 +142,21 @@ const onDragOver = (event: DragEvent) => {
     }
 };
 
-const onDrop = async (event: DragEvent, targetCategory: Category, position: 'before' | 'after' | 'inside') => {
+const onDrop = async (
+    event: DragEvent,
+    targetCategory: Category,
+    position: 'before' | 'after' | 'inside',
+) => {
     event.preventDefault();
     const draggedCategoryId = event.dataTransfer?.getData('text/plain');
-    
+
     if (!draggedCategoryId) return;
 
     // Evitar que una categoría se mueva dentro de sí misma
-    if (position === 'inside' && parseInt(draggedCategoryId) === targetCategory.id) {
+    if (
+        position === 'inside' &&
+        parseInt(draggedCategoryId) === targetCategory.id
+    ) {
         return;
     }
 
@@ -129,9 +165,12 @@ const onDrop = async (event: DragEvent, targetCategory: Category, position: 'bef
             draggedId: parseInt(draggedCategoryId),
             targetId: targetCategory.id,
             position: position,
-            newParentId: position === 'inside' ? targetCategory.id : targetCategory.parent_id
+            newParentId:
+                position === 'inside'
+                    ? targetCategory.id
+                    : targetCategory.parent_id,
         });
-        
+
         // Recargar para ver los cambios
         router.reload();
     } catch (error) {
@@ -141,115 +180,172 @@ const onDrop = async (event: DragEvent, targetCategory: Category, position: 'bef
 };
 
 // Handlers específicos para las diferentes zonas
-const onDropBefore = (event: DragEvent, category: Category) => onDrop(event, category, 'before');
-const onDropAfter = (event: DragEvent, category: Category) => onDrop(event, category, 'after');
-const onDropInside = (event: DragEvent, category: Category) => onDrop(event, category, 'inside');
+const onDropBefore = (event: DragEvent, category: Category) =>
+    onDrop(event, category, 'before');
+const onDropAfter = (event: DragEvent, category: Category) =>
+    onDrop(event, category, 'after');
+const onDropInside = (event: DragEvent, category: Category) =>
+    onDrop(event, category, 'inside');
 </script>
 
 <template>
     <Head title="Gestión de Categorías" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="p-6 space-y-6">
+        <div class="space-y-6 p-6">
             <!-- Header -->
-            <div class="flex justify-between items-center">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-foreground">Gestión de Categorías</h1>
-                    <p class="text-muted-foreground mt-2">
-                        Administra las categorías y subcategorías de tu biblioteca
+                    <h1 class="text-3xl font-bold text-foreground">
+                        Gestión de Categorías
+                    </h1>
+                    <p class="mt-2 text-muted-foreground">
+                        Administra las categorías y subcategorías de tu
+                        biblioteca
                     </p>
                 </div>
                 <Link
                     href="/admin/categories/create"
-                    class="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+                    class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-lg shadow-primary/25 transition-colors hover:bg-primary/90"
                 >
-                    <Plus class="w-4 h-4" />
+                    <Plus class="h-4 w-4" />
                     Nueva Categoría
                 </Link>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="bg-card rounded-xl border border-border p-6">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+                <div class="rounded-xl border border-border bg-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-muted-foreground">Total Categorías</p>
-                            <p class="text-2xl font-bold text-foreground mt-1">{{ categories.length }}</p>
+                            <p
+                                class="text-sm font-medium text-muted-foreground"
+                            >
+                                Total Categorías
+                            </p>
+                            <p class="mt-1 text-2xl font-bold text-foreground">
+                                {{ categories.length }}
+                            </p>
                         </div>
-                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <Folder class="w-6 h-6 text-primary" />
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                        >
+                            <Folder class="h-6 w-6 text-primary" />
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-card rounded-xl border border-border p-6">
+                <div class="rounded-xl border border-border bg-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-muted-foreground">Categorías Activas</p>
-                            <p class="text-2xl font-bold text-foreground mt-1">
-                                {{ categories.filter(c => c.is_active).length }}
+                            <p
+                                class="text-sm font-medium text-muted-foreground"
+                            >
+                                Categorías Activas
+                            </p>
+                            <p class="mt-1 text-2xl font-bold text-foreground">
+                                {{
+                                    categories.filter((c) => c.is_active).length
+                                }}
                             </p>
                         </div>
-                        <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-                            <Eye class="w-6 h-6 text-success" />
+                        <div
+                            class="bg-success/10 flex h-12 w-12 items-center justify-center rounded-lg"
+                        >
+                            <Eye class="text-success h-6 w-6" />
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-card rounded-xl border border-border p-6">
+                <div class="rounded-xl border border-border bg-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-muted-foreground">Subcategorías</p>
-                            <p class="text-2xl font-bold text-foreground mt-1">
-                                {{ categories.filter(c => c.parent_id !== null).length }}
+                            <p
+                                class="text-sm font-medium text-muted-foreground"
+                            >
+                                Subcategorías
+                            </p>
+                            <p class="mt-1 text-2xl font-bold text-foreground">
+                                {{
+                                    categories.filter(
+                                        (c) => c.parent_id !== null,
+                                    ).length
+                                }}
                             </p>
                         </div>
-                        <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                            <FolderOpen class="w-6 h-6 text-secondary" />
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10"
+                        >
+                            <FolderOpen class="h-6 w-6 text-secondary" />
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-card rounded-xl border border-border p-6">
+                <div class="rounded-xl border border-border bg-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-muted-foreground">Promedio Libros</p>
-                            <p class="text-2xl font-bold text-foreground mt-1">
-                                {{ Math.round(categories.reduce((acc, c) => acc + c.books_count, 0) / categories.length) || 0 }}
+                            <p
+                                class="text-sm font-medium text-muted-foreground"
+                            >
+                                Promedio Libros
+                            </p>
+                            <p class="mt-1 text-2xl font-bold text-foreground">
+                                {{
+                                    Math.round(
+                                        categories.reduce(
+                                            (acc, c) => acc + c.books_count,
+                                            0,
+                                        ) / categories.length,
+                                    ) || 0
+                                }}
                             </p>
                         </div>
-                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <span class="text-lg font-bold text-primary">📚</span>
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                        >
+                            <span class="text-lg font-bold text-primary"
+                                >📚</span
+                            >
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Controls Bar -->
-            <div class="bg-card rounded-xl border border-border p-4">
-                <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div class="rounded-xl border border-border bg-card p-4">
+                <div
+                    class="flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center"
+                >
                     <!-- Search -->
-                    <div class="flex-1 w-full lg:max-w-md">
+                    <div class="w-full flex-1 lg:max-w-md">
                         <div class="relative">
-                            <Search class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" />
+                            <Search
+                                class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-muted-foreground"
+                            />
                             <input
                                 v-model="searchQuery"
                                 type="text"
                                 placeholder="Buscar categorías por nombre, slug o descripción..."
-                                class="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                                class="w-full rounded-lg border border-border bg-background py-2 pr-4 pl-10 text-foreground focus:border-transparent focus:ring-2 focus:ring-primary focus:outline-none"
                             />
                         </div>
                     </div>
 
                     <!-- Filters -->
                     <div class="flex flex-wrap gap-2">
-                        <select v-model="filterStatus" class="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm">
+                        <select
+                            v-model="filterStatus"
+                            class="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                        >
                             <option value="all">Todos los estados</option>
                             <option value="active">Solo activas</option>
                             <option value="inactive">Solo inactivas</option>
                         </select>
 
-                        <select v-model="filterType" class="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm">
+                        <select
+                            v-model="filterType"
+                            class="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                        >
                             <option value="all">Todos los tipos</option>
                             <option value="parent">Solo principales</option>
                             <option value="child">Solo subcategorías</option>
@@ -257,45 +353,85 @@ const onDropInside = (event: DragEvent, category: Category) => onDrop(event, cat
                     </div>
 
                     <!-- View Toggle -->
-                    <div class="flex border border-border rounded-lg p-1">
+                    <div class="flex rounded-lg border border-border p-1">
                         <button
                             @click="viewMode = 'table'"
-                            :class="viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-                            class="px-3 py-1 rounded flex items-center gap-2 text-sm transition-colors"
+                            :class="
+                                viewMode === 'table'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                            class="flex items-center gap-2 rounded px-3 py-1 text-sm transition-colors"
                         >
-                            <Table class="w-4 h-4" />
+                            <Table class="h-4 w-4" />
                             Tabla
                         </button>
                         <button
                             @click="viewMode = 'tree'"
-                            :class="viewMode === 'tree' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-                            class="px-3 py-1 rounded flex items-center gap-2 text-sm transition-colors"
+                            :class="
+                                viewMode === 'tree'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                            class="flex items-center gap-2 rounded px-3 py-1 text-sm transition-colors"
                         >
-                            <ListTree class="w-4 h-4" />
+                            <ListTree class="h-4 w-4" />
                             Árbol
                         </button>
                     </div>
                 </div>
 
                 <!-- Active Filters Info -->
-                <div v-if="searchQuery || filterStatus !== 'all' || filterType !== 'all'" class="mt-3 pt-3 border-t border-border">
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Filter class="w-4 h-4" />
+                <div
+                    v-if="
+                        searchQuery ||
+                        filterStatus !== 'all' ||
+                        filterType !== 'all'
+                    "
+                    class="mt-3 border-t border-border pt-3"
+                >
+                    <div
+                        class="flex items-center gap-2 text-sm text-muted-foreground"
+                    >
+                        <Filter class="h-4 w-4" />
                         <span>Filtros activos:</span>
-                        <span v-if="searchQuery" class="bg-primary/10 text-primary px-2 py-1 rounded text-xs">
+                        <span
+                            v-if="searchQuery"
+                            class="rounded bg-primary/10 px-2 py-1 text-xs text-primary"
+                        >
                             Búsqueda: "{{ searchQuery }}"
                         </span>
-                        <span v-if="filterStatus !== 'all'" class="bg-secondary/10 text-secondary px-2 py-1 rounded text-xs">
-                            Estado: {{ filterStatus === 'active' ? 'Activas' : 'Inactivas' }}
+                        <span
+                            v-if="filterStatus !== 'all'"
+                            class="rounded bg-secondary/10 px-2 py-1 text-xs text-secondary"
+                        >
+                            Estado:
+                            {{
+                                filterStatus === 'active'
+                                    ? 'Activas'
+                                    : 'Inactivas'
+                            }}
                         </span>
-                        <span v-if="filterType !== 'all'" class="bg-primary/10 text-primary px-2 py-1 rounded text-xs">
-                            Tipo: {{ filterType === 'parent' ? 'Principales' : 'Subcategorías' }}
+                        <span
+                            v-if="filterType !== 'all'"
+                            class="rounded bg-primary/10 px-2 py-1 text-xs text-primary"
+                        >
+                            Tipo:
+                            {{
+                                filterType === 'parent'
+                                    ? 'Principales'
+                                    : 'Subcategorías'
+                            }}
                         </span>
                         <button
-                            @click="searchQuery = ''; filterStatus = 'all'; filterType = 'all'"
-                            class="text-destructive hover:text-destructive/80 text-xs flex items-center gap-1"
+                            @click="
+                                searchQuery = '';
+                                filterStatus = 'all';
+                                filterType = 'all';
+                            "
+                            class="flex items-center gap-1 text-xs text-destructive hover:text-destructive/80"
                         >
-                            <X class="w-3 h-3" />
+                            <X class="h-3 w-3" />
                             Limpiar
                         </button>
                     </div>
@@ -304,21 +440,38 @@ const onDropInside = (event: DragEvent, category: Category) => onDrop(event, cat
 
             <!-- Results Count -->
             <div class="text-sm text-muted-foreground">
-                Mostrando {{ filteredCategories.length }} de {{ categories.length }} categorías
+                Mostrando {{ filteredCategories.length }} de
+                {{ categories.length }} categorías
             </div>
 
             <!-- Table View -->
-            <div v-if="viewMode === 'table'" class="bg-card rounded-xl border border-border shadow-lg">
+            <div
+                v-if="viewMode === 'table'"
+                class="rounded-xl border border-border bg-card shadow-lg"
+            >
                 <div class="p-6">
-                    <div v-if="filteredCategories.length === 0" class="text-center py-12">
-                        <FolderOpen class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <p class="text-muted-foreground text-lg mb-2">No se encontraron categorías</p>
-                        <p class="text-muted-foreground mb-6">Intenta ajustar tus filtros de búsqueda</p>
+                    <div
+                        v-if="filteredCategories.length === 0"
+                        class="py-12 text-center"
+                    >
+                        <FolderOpen
+                            class="mx-auto mb-4 h-16 w-16 text-muted-foreground"
+                        />
+                        <p class="mb-2 text-lg text-muted-foreground">
+                            No se encontraron categorías
+                        </p>
+                        <p class="mb-6 text-muted-foreground">
+                            Intenta ajustar tus filtros de búsqueda
+                        </p>
                         <button
-                            @click="searchQuery = ''; filterStatus = 'all'; filterType = 'all'"
-                            class="bg-primary text-primary-foreground px-6 py-3 rounded-lg inline-flex items-center gap-2 hover:bg-primary/90 transition-colors"
+                            @click="
+                                searchQuery = '';
+                                filterStatus = 'all';
+                                filterType = 'all';
+                            "
+                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90"
                         >
-                            <X class="w-4 h-4" />
+                            <X class="h-4 w-4" />
                             Limpiar filtros
                         </button>
                     </div>
@@ -327,105 +480,188 @@ const onDropInside = (event: DragEvent, category: Category) => onDrop(event, cat
                         <table class="w-full">
                             <thead>
                                 <tr class="border-b border-border">
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Nombre</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Slug</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Categoría Padre</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Libros</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Subcategorías</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Estado</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Orden</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-foreground">Acciones</th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Nombre
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Slug
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Categoría Padre
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Libros
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Subcategorías
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Estado
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Orden
+                                    </th>
+                                    <th
+                                        class="px-4 py-4 text-left font-semibold text-foreground"
+                                    >
+                                        Acciones
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr 
-                                    v-for="category in filteredCategories" 
+                                <tr
+                                    v-for="category in filteredCategories"
                                     :key="category.id"
-                                    class="border-b border-border hover:bg-accent/50 transition-colors"
+                                    class="border-b border-border transition-colors hover:bg-accent/50"
                                     draggable="true"
                                     @dragstart="onDragStart($event, category)"
                                     @dragover="onDragOver"
                                     @drop="onDropInside($event, category)"
                                 >
-                                    <td class="py-4 px-4">
+                                    <td class="px-4 py-4">
                                         <div class="flex items-center gap-3">
-                                            <GripVertical class="w-4 h-4 text-muted-foreground cursor-move" />
-                                            <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                                                <Folder class="w-5 h-5 text-primary" />
+                                            <GripVertical
+                                                class="h-4 w-4 cursor-move text-muted-foreground"
+                                            />
+                                            <div
+                                                class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+                                            >
+                                                <Folder
+                                                    class="h-5 w-5 text-primary"
+                                                />
                                             </div>
                                             <div>
-                                                <p class="font-semibold text-foreground">{{ category.name }}</p>
-                                                <p v-if="category.description" class="text-sm text-muted-foreground truncate max-w-xs">
+                                                <p
+                                                    class="font-semibold text-foreground"
+                                                >
+                                                    {{ category.name }}
+                                                </p>
+                                                <p
+                                                    v-if="category.description"
+                                                    class="max-w-xs truncate text-sm text-muted-foreground"
+                                                >
                                                     {{ category.description }}
                                                 </p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="py-4 px-4 text-muted-foreground font-mono text-sm">
+                                    <td
+                                        class="px-4 py-4 font-mono text-sm text-muted-foreground"
+                                    >
                                         {{ category.slug }}
                                     </td>
-                                    <td class="py-4 px-4">
-                                        <span v-if="category.parent_name" class="bg-secondary/10 text-secondary px-2 py-1 rounded text-sm">
+                                    <td class="px-4 py-4">
+                                        <span
+                                            v-if="category.parent_name"
+                                            class="rounded bg-secondary/10 px-2 py-1 text-sm text-secondary"
+                                        >
                                             {{ category.parent_name }}
                                         </span>
-                                        <span v-else class="text-muted-foreground text-sm">—</span>
+                                        <span
+                                            v-else
+                                            class="text-sm text-muted-foreground"
+                                            >—</span
+                                        >
                                     </td>
-                                    <td class="py-4 px-4">
-                                        <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                                    <td class="px-4 py-4">
+                                        <span
+                                            class="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                                        >
                                             {{ category.books_count }} libros
                                         </span>
                                     </td>
-                                    <td class="py-4 px-4">
-                                        <span v-if="category.children_count > 0" class="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-sm font-medium">
+                                    <td class="px-4 py-4">
+                                        <span
+                                            v-if="category.children_count > 0"
+                                            class="rounded-full bg-secondary/10 px-3 py-1 text-sm font-medium text-secondary"
+                                        >
                                             {{ category.children_count }} sub
                                         </span>
-                                        <span v-else class="text-muted-foreground text-sm">—</span>
+                                        <span
+                                            v-else
+                                            class="text-sm text-muted-foreground"
+                                            >—</span
+                                        >
                                     </td>
-                                    <td class="py-4 px-4">
+                                    <td class="px-4 py-4">
                                         <button
                                             @click="toggleStatus(category)"
-                                            class="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors"
-                                            :class="category.is_active 
-                                                ? 'bg-success/10 text-success hover:bg-success/20' 
-                                                : 'bg-muted text-muted-foreground hover:bg-muted/80'"
+                                            class="flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium transition-colors"
+                                            :class="
+                                                category.is_active
+                                                    ? 'bg-success/10 text-success hover:bg-success/20'
+                                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                            "
                                         >
-                                            <component :is="category.is_active ? Eye : EyeOff" class="w-4 h-4" />
-                                            {{ category.is_active ? 'Activa' : 'Inactiva' }}
+                                            <component
+                                                :is="
+                                                    category.is_active
+                                                        ? Eye
+                                                        : EyeOff
+                                                "
+                                                class="h-4 w-4"
+                                            />
+                                            {{
+                                                category.is_active
+                                                    ? 'Activa'
+                                                    : 'Inactiva'
+                                            }}
                                         </button>
                                     </td>
-                                    <td class="py-4 px-4">
-                                        <span class="bg-muted text-foreground px-2 py-1 rounded text-sm font-mono">
+                                    <td class="px-4 py-4">
+                                        <span
+                                            class="rounded bg-muted px-2 py-1 font-mono text-sm text-foreground"
+                                        >
                                             {{ category.sort_order }}
                                         </span>
                                     </td>
-                                    <td class="py-4 px-4">
+                                    <td class="px-4 py-4">
                                         <div class="flex items-center gap-1">
                                             <button
                                                 @click="viewDetails(category)"
-                                                class="p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                                 title="Ver detalles"
                                             >
-                                                <Eye class="w-4 h-4" />
+                                                <Eye class="h-4 w-4" />
                                             </button>
                                             <button
                                                 @click="viewHistory(category)"
-                                                class="p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                                 title="Historial"
                                             >
-                                                <History class="w-4 h-4" />
+                                                <History class="h-4 w-4" />
                                             </button>
                                             <Link
                                                 :href="`/admin/categories/${category.id}/edit`"
-                                                class="p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
+                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                                             >
-                                                <Edit class="w-4 h-4" />
+                                                <Edit class="h-4 w-4" />
                                             </Link>
                                             <button
-                                                @click="deleteCategory(category)"
-                                                class="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
-                                                :disabled="category.books_count > 0 || category.children_count > 0"
+                                                @click="
+                                                    deleteCategory(category)
+                                                "
+                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                                :disabled="
+                                                    category.books_count > 0 ||
+                                                    category.children_count > 0
+                                                "
                                             >
-                                                <Trash2 class="w-4 h-4" />
+                                                <Trash2 class="h-4 w-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -437,10 +673,20 @@ const onDropInside = (event: DragEvent, category: Category) => onDrop(event, cat
             </div>
 
             <!-- Tree View -->
-            <div v-else-if="viewMode === 'tree'" class="bg-card rounded-xl border border-border shadow-lg p-6">
-                <div v-if="rootCategories.length === 0" class="text-center py-12">
-                    <FolderOpen class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p class="text-muted-foreground text-lg mb-2">No se encontraron categorías</p>
+            <div
+                v-else-if="viewMode === 'tree'"
+                class="rounded-xl border border-border bg-card p-6 shadow-lg"
+            >
+                <div
+                    v-if="rootCategories.length === 0"
+                    class="py-12 text-center"
+                >
+                    <FolderOpen
+                        class="mx-auto mb-4 h-16 w-16 text-muted-foreground"
+                    />
+                    <p class="mb-2 text-lg text-muted-foreground">
+                        No se encontraron categorías
+                    </p>
                 </div>
                 <div v-else class="space-y-2">
                     <CategoryTreeNode
@@ -462,76 +708,123 @@ const onDropInside = (event: DragEvent, category: Category) => onDrop(event, cat
         </div>
 
         <!-- Modal de Detalles -->
-        <div v-if="showDetailModal && selectedCategory" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div class="bg-card rounded-xl border border-border p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-foreground">Detalles de Categoría</h3>
-                    <button @click="showDetailModal = false" class="p-1 hover:bg-accent rounded transition-colors">
-                        <X class="w-5 h-5" />
+        <div
+            v-if="showDetailModal && selectedCategory"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+            <div
+                class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-6"
+            >
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-foreground">
+                        Detalles de Categoría
+                    </h3>
+                    <button
+                        @click="showDetailModal = false"
+                        class="rounded p-1 transition-colors hover:bg-accent"
+                    >
+                        <X class="h-5 w-5" />
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
-                    <div class="flex items-center gap-3 p-3 bg-primary/5 rounded-lg">
-                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <Folder class="w-6 h-6 text-primary" />
+                    <div
+                        class="flex items-center gap-3 rounded-lg bg-primary/5 p-3"
+                    >
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                        >
+                            <Folder class="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                            <h4 class="font-semibold text-foreground">{{ selectedCategory.name }}</h4>
-                            <p class="text-sm text-muted-foreground">{{ selectedCategory.slug }}</p>
+                            <h4 class="font-semibold text-foreground">
+                                {{ selectedCategory.name }}
+                            </h4>
+                            <p class="text-sm text-muted-foreground">
+                                {{ selectedCategory.slug }}
+                            </p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <span class="text-muted-foreground">Estado:</span>
-                            <span :class="selectedCategory.is_active ? 'text-success' : 'text-warning'" class="font-medium ml-2">
-                                {{ selectedCategory.is_active ? 'Activa' : 'Inactiva' }}
+                            <span
+                                :class="
+                                    selectedCategory.is_active
+                                        ? 'text-success'
+                                        : 'text-warning'
+                                "
+                                class="ml-2 font-medium"
+                            >
+                                {{
+                                    selectedCategory.is_active
+                                        ? 'Activa'
+                                        : 'Inactiva'
+                                }}
                             </span>
                         </div>
                         <div>
                             <span class="text-muted-foreground">Orden:</span>
-                            <span class="font-medium ml-2">{{ selectedCategory.sort_order }}</span>
+                            <span class="ml-2 font-medium">{{
+                                selectedCategory.sort_order
+                            }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground">Libros:</span>
-                            <span class="font-medium ml-2">{{ selectedCategory.books_count }}</span>
+                            <span class="ml-2 font-medium">{{
+                                selectedCategory.books_count
+                            }}</span>
                         </div>
                         <div>
-                            <span class="text-muted-foreground">Subcategorías:</span>
-                            <span class="font-medium ml-2">{{ selectedCategory.children_count }}</span>
+                            <span class="text-muted-foreground"
+                                >Subcategorías:</span
+                            >
+                            <span class="ml-2 font-medium">{{
+                                selectedCategory.children_count
+                            }}</span>
                         </div>
                     </div>
 
                     <div v-if="selectedCategory.description">
-                        <span class="text-muted-foreground text-sm block mb-1">Descripción:</span>
-                        <p class="text-foreground">{{ selectedCategory.description }}</p>
+                        <span class="mb-1 block text-sm text-muted-foreground"
+                            >Descripción:</span
+                        >
+                        <p class="text-foreground">
+                            {{ selectedCategory.description }}
+                        </p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <span class="text-muted-foreground">Creado:</span>
-                            <span class="font-medium ml-2">{{ selectedCategory.created_at }}</span>
+                            <span class="ml-2 font-medium">{{
+                                selectedCategory.created_at
+                            }}</span>
                         </div>
                         <div>
-                            <span class="text-muted-foreground">Actualizado:</span>
-                            <span class="font-medium ml-2">{{ selectedCategory.updated_at }}</span>
+                            <span class="text-muted-foreground"
+                                >Actualizado:</span
+                            >
+                            <span class="ml-2 font-medium">{{
+                                selectedCategory.updated_at
+                            }}</span>
                         </div>
                     </div>
 
-                    <div class="flex gap-2 pt-4 border-t border-border">
+                    <div class="flex gap-2 border-t border-border pt-4">
                         <button
                             @click="viewHistory(selectedCategory)"
-                            class="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-secondary py-2 text-secondary-foreground transition-colors hover:bg-secondary/90"
                         >
-                            <History class="w-4 h-4" />
+                            <History class="h-4 w-4" />
                             Ver Historial
                         </button>
                         <Link
                             :href="`/admin/categories/${selectedCategory.id}/edit`"
-                            class="flex-1 bg-primary text-primary-foreground py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                         >
-                            <Edit class="w-4 h-4" />
+                            <Edit class="h-4 w-4" />
                             Editar
                         </Link>
                     </div>
@@ -540,31 +833,50 @@ const onDropInside = (event: DragEvent, category: Category) => onDrop(event, cat
         </div>
 
         <!-- Modal de Historial -->
-        <div v-if="showHistoryModal && selectedCategory" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div class="bg-card rounded-xl border border-border p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-4">
+        <div
+            v-if="showHistoryModal && selectedCategory"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+            <div
+                class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6"
+            >
+                <div class="mb-4 flex items-center justify-between">
                     <h3 class="text-xl font-bold text-foreground">
                         Historial: {{ selectedCategory.name }}
                     </h3>
-                    <button @click="showHistoryModal = false" class="p-1 hover:bg-accent rounded transition-colors">
-                        <X class="w-5 h-5" />
+                    <button
+                        @click="showHistoryModal = false"
+                        class="rounded p-1 transition-colors hover:bg-accent"
+                    >
+                        <X class="h-5 w-5" />
                     </button>
                 </div>
 
-                <div v-if="categoryHistory.length === 0" class="text-center py-8">
-                    <History class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p class="text-muted-foreground">No hay historial disponible</p>
+                <div
+                    v-if="categoryHistory.length === 0"
+                    class="py-8 text-center"
+                >
+                    <History
+                        class="mx-auto mb-4 h-16 w-16 text-muted-foreground"
+                    />
+                    <p class="text-muted-foreground">
+                        No hay historial disponible
+                    </p>
                 </div>
 
                 <div v-else class="space-y-3">
                     <div
                         v-for="log in categoryHistory"
                         :key="log.id"
-                        class="flex items-start gap-3 p-3 border border-border rounded-lg"
+                        class="flex items-start gap-3 rounded-lg border border-border p-3"
                     >
-                        <div class="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                        <div
+                            class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-primary"
+                        ></div>
                         <div class="flex-1">
-                            <p class="font-medium text-foreground">{{ log.description }}</p>
+                            <p class="font-medium text-foreground">
+                                {{ log.description }}
+                            </p>
                             <p class="text-sm text-muted-foreground">
                                 Por {{ log.user.name }} • {{ log.created_at }}
                             </p>

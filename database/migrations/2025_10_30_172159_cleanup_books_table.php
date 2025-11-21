@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('books', function (Blueprint $table) {
-            // Eliminar columnas relacionadas con e-commerce/librería comercial
+            // Primero eliminar índices que usan estas columnas (necesario para SQLite)
+            $table->dropIndex('books_access_level_is_active_index');
+            $table->dropIndex('books_copyright_status_downloadable_index');
+            
+            // Luego eliminar columnas relacionadas con e-commerce/librería comercial
             $table->dropColumn([
                 'access_level',
                 'copyright_status',
@@ -37,6 +41,10 @@ return new class extends Migration
             $table->enum('acquisition_type', ['purchase', 'donation', 'exchange'])->default('purchase');
             $table->decimal('acquisition_cost', 8, 2)->nullable();
             $table->string('source')->nullable();
+            
+            // Restaurar índices
+            $table->index(['access_level', 'is_active']);
+            $table->index(['copyright_status', 'downloadable']);
         });
     }
 };

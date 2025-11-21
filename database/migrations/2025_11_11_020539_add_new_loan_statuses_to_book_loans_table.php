@@ -12,14 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('book_loans', function (Blueprint $table) {
-            // Modificar la columna status para incluir los nuevos estados
-            // Nota: En MySQL, ALTER COLUMN no soporta ENUM directamente,
-            // así que necesitamos usar DB::statement
-        });
-        
-        // Actualizar el ENUM para incluir los nuevos estados
-        DB::statement("ALTER TABLE book_loans MODIFY COLUMN status ENUM('pending_pickup', 'ready_for_pickup', 'active', 'overdue', 'returned', 'lost') DEFAULT 'pending_pickup'");
+        // Solo ejecutar para MySQL (SQLite usa CHECK constraints en lugar de ENUM)
+        if (DB::getDriverName() !== 'sqlite') {
+            // Actualizar el ENUM para incluir los nuevos estados
+            DB::statement("ALTER TABLE book_loans MODIFY COLUMN status ENUM('pending_pickup', 'ready_for_pickup', 'active', 'overdue', 'returned', 'lost') DEFAULT 'pending_pickup'");
+        }
     }
 
     /**
@@ -27,7 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revertir al ENUM original
-        DB::statement("ALTER TABLE book_loans MODIFY COLUMN status ENUM('active', 'overdue', 'returned', 'lost') DEFAULT 'active'");
+        // Solo ejecutar para MySQL
+        if (DB::getDriverName() !== 'sqlite') {
+            // Revertir al ENUM original
+            DB::statement("ALTER TABLE book_loans MODIFY COLUMN status ENUM('active', 'overdue', 'returned', 'lost') DEFAULT 'active'");
+        }
     }
 };

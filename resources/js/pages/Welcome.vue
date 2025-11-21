@@ -76,7 +76,7 @@ onUnmounted(() => {
             content="Accede a miles de libros digitales y físicos. Tu biblioteca universitaria en línea con recursos académicos, investigación y literatura." />
     </Head>
 
-    <div class="min-h-screen bg-background overflow-hidden">
+    <div class="min-h-screen overflow-hidden bg-background">
         <!-- Efectos de fondo animados -->
         <div class="fixed inset-0 pointer-events-none">
             <div class="absolute inset-0 opacity-30 transition-transform duration-1000" :style="{

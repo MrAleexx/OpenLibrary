@@ -8,68 +8,91 @@ import { Label } from '@/components/ui/label';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 import { Form, Head } from '@inertiajs/vue3';
-import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
+import { BookOpen, LoaderCircle, Shield, Users } from 'lucide-vue-next';
 </script>
 
 <template>
     <Head title="Crear cuenta" />
-    
-    <div class="min-h-screen grid lg:grid-cols-2">
+
+    <div class="grid min-h-screen lg:grid-cols-2">
         <!-- Lado izquierdo: Hero Section -->
-        <div class="hidden lg:flex bg-gradient-to-br from-indigo-900 via-gray-900 to-indigo-900 text-white p-12 flex-col justify-between relative overflow-hidden">
+        <div
+            class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-900 via-gray-900 to-indigo-900 p-12 text-white lg:flex"
+        >
             <!-- Imagen de fondo con overlay -->
-            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2128')] bg-cover bg-center opacity-20"></div>
-            
+            <div
+                class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=2128')] bg-cover bg-center opacity-20"
+            ></div>
+
             <div class="relative z-10">
-                <div class="flex items-center gap-2 mb-8">
+                <div class="mb-8 flex items-center gap-2">
                     <BookOpen class="h-8 w-8" />
                     <span class="text-2xl font-bold">OpenLibrary</span>
                 </div>
 
                 <div class="max-w-md">
-                    <h1 class="text-4xl font-bold mb-6 leading-tight">
+                    <h1 class="mb-6 text-4xl leading-tight font-bold">
                         Únete a nuestra comunidad de lectores
                     </h1>
-                    <p class="text-lg text-blue-100 mb-8">
-                        Crea tu cuenta y comienza a explorar miles de libros y recursos educativos.
+                    <p class="mb-8 text-lg text-blue-100">
+                        Crea tu cuenta y comienza a explorar miles de libros y
+                        recursos educativos.
                     </p>
                 </div>
             </div>
 
             <div class="relative z-10 space-y-4">
                 <div class="flex items-start gap-3">
-                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-2 mt-1">
+                    <div
+                        class="mt-1 rounded-lg bg-white/10 p-2 backdrop-blur-sm"
+                    >
                         <Users class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold mb-1">Comunidad activa</h3>
-                        <p class="text-sm text-blue-100">Miles de lectores compartiendo conocimiento</p>
+                        <h3 class="mb-1 font-semibold">Comunidad activa</h3>
+                        <p class="text-sm text-blue-100">
+                            Miles de lectores compartiendo conocimiento
+                        </p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
-                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-2 mt-1">
+                    <div
+                        class="mt-1 rounded-lg bg-white/10 p-2 backdrop-blur-sm"
+                    >
                         <Shield class="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 class="font-semibold mb-1">Seguro y privado</h3>
-                        <p class="text-sm text-blue-100">Tus datos están protegidos</p>
+                        <h3 class="mb-1 font-semibold">Seguro y privado</h3>
+                        <p class="text-sm text-blue-100">
+                            Tus datos están protegidos
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Lado derecho: Formulario de Registro -->
-        <div class="flex items-center justify-center p-8 bg-white overflow-y-auto">
+        <div
+            class="flex items-center justify-center overflow-y-auto bg-white p-8"
+        >
             <div class="w-full max-w-md">
                 <!-- Logo móvil -->
-                <div class="lg:hidden flex items-center gap-2 mb-8 justify-center">
+                <div
+                    class="mb-8 flex items-center justify-center gap-2 lg:hidden"
+                >
                     <BookOpen class="h-6 w-6 text-slate-900" />
-                    <span class="text-xl font-bold text-slate-900">OpenReads</span>
+                    <span class="text-xl font-bold text-slate-900"
+                        >OpenReads</span
+                    >
                 </div>
 
                 <div class="mb-8">
-                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Crear cuenta</h2>
-                    <p class="text-slate-600">Ingresa tus datos para registrarte</p>
+                    <h2 class="mb-2 text-3xl font-bold text-slate-900">
+                        Crear cuenta
+                    </h2>
+                    <p class="text-slate-600">
+                        Ingresa tus datos para registrarte
+                    </p>
                 </div>
 
                 <Form
@@ -82,7 +105,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
                         <!-- Fila: Nombre y Apellido -->
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <Label for="name" class="text-slate-700 font-medium">Nombres</Label>
+                                <Label
+                                    for="name"
+                                    class="font-medium text-slate-700"
+                                    >Nombres</Label
+                                >
                                 <Input
                                     id="name"
                                     type="text"
@@ -98,7 +125,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="last_name" class="text-slate-700 font-medium">Apellidos</Label>
+                                <Label
+                                    for="last_name"
+                                    class="font-medium text-slate-700"
+                                    >Apellidos</Label
+                                >
                                 <Input
                                     id="last_name"
                                     type="text"
@@ -116,7 +147,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
                         <!-- Fila: DNI y Teléfono -->
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <Label for="dni" class="text-slate-700 font-medium">DNI</Label>
+                                <Label
+                                    for="dni"
+                                    class="font-medium text-slate-700"
+                                    >DNI</Label
+                                >
                                 <Input
                                     id="dni"
                                     type="text"
@@ -132,7 +167,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="phone" class="text-slate-700 font-medium">Teléfono</Label>
+                                <Label
+                                    for="phone"
+                                    class="font-medium text-slate-700"
+                                    >Teléfono</Label
+                                >
                                 <Input
                                     id="phone"
                                     type="text"
@@ -150,7 +189,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
 
                         <!-- Email -->
                         <div class="space-y-2">
-                            <Label for="email" class="text-slate-700 font-medium">Correo electrónico</Label>
+                            <Label
+                                for="email"
+                                class="font-medium text-slate-700"
+                                >Correo electrónico</Label
+                            >
                             <Input
                                 id="email"
                                 type="email"
@@ -166,7 +209,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
 
                         <!-- Contraseña -->
                         <div class="space-y-2">
-                            <Label for="password" class="text-slate-700 font-medium">Contraseña</Label>
+                            <Label
+                                for="password"
+                                class="font-medium text-slate-700"
+                                >Contraseña</Label
+                            >
                             <Input
                                 id="password"
                                 type="password"
@@ -182,7 +229,11 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
 
                         <!-- Confirmar contraseña -->
                         <div class="space-y-2">
-                            <Label for="password_confirmation" class="text-slate-700 font-medium">Confirmar contraseña</Label>
+                            <Label
+                                for="password_confirmation"
+                                class="font-medium text-slate-700"
+                                >Confirmar contraseña</Label
+                            >
                             <Input
                                 id="password_confirmation"
                                 type="password"
@@ -193,29 +244,31 @@ import { LoaderCircle, BookOpen, Users, Shield } from 'lucide-vue-next';
                                 placeholder="••••••••"
                                 class="h-11"
                             />
-                            <InputError :message="errors.password_confirmation" />
+                            <InputError
+                                :message="errors.password_confirmation"
+                            />
                         </div>
 
                         <Button
                             type="submit"
-                            class="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                            class="h-11 w-full bg-blue-600 font-medium text-white hover:bg-blue-700"
                             tabindex="8"
                             :disabled="processing"
                             data-test="register-user-button"
                         >
                             <LoaderCircle
                                 v-if="processing"
-                                class="h-4 w-4 animate-spin mr-2"
+                                class="mr-2 h-4 w-4 animate-spin"
                             />
                             Crear cuenta
                         </Button>
                     </div>
 
-                    <div class="text-center text-sm text-slate-600 pt-4">
+                    <div class="pt-4 text-center text-sm text-slate-600">
                         ¿Ya tienes una cuenta?
                         <TextLink
                             :href="login()"
-                            class="text-blue-600 hover:text-blue-700 font-medium"
+                            class="font-medium text-blue-600 hover:text-blue-700"
                             :tabindex="9"
                         >
                             Iniciar sesión

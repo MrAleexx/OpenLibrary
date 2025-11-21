@@ -19,10 +19,20 @@
     - Protección contra loops infinitos en carga de imágenes
 -->
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Download, Calendar, User, Building2, Eye, BookMarked, ShoppingCart, Check } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
 import { useCart } from '@/composables/useCart';
+import { Link, usePage } from '@inertiajs/vue3';
+import {
+    BookMarked,
+    BookOpen,
+    Building2,
+    Calendar,
+    Check,
+    Download,
+    Eye,
+    ShoppingCart,
+    User,
+} from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 /**
  * Interface que define la estructura de datos de un libro
@@ -59,7 +69,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    userHasLoaned: false
+    userHasLoaned: false,
 });
 
 const { isInCart, addToCart, isLoading } = useCart();
@@ -74,33 +84,37 @@ const showAddedMessage = ref(false);
 
 /**
  * Extrae y formatea los nombres de autores del libro
- * 
+ *
  * @returns {string} Lista de autores separados por coma, o "Autor desconocido"
  */
 const authors = computed(() => {
     if (!props.book.contributors || props.book.contributors.length === 0) {
         return 'Autor desconocido';
     }
-    
+
     const authorsList = props.book.contributors
-        .filter(c => c.contributor_type === 'author')
-        .map(c => c.full_name);
-    
-    return authorsList.length > 0 ? authorsList.join(', ') : 'Autor desconocido';
+        .filter((c) => c.contributor_type === 'author')
+        .map((c) => c.full_name);
+
+    return authorsList.length > 0
+        ? authorsList.join(', ')
+        : 'Autor desconocido';
 });
 
 /**
  * Calcula el estado de disponibilidad del libro
- * 
+ *
  * Determina el mensaje y estilo visual según:
  * - Tipo de libro (físico, digital, ambos)
  * - Cantidad de copias disponibles
- * 
+ *
  * @returns {Object} Configuración de badge con texto, icono y colores
  */
 const availabilityStatus = computed(() => {
-    const hasPhysical = props.book.book_type === 'physical' || props.book.book_type === 'both';
-    const hasDigital = props.book.book_type === 'digital' || props.book.book_type === 'both';
+    const hasPhysical =
+        props.book.book_type === 'physical' || props.book.book_type === 'both';
+    const hasDigital =
+        props.book.book_type === 'digital' || props.book.book_type === 'both';
     const available = props.book.available_copies_count || 0;
 
     // Prioridad 1: Copias físicas disponibles
@@ -112,8 +126,8 @@ const availabilityStatus = computed(() => {
             bgColor: 'bg-success/10',
             borderColor: 'border-success/20',
         };
-    } 
-    
+    }
+
     // Prioridad 2: Sin copias físicas disponibles
     if (hasPhysical && available === 0) {
         return {
@@ -123,8 +137,8 @@ const availabilityStatus = computed(() => {
             bgColor: 'bg-warning/10',
             borderColor: 'border-warning/20',
         };
-    } 
-    
+    }
+
     // Prioridad 3: Versión digital disponible
     if (hasDigital) {
         return {
@@ -149,7 +163,7 @@ const availabilityStatus = computed(() => {
 /**
  * URL de la imagen de portada del libro
  * Retorna placeholder SVG si no existe portada
- * 
+ *
  * @returns {string} URL de la imagen
  */
 const coverImageUrl = computed(() => {
@@ -160,9 +174,15 @@ const coverImageUrl = computed(() => {
  * Determina si el libro puede ser agregado al carrito
  */
 const canAddToCart = computed(() => {
-    const hasPhysical = props.book.book_type === 'physical' || props.book.book_type === 'both';
+    const hasPhysical =
+        props.book.book_type === 'physical' || props.book.book_type === 'both';
     const available = props.book.available_copies_count || 0;
-    return hasPhysical && available > 0 && isAuthenticated.value && !props.userHasLoaned;
+    return (
+        hasPhysical &&
+        available > 0 &&
+        isAuthenticated.value &&
+        !props.userHasLoaned
+    );
 });
 
 /**
@@ -171,19 +191,19 @@ const canAddToCart = computed(() => {
 const handleAddToCart = async (e: Event) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!canAddToCart.value || isAddingToCart.value) return;
-    
+
     isAddingToCart.value = true;
     const success = await addToCart(props.book.id);
-    
+
     if (success) {
         showAddedMessage.value = true;
         setTimeout(() => {
             showAddedMessage.value = false;
         }, 2000);
     }
-    
+
     isAddingToCart.value = false;
 };
 </script>
@@ -191,31 +211,44 @@ const handleAddToCart = async (e: Event) => {
 <template>
     <Link
         :href="`/books/${book.id}`"
-        class="group block bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+        class="group block overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl"
     >
         <!-- Cover Image -->
         <div class="relative aspect-[2/3] overflow-hidden bg-muted">
             <img
                 :src="coverImageUrl"
                 :alt="book.title"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                @error="(e) => { const img = e.target as HTMLImageElement; if (!img.src.includes('placeholder')) img.src = '/images/book-placeholder.svg'; }"
+                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                @error="
+                    (e) => {
+                        const img = e.target as HTMLImageElement;
+                        if (!img.src.includes('placeholder'))
+                            img.src = '/images/book-placeholder.svg';
+                    }
+                "
             />
-            
+
             <!-- Overlay con efecto hover -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div class="absolute bottom-4 left-4 right-4">
-                    <p class="text-white text-sm font-medium flex items-center gap-2">
-                        <Eye class="w-4 h-4" />
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            >
+                <div class="absolute right-4 bottom-4 left-4">
+                    <p
+                        class="flex items-center gap-2 text-sm font-medium text-white"
+                    >
+                        <Eye class="h-4 w-4" />
                         {{ book.total_views || 0 }} vistas
                     </p>
                 </div>
             </div>
 
             <!-- Badge de categoría -->
-            <div v-if="book.categories && book.categories.length > 0" class="absolute top-3 left-3">
-                <span 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground shadow-lg"
+            <div
+                v-if="book.categories && book.categories.length > 0"
+                class="absolute top-3 left-3"
+            >
+                <span
+                    class="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-lg"
                 >
                     {{ book.categories[0].name }}
                 </span>
@@ -223,54 +256,69 @@ const handleAddToCart = async (e: Event) => {
         </div>
 
         <!-- Content -->
-        <div class="p-4 space-y-3">
+        <div class="space-y-3 p-4">
             <!-- Title -->
-            <h3 class="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors min-h-[3rem]">
+            <h3
+                class="line-clamp-2 min-h-[3rem] font-semibold text-foreground transition-colors group-hover:text-primary"
+            >
                 {{ book.title }}
             </h3>
 
             <!-- Author -->
-            <p class="text-sm text-muted-foreground flex items-center gap-1.5">
-                <User class="w-3.5 h-3.5" />
+            <p class="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <User class="h-3.5 w-3.5" />
                 <span class="line-clamp-1">{{ authors }}</span>
             </p>
 
             <!-- Publisher & Year -->
             <div class="flex items-center gap-3 text-xs text-muted-foreground">
                 <span v-if="book.publisher" class="flex items-center gap-1">
-                    <Building2 class="w-3.5 h-3.5" />
+                    <Building2 class="h-3.5 w-3.5" />
                     {{ book.publisher.name }}
                 </span>
-                <span v-if="book.publication_year" class="flex items-center gap-1">
-                    <Calendar class="w-3.5 h-3.5" />
+                <span
+                    v-if="book.publication_year"
+                    class="flex items-center gap-1"
+                >
+                    <Calendar class="h-3.5 w-3.5" />
                     {{ book.publication_year }}
                 </span>
             </div>
 
             <!-- Divider -->
-            <div class="border-t border-border pt-3 space-y-2">
+            <div class="space-y-2 border-t border-border pt-3">
                 <!-- User Has Loaned Badge -->
-                <div 
+                <div
                     v-if="userHasLoaned"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-300 dark:border-blue-800 bg-blue-100 dark:bg-blue-900/30"
+                    class="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-100 px-3 py-2 dark:border-blue-800 dark:bg-blue-900/30"
                 >
-                    <BookMarked class="w-4 h-4 flex-shrink-0 text-blue-700 dark:text-blue-400" />
-                    <span class="text-sm font-medium text-blue-700 dark:text-blue-400">
+                    <BookMarked
+                        class="h-4 w-4 flex-shrink-0 text-blue-700 dark:text-blue-400"
+                    />
+                    <span
+                        class="text-sm font-medium text-blue-700 dark:text-blue-400"
+                    >
                         Tienes un préstamo activo
                     </span>
                 </div>
 
                 <!-- Availability Badge -->
-                <div 
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors"
-                    :class="[availabilityStatus.bgColor, availabilityStatus.borderColor]"
+                <div
+                    class="flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors"
+                    :class="[
+                        availabilityStatus.bgColor,
+                        availabilityStatus.borderColor,
+                    ]"
                 >
-                    <component 
-                        :is="availabilityStatus.icon" 
-                        class="w-4 h-4 flex-shrink-0"
+                    <component
+                        :is="availabilityStatus.icon"
+                        class="h-4 w-4 flex-shrink-0"
                         :class="availabilityStatus.color"
                     />
-                    <span class="text-sm font-medium" :class="availabilityStatus.color">
+                    <span
+                        class="text-sm font-medium"
+                        :class="availabilityStatus.color"
+                    >
                         {{ availabilityStatus.text }}
                     </span>
                 </div>
@@ -280,12 +328,17 @@ const handleAddToCart = async (e: Event) => {
                     v-if="canAddToCart"
                     @click="handleAddToCart"
                     :disabled="isInCart(book.id) || isAddingToCart"
-                    class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    :class="isInCart(book.id) 
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-800' 
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'"
+                    class="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="
+                        isInCart(book.id)
+                            ? 'border border-green-300 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                    "
                 >
-                    <component :is="isInCart(book.id) ? Check : ShoppingCart" class="w-4 h-4" />
+                    <component
+                        :is="isInCart(book.id) ? Check : ShoppingCart"
+                        class="h-4 w-4"
+                    />
                     <span v-if="isInCart(book.id)">En carrito</span>
                     <span v-else-if="isAddingToCart">Agregando...</span>
                     <span v-else>Agregar al carrito</span>
