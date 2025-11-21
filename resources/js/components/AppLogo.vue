@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import { BookOpen } from 'lucide-vue-next';
 </script>
 
 <template>
-    <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
-    >
-        <AppLogoIcon class="size-5 fill-current text-white dark:text-black" />
-    </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold"
-            >Laravel Starter Kit</span
-        >
+    <div class="flex items-center space-x-3 group">
+        <div
+            class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-110">
+            <BookOpen class="w-5 h-5 text-primary-foreground group-hover:rotate-12 transition-transform duration-300" />
+        </div>
+        <div>
+            <span class="text-xl font-bold text-foreground">OpenLibrary</span>
+            <span class="block text-xs text-muted-foreground">Biblioteca Digital</span>
+        </div>
     </div>
 </template>
