@@ -9,6 +9,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\UserReservationController;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\DownloadController;
 use Illuminate\Support\Facades\Auth;
 
