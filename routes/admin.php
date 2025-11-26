@@ -111,4 +111,11 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::post('/{reservation}/convert-to-loan', [ReservationController::class, 'convertToLoan'])->name('convert-to-loan');
         Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('cancel');
     });
+    // ===========================
+    // RECLAMOS
+    // ===========================
+    Route::prefix('/admin/claims')->name('admin.claims.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ClaimController::class, 'index'])->name('index');
+        Route::get('/{claim}', [\App\Http\Controllers\ClaimController::class, 'show'])->name('show');
+    });
 });

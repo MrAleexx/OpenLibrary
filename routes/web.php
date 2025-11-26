@@ -57,6 +57,10 @@ Route::get('/usage-policies', function () {
     ]);
 })->name('usage-policies');
 
+// Rutas de Reclamaciones
+Route::get('/claims/create', [App\Http\Controllers\ClaimController::class, 'create'])->name('claims.create');
+Route::post('/claims', [App\Http\Controllers\ClaimController::class, 'store'])->name('claims.store');
+
 // Dashboard - solo para usuarios autenticados y activos
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'ensure_active'])
