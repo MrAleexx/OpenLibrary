@@ -93,6 +93,15 @@ const saveCart = () => {
     }
 };
 
+// Listen for storage changes in other tabs
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (event) => {
+        if (event.key === CART_STORAGE_KEY) {
+            initializeCart();
+        }
+    });
+}
+
 // Track if we've already synced with backend to avoid redundant calls
 let hasInitialSync = false;
 
