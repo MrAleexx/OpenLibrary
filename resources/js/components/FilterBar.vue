@@ -67,8 +67,17 @@ const emit = defineEmits<{
     'update:modelValue': [value: Record<string, any>];
 }>();
 
+// Helper para transformar valores iniciales ('' -> '_all')
+const transformInitialValues = (values: Record<string, any>) => {
+    const transformed: Record<string, any> = {};
+    Object.keys(values).forEach((key) => {
+        transformed[key] = values[key] === '' || values[key] === null || values[key] === undefined ? '_all' : values[key];
+    });
+    return transformed;
+};
+
 // Valores locales para los filtros
-const localFilters = ref({ ...props.modelValue });
+const localFilters = ref(transformInitialValues(props.modelValue));
 
 // Configuración por defecto basada en el módulo
 const defaultConfig = computed(() => {
@@ -232,7 +241,7 @@ const finalConfig = computed(() => ({
 const activeFiltersCount = computed(() => {
     let count = 0;
     Object.values(localFilters.value).forEach((value) => {
-        if (value !== '' && value !== null && value !== undefined) {
+        if (value !== '' && value !== null && value !== undefined && value !== '_all') {
             count++;
         }
     });
@@ -249,7 +258,12 @@ function debounce(fn: Function, wait: number) {
 }
 
 const debouncedEmit = debounce((filters: any) => {
-    emit('update:modelValue', filters);
+    // Transformar '_all' de vuelta a '' antes de emitir
+    const transformed: Record<string, any> = {};
+    Object.keys(filters).forEach((key) => {
+        transformed[key] = filters[key] === '_all' ? '' : filters[key];
+    });
+    emit('update:modelValue', transformed);
 }, 300);
 
 watch(
@@ -264,7 +278,7 @@ watch(
 function clearFilters() {
     const clearedFilters: Record<string, any> = {};
     Object.keys(localFilters.value).forEach((key) => {
-        clearedFilters[key] = '';
+        clearedFilters[key] = key === 'search' ? '' : '_all';
     });
     localFilters.value = clearedFilters;
 }
@@ -273,7 +287,7 @@ function getFilterDisplayValue(
     filterConfig: FilterConfig,
     value: string,
 ): string {
-    if (!value) return filterConfig.placeholder || '';
+    if (!value || value === '_all') return filterConfig.placeholder || '';
 
     if (filterConfig.key === 'category' && props.data?.categories) {
         const category = props.data.categories.find(
@@ -287,7 +301,7 @@ function getFilterDisplayValue(
 }
 
 function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
-    if (!value) return filterConfig.icon || Filter;
+    if (!value || value === '_all') return filterConfig.icon || Filter;
 
     const option = filterConfig.options?.find((opt) => opt.value === value);
     return option?.icon || filterConfig.icon || Filter;
@@ -298,9 +312,7 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
     <div class="rounded-xl border border-border bg-card shadow-lg">
         <div class="space-y-6 p-6">
             <!-- Header -->
-            <div
-                class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
-            >
+            <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                 <div class="flex items-center gap-2">
                     <Filter class="h-4 w-4 text-muted-foreground" />
                     <div>
@@ -311,21 +323,13 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
                             {{ finalConfig.description }}
                         </p>
                     </div>
-                    <Badge
-                        v-if="activeFiltersCount > 0"
-                        variant="secondary"
-                        class="border-primary/20 bg-primary/10 text-primary"
-                    >
+                    <Badge v-if="activeFiltersCount > 0" variant="secondary"
+                        class="border-primary/20 bg-primary/10 text-primary">
                         {{ activeFiltersCount }} activos
                     </Badge>
                 </div>
-                <Button
-                    v-if="activeFiltersCount > 0"
-                    variant="outline"
-                    size="sm"
-                    @click="clearFilters"
-                    class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
-                >
+                <Button v-if="activeFiltersCount > 0" variant="outline" size="sm" @click="clearFilters"
+                    class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
                     <X class="mr-1 h-4 w-4" />
                     Limpiar
                 </Button>
@@ -333,55 +337,31 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
 
             <!-- Search -->
             <div class="relative">
-                <Search
-                    class="absolute top-3 left-3 h-4 w-4 text-muted-foreground"
-                />
-                <Input
-                    v-model="localFilters.search"
-                    :placeholder="finalConfig.searchPlaceholder"
-                    class="border-border bg-background pl-10 focus:border-primary"
-                />
+                <Search class="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
+                <Input v-model="localFilters.search" :placeholder="finalConfig.searchPlaceholder"
+                    class="border-border bg-background pl-10 focus:border-primary" />
             </div>
 
             <!-- Filtros Dinámicos -->
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <div
-                    v-for="filterItem in finalConfig.filters"
-                    :key="filterItem.key"
-                    class="space-y-2"
-                >
-                    <label
-                        class="flex items-center gap-2 text-sm font-medium text-foreground"
-                    >
-                        <component
-                            :is="
-                                getFilterIcon(
-                                    filterItem,
-                                    localFilters[filterItem.key],
-                                )
-                            "
-                            class="h-4 w-4 text-primary"
-                        />
+                <div v-for="filterItem in finalConfig.filters" :key="filterItem.key" class="space-y-2">
+                    <label class="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <component :is="getFilterIcon(
+                            filterItem,
+                            localFilters[filterItem.key],
+                        )
+                            " class="h-4 w-4 text-primary" />
                         {{ filterItem.label }}
                     </label>
-                    <Select
-                        v-model="localFilters[filterItem.key]"
-                        v-if="filterItem.type === 'select'"
-                    >
-                        <SelectTrigger
-                            class="border-border bg-background focus:border-primary"
-                        >
+                    <Select v-model="localFilters[filterItem.key]" v-if="filterItem.type === 'select'">
+                        <SelectTrigger class="border-border bg-background focus:border-primary">
                             <SelectValue :placeholder="filterItem.placeholder">
                                 <span class="flex items-center gap-2">
-                                    <component
-                                        :is="
-                                            getFilterIcon(
-                                                filterItem,
-                                                localFilters[filterItem.key],
-                                            )
-                                        "
-                                        class="h-3 w-3"
-                                    />
+                                    <component :is="getFilterIcon(
+                                        filterItem,
+                                        localFilters[filterItem.key],
+                                    )
+                                        " class="h-3 w-3" />
                                     {{
                                         getFilterDisplayValue(
                                             filterItem,
@@ -392,29 +372,18 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">
+                            <SelectItem value="_all">
                                 <span class="flex items-center gap-2">
-                                    <component
-                                        :is="filterItem.icon || Filter"
-                                        class="h-3 w-3"
-                                    />
+                                    <component :is="filterItem.icon || Filter" class="h-3 w-3" />
                                     {{ filterItem.placeholder }}
                                 </span>
                             </SelectItem>
-                            <SelectItem
-                                v-for="option in filterItem.options"
-                                :key="option.value"
-                                :value="option.value"
-                            >
+                            <SelectItem v-for="option in filterItem.options" :key="option.value" :value="option.value">
                                 <span class="flex items-center gap-2">
-                                    <component
-                                        :is="
-                                            option.icon ||
-                                            filterItem.icon ||
-                                            Filter
-                                        "
-                                        class="h-3 w-3"
-                                    />
+                                    <component :is="option.icon ||
+                                        filterItem.icon ||
+                                        Filter
+                                        " class="h-3 w-3" />
                                     {{ option.label }}
                                 </span>
                             </SelectItem>
@@ -424,32 +393,18 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
             </div>
 
             <!-- Active Filters Info -->
-            <div
-                v-if="activeFiltersCount > 0"
-                class="border-t border-border pt-4"
-            >
-                <div
-                    class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
-                >
+            <div v-if="activeFiltersCount > 0" class="border-t border-border pt-4">
+                <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                     <Filter class="h-4 w-4" />
                     <span>Filtros activos:</span>
-                    <template
-                        v-for="filterItem in finalConfig.filters"
-                        :key="filterItem.key"
-                    >
-                        <span
-                            v-if="localFilters[filterItem.key]"
-                            class="flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-xs text-primary"
-                        >
-                            <component
-                                :is="
-                                    getFilterIcon(
-                                        filterItem,
-                                        localFilters[filterItem.key],
-                                    )
-                                "
-                                class="h-3 w-3"
-                            />
+                    <template v-for="filterItem in finalConfig.filters" :key="filterItem.key">
+                        <span v-if="localFilters[filterItem.key] && localFilters[filterItem.key] !== '_all'"
+                            class="flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-xs text-primary">
+                            <component :is="getFilterIcon(
+                                filterItem,
+                                localFilters[filterItem.key],
+                            )
+                                " class="h-3 w-3" />
                             {{ filterItem.label }}:
                             {{
                                 getFilterDisplayValue(
@@ -459,10 +414,8 @@ function getFilterIcon(filterConfig: FilterConfig, value: string): Component {
                             }}
                         </span>
                     </template>
-                    <span
-                        v-if="localFilters.search"
-                        class="flex items-center gap-1 rounded bg-secondary/10 px-2 py-1 text-xs text-secondary"
-                    >
+                    <span v-if="localFilters.search"
+                        class="flex items-center gap-1 rounded bg-secondary/10 px-2 py-1 text-xs text-secondary">
                         <Search class="h-3 w-3" />
                         Búsqueda: "{{ localFilters.search }}"
                     </span>
