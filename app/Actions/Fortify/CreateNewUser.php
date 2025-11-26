@@ -43,7 +43,7 @@ class CreateNewUser implements CreatesNewUsers
             'max_concurrent_loans' => 3,
             'can_download' => true,
             'is_temp_password' => false,
-            'is_active' => true,
+            'is_active' => false,
         ]);
 
         // Asignar rol de usuario por defecto

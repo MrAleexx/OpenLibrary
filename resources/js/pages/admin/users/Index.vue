@@ -182,13 +182,26 @@ function resetPassword(user: any) {
             `/admin/users/${user.id}/reset-password`,
             {},
             {
-                onSuccess: (page) => {
-                    if (page.props.temp_password) {
-                        // Mostrar modal con contraseña temporal
-                        alert(
-                            `Contraseña temporal generada: ${page.props.temp_password}\n\nEsta contraseña expirará en 7 días.`,
-                        );
-                    }
+                onSuccess: () => {
+                    // La redirección se maneja desde el backend hacia la página de contraseñas temporales
+                },
+            },
+        );
+    }
+}
+
+function viewTempPassword(user: any) {
+    if (
+        confirm(
+            `Para ver la contraseña temporal de ${user.name}, es necesario generar una nueva por seguridad.\n\n¿Deseas generar una nueva contraseña temporal y verla?`,
+        )
+    ) {
+        router.patch(
+            `/admin/users/${user.id}/reset-password`,
+            {},
+            {
+                onSuccess: () => {
+                    // La redirección se maneja desde el backend
                 },
             },
         );
@@ -237,6 +250,7 @@ function isMembershipExpired(user: any) {
 </script>
 
 <template>
+
     <Head>
         <title>Gestión de Usuarios</title>
     </Head>
@@ -250,176 +264,139 @@ function isMembershipExpired(user: any) {
                         <h1 class="text-3xl font-bold text-foreground">
                             Gestión de Usuarios
                         </h1>
-                        <p
-                            class="mt-2 flex items-center gap-2 text-muted-foreground"
-                        >
+                        <p class="mt-2 flex items-center gap-2 text-muted-foreground">
                             <Users class="h-4 w-4 text-primary" />
                             Administra los usuarios del sistema bibliotecario
                         </p>
                     </div>
                     <div class="flex items-center gap-4">
-                        <Button
-                            as-child
-                            class="bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                            <Link
-                                href="/admin/users/create"
-                                class="flex items-center gap-2"
-                            >
-                                <UserPlus class="h-4 w-4" />
-                                Nuevo Usuario
+                        <Button as-child class="bg-primary text-primary-foreground hover:bg-primary/90">
+                            <Link href="/admin/users/create" class="flex items-center gap-2">
+                            <UserPlus class="h-4 w-4" />
+                            Nuevo Usuario
                             </Link>
                         </Button>
                         <div
-                            class="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2 text-primary"
-                        >
+                            class="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2 text-primary">
                             <Zap class="h-4 w-4 animate-pulse" />
-                            <span class="text-sm font-medium"
-                                >{{ users.data.length }} Usuarios</span
-                            >
+                            <span class="text-sm font-medium">{{ users.data.length }} Usuarios</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Stats Cards - Consistente con Books -->
-            <div
-                class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
-            >
+            <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Total Usuarios -->
                 <div
-                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
-                >
+                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p
-                                    class="mb-2 text-sm font-medium text-muted-foreground"
-                                >
+                                <p class="mb-2 text-sm font-medium text-muted-foreground">
                                     Total Usuarios
                                 </p>
                                 <p class="text-3xl font-bold text-foreground">
                                     {{ stats.total_users }}
                                 </p>
-                                <div
-                                    class="text-success mt-2 flex items-center gap-1 text-xs"
-                                >
+                                <div class="text-success mt-2 flex items-center gap-1 text-xs">
                                     <TrendingUp class="h-3 w-3" />
                                     <span>+8% este mes</span>
                                 </div>
                             </div>
                             <div
-                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-transform duration-300 group-hover:scale-110"
-                            >
+                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-transform duration-300 group-hover:scale-110">
                                 <Users class="h-6 w-6 text-primary" />
                             </div>
                         </div>
                     </div>
                     <div
-                        class="h-1 w-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-500 group-hover:w-full"
-                    ></div>
+                        class="h-1 w-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-500 group-hover:w-full">
+                    </div>
                 </div>
 
                 <!-- Usuarios Activos -->
                 <div
-                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-secondary/30 hover:shadow-xl"
-                >
+                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-secondary/30 hover:shadow-xl">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p
-                                    class="mb-2 text-sm font-medium text-muted-foreground"
-                                >
+                                <p class="mb-2 text-sm font-medium text-muted-foreground">
                                     Usuarios Activos
                                 </p>
                                 <p class="text-3xl font-bold text-foreground">
                                     {{ stats.active_users }}
                                 </p>
-                                <div
-                                    class="text-success mt-2 flex items-center gap-1 text-xs"
-                                >
+                                <div class="text-success mt-2 flex items-center gap-1 text-xs">
                                     <TrendingUp class="h-3 w-3" />
                                     <span>+5% este mes</span>
                                 </div>
                             </div>
                             <div
-                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 transition-transform duration-300 group-hover:scale-110"
-                            >
+                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 transition-transform duration-300 group-hover:scale-110">
                                 <UserCheck class="h-6 w-6 text-secondary" />
                             </div>
                         </div>
                     </div>
                     <div
-                        class="h-1 w-0 bg-gradient-to-r from-secondary to-secondary/60 transition-all duration-500 group-hover:w-full"
-                    ></div>
+                        class="h-1 w-0 bg-gradient-to-r from-secondary to-secondary/60 transition-all duration-500 group-hover:w-full">
+                    </div>
                 </div>
 
                 <!-- Estudiantes -->
                 <div
-                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
-                >
+                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p
-                                    class="mb-2 text-sm font-medium text-muted-foreground"
-                                >
+                                <p class="mb-2 text-sm font-medium text-muted-foreground">
                                     Estudiantes
                                 </p>
                                 <p class="text-3xl font-bold text-foreground">
                                     {{ stats.students }}
                                 </p>
-                                <div
-                                    class="mt-2 flex items-center gap-1 text-xs text-muted-foreground"
-                                >
+                                <div class="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                                     <Library class="h-3 w-3" />
                                     <span>Principal grupo</span>
                                 </div>
                             </div>
                             <div
-                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-transform duration-300 group-hover:scale-110"
-                            >
+                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-transform duration-300 group-hover:scale-110">
                                 <Users class="h-6 w-6 text-primary" />
                             </div>
                         </div>
                     </div>
                     <div
-                        class="h-1 w-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-500 group-hover:w-full"
-                    ></div>
+                        class="h-1 w-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-500 group-hover:w-full">
+                    </div>
                 </div>
 
                 <!-- Docentes -->
                 <div
-                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-secondary/30 hover:shadow-xl"
-                >
+                    class="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-secondary/30 hover:shadow-xl">
                     <div class="p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p
-                                    class="mb-2 text-sm font-medium text-muted-foreground"
-                                >
+                                <p class="mb-2 text-sm font-medium text-muted-foreground">
                                     Docentes
                                 </p>
                                 <p class="text-3xl font-bold text-foreground">
                                     {{ stats.teachers }}
                                 </p>
-                                <div
-                                    class="mt-2 flex items-center gap-1 text-xs text-muted-foreground"
-                                >
+                                <div class="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                                     <Shield class="h-3 w-3" />
                                     <span>Personal académico</span>
                                 </div>
                             </div>
                             <div
-                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 transition-transform duration-300 group-hover:scale-110"
-                            >
+                                class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 transition-transform duration-300 group-hover:scale-110">
                                 <Shield class="h-6 w-6 text-secondary" />
                             </div>
                         </div>
                     </div>
                     <div
-                        class="h-1 w-0 bg-gradient-to-r from-secondary to-secondary/60 transition-all duration-500 group-hover:w-full"
-                    ></div>
+                        class="h-1 w-0 bg-gradient-to-r from-secondary to-secondary/60 transition-all duration-500 group-hover:w-full">
+                    </div>
                 </div>
             </div>
 
@@ -434,9 +411,7 @@ function isMembershipExpired(user: any) {
             <!-- Users Table - Versión Lista/Table -->
             <Card class="rounded-xl border border-border bg-card shadow-lg">
                 <CardHeader>
-                    <CardTitle class="text-foreground"
-                        >Lista de Usuarios</CardTitle
-                    >
+                    <CardTitle class="text-foreground">Lista de Usuarios</CardTitle>
                     <CardDescription>
                         {{ users.total }} usuarios encontrados
                     </CardDescription>
@@ -446,75 +421,49 @@ function isMembershipExpired(user: any) {
                         <table class="w-full">
                             <thead>
                                 <tr class="border-b border-border bg-muted/50">
-                                    <th
-                                        class="px-6 py-4 text-left font-semibold text-foreground"
-                                    >
+                                    <th class="px-6 py-4 text-left font-semibold text-foreground">
                                         Usuario
                                     </th>
-                                    <th
-                                        class="px-6 py-4 text-left font-semibold text-foreground"
-                                    >
+                                    <th class="px-6 py-4 text-left font-semibold text-foreground">
                                         Tipo
                                     </th>
-                                    <th
-                                        class="px-6 py-4 text-left font-semibold text-foreground"
-                                    >
+                                    <th class="px-6 py-4 text-left font-semibold text-foreground">
                                         Contacto
                                     </th>
-                                    <th
-                                        class="px-6 py-4 text-left font-semibold text-foreground"
-                                    >
+                                    <th class="px-6 py-4 text-left font-semibold text-foreground">
                                         Estado
                                     </th>
-                                    <th
-                                        class="px-6 py-4 text-left font-semibold text-foreground"
-                                    >
+                                    <th class="px-6 py-4 text-left font-semibold text-foreground">
                                         Estadísticas
                                     </th>
-                                    <th
-                                        class="px-6 py-4 text-left font-semibold text-foreground"
-                                    >
+                                    <th class="px-6 py-4 text-left font-semibold text-foreground">
                                         Acciones
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr
-                                    v-for="user in users.data"
-                                    :key="user.id"
-                                    class="group border-b border-border transition-colors hover:bg-accent/50"
-                                >
+                                <tr v-for="user in users.data" :key="user.id"
+                                    class="group border-b border-border transition-colors hover:bg-accent/50">
                                     <!-- Información del Usuario -->
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             <div
-                                                class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"
-                                            >
-                                                <User
-                                                    class="h-5 w-5 text-primary"
-                                                />
+                                                class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                                                <User class="h-5 w-5 text-primary" />
                                             </div>
                                             <div>
                                                 <p
-                                                    class="font-semibold text-foreground transition-colors group-hover:text-primary"
-                                                >
+                                                    class="font-semibold text-foreground transition-colors group-hover:text-primary">
                                                     {{ user.name }}
                                                     {{ user.last_name }}
                                                 </p>
-                                                <div
-                                                    class="mt-1 flex items-center gap-2 text-xs text-muted-foreground"
-                                                >
+                                                <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                                                     <IdCard class="h-3 w-3" />
-                                                    <span
-                                                        >DNI:
-                                                        {{ user.dni }}</span
-                                                    >
-                                                    <span
-                                                        v-if="
-                                                            user.institutional_id
-                                                        "
-                                                        class="flex items-center gap-1"
-                                                    >
+                                                    <span>DNI:
+                                                        {{ user.dni }}</span>
+                                                    <span v-if="
+                                                        user.institutional_id
+                                                    " class="flex items-center gap-1">
                                                         <Hash class="h-3 w-3" />
                                                         {{
                                                             user.institutional_id
@@ -527,20 +476,12 @@ function isMembershipExpired(user: any) {
 
                                     <!-- Tipo de Usuario -->
                                     <td class="px-6 py-4">
-                                        <Badge
-                                            :class="
-                                                userTypeColors[user.user_type]
-                                            "
-                                            class="border font-medium"
-                                        >
-                                            <component
-                                                :is="
-                                                    userTypeIcons[
-                                                        user.user_type
-                                                    ]
-                                                "
-                                                class="mr-1 h-3 w-3"
-                                            />
+                                        <Badge :class="userTypeColors[user.user_type]
+                                            " class="border font-medium">
+                                            <component :is="userTypeIcons[
+                                                user.user_type
+                                            ]
+                                                " class="mr-1 h-3 w-3" />
                                             {{ userTypeLabels[user.user_type] }}
                                         </Badge>
                                     </td>
@@ -548,18 +489,11 @@ function isMembershipExpired(user: any) {
                                     <!-- Contacto -->
                                     <td class="px-6 py-4">
                                         <div class="space-y-1">
-                                            <div
-                                                class="flex items-center gap-2 text-sm text-muted-foreground"
-                                            >
+                                            <div class="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Mail class="h-3 w-3" />
-                                                <span
-                                                    class="max-w-[200px] truncate"
-                                                    >{{ user.email }}</span
-                                                >
+                                                <span class="max-w-[200px] truncate">{{ user.email }}</span>
                                             </div>
-                                            <div
-                                                class="text-xs text-muted-foreground"
-                                            >
+                                            <div class="text-xs text-muted-foreground">
                                                 Registro:
                                                 {{
                                                     formatDate(user.created_at)
@@ -571,37 +505,22 @@ function isMembershipExpired(user: any) {
                                     <!-- Estado -->
                                     <td class="px-6 py-4">
                                         <div class="flex flex-wrap gap-1">
-                                            <Badge
-                                                v-if="!user.is_active"
-                                                variant="destructive"
-                                                class="text-xs"
-                                            >
+                                            <Badge v-if="!user.is_active" variant="destructive" class="text-xs">
                                                 <UserX class="mr-1 h-3 w-3" />
                                                 Inactivo
                                             </Badge>
-                                            <Badge
-                                                v-else
-                                                variant="outline"
-                                                class="border-green-200 bg-green-500/10 text-xs text-green-600"
-                                            >
-                                                <UserCheck
-                                                    class="mr-1 h-3 w-3"
-                                                />
+                                            <Badge v-else variant="outline"
+                                                class="border-green-200 bg-green-500/10 text-xs text-green-600">
+                                                <UserCheck class="mr-1 h-3 w-3" />
                                                 Activo
                                             </Badge>
-                                            <Badge
-                                                v-if="isMembershipExpired(user)"
-                                                variant="destructive"
-                                                class="text-xs"
-                                            >
+                                            <Badge v-if="isMembershipExpired(user)" variant="destructive"
+                                                class="text-xs">
                                                 <Clock class="mr-1 h-3 w-3" />
                                                 Expirado
                                             </Badge>
-                                            <Badge
-                                                v-if="user.is_temp_password"
-                                                variant="outline"
-                                                class="border-amber-200 bg-amber-500/10 text-xs text-amber-600"
-                                            >
+                                            <Badge v-if="user.is_temp_password" variant="outline"
+                                                class="border-amber-200 bg-amber-500/10 text-xs text-amber-600">
                                                 <Clock class="mr-1 h-3 w-3" />
                                                 Temporal
                                             </Badge>
@@ -610,43 +529,26 @@ function isMembershipExpired(user: any) {
 
                                     <!-- Estadísticas -->
                                     <td class="px-6 py-4">
-                                        <div
-                                            class="flex items-center gap-4 text-sm text-muted-foreground"
-                                        >
+                                        <div class="flex items-center gap-4 text-sm text-muted-foreground">
                                             <div class="text-center">
-                                                <Download
-                                                    class="mx-auto mb-1 h-4 w-4 text-blue-500"
-                                                />
-                                                <span
-                                                    class="font-semibold text-foreground"
-                                                    >{{
-                                                        user.downloads_count
-                                                    }}</span
-                                                >
+                                                <Download class="mx-auto mb-1 h-4 w-4 text-blue-500" />
+                                                <span class="font-semibold text-foreground">{{
+                                                    user.downloads_count
+                                                    }}</span>
                                                 <p class="text-xs">Descargas</p>
                                             </div>
                                             <div class="text-center">
-                                                <BookOpen
-                                                    class="mx-auto mb-1 h-4 w-4 text-emerald-500"
-                                                />
-                                                <span
-                                                    class="font-semibold text-foreground"
-                                                    >{{
-                                                        user.loans_count
-                                                    }}</span
-                                                >
+                                                <BookOpen class="mx-auto mb-1 h-4 w-4 text-emerald-500" />
+                                                <span class="font-semibold text-foreground">{{
+                                                    user.loans_count
+                                                    }}</span>
                                                 <p class="text-xs">Préstamos</p>
                                             </div>
                                             <div class="text-center">
-                                                <Calendar
-                                                    class="mx-auto mb-1 h-4 w-4 text-purple-500"
-                                                />
-                                                <span
-                                                    class="font-semibold text-foreground"
-                                                    >{{
-                                                        user.reservations_count
-                                                    }}</span
-                                                >
+                                                <Calendar class="mx-auto mb-1 h-4 w-4 text-purple-500" />
+                                                <span class="font-semibold text-foreground">{{
+                                                    user.reservations_count
+                                                    }}</span>
                                                 <p class="text-xs">Reservas</p>
                                             </div>
                                         </div>
@@ -656,91 +558,60 @@ function isMembershipExpired(user: any) {
                                     <td class="px-6 py-4">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger as-child>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    class="h-8 w-8 p-0 opacity-50 transition-opacity duration-200 group-hover:opacity-100"
-                                                >
-                                                    <MoreHorizontal
-                                                        class="h-4 w-4"
-                                                    />
+                                                <Button variant="ghost" size="sm"
+                                                    class="h-8 w-8 p-0 opacity-50 transition-opacity duration-200 group-hover:opacity-100">
+                                                    <MoreHorizontal class="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                class="w-48"
-                                            >
+                                            <DropdownMenuContent align="end" class="w-48">
                                                 <DropdownMenuItem as-child>
-                                                    <Link
-                                                        :href="`/admin/users/${user.id}`"
-                                                        class="flex cursor-pointer items-center text-foreground"
-                                                    >
-                                                        <Eye
-                                                            class="mr-2 h-4 w-4 text-blue-500"
-                                                        />
-                                                        Ver detalles
+                                                    <Link :href="`/admin/users/${user.id}`"
+                                                        class="flex cursor-pointer items-center text-foreground">
+                                                    <Eye class="mr-2 h-4 w-4 text-blue-500" />
+                                                    Ver detalles
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem as-child>
-                                                    <Link
-                                                        :href="`/admin/users/${user.id}/edit`"
-                                                        class="flex cursor-pointer items-center text-foreground"
-                                                    >
-                                                        <Edit
-                                                            class="mr-2 h-4 w-4 text-emerald-500"
-                                                        />
-                                                        Editar usuario
+                                                    <Link :href="`/admin/users/${user.id}/edit`"
+                                                        class="flex cursor-pointer items-center text-foreground">
+                                                    <Edit class="mr-2 h-4 w-4 text-emerald-500" />
+                                                    Editar usuario
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem
-                                                    @click="toggleActive(user)"
-                                                    class="cursor-pointer"
-                                                >
-                                                    <component
-                                                        :is="
-                                                            user.is_active
-                                                                ? UserX
-                                                                : UserCheck
-                                                        "
-                                                        class="mr-2 h-4 w-4 text-orange-500"
-                                                    />
+                                                <DropdownMenuItem @click="toggleActive(user)" class="cursor-pointer">
+                                                    <component :is="user.is_active
+                                                        ? UserX
+                                                        : UserCheck
+                                                        " class="mr-2 h-4 w-4 text-orange-500" />
                                                     {{
                                                         user.is_active
                                                             ? 'Desactivar'
                                                             : 'Activar'
                                                     }}
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    @click="resetPassword(user)"
-                                                    class="cursor-pointer"
-                                                >
-                                                    <RefreshCw
-                                                        class="mr-2 h-4 w-4 text-purple-500"
-                                                    />
+                                                <DropdownMenuItem v-if="user.is_temp_password"
+                                                    @click="viewTempPassword(user)" class="cursor-pointer">
+                                                    <Key class="mr-2 h-4 w-4 text-amber-500" />
+                                                    Ver Contraseña Temporal
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem @click="resetPassword(user)" class="cursor-pointer">
+                                                    <RefreshCw class="mr-2 h-4 w-4 text-purple-500" />
                                                     Resetear Contraseña
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem as-child>
-                                                    <Link
-                                                        :href="`/admin/users/${user.id}/download-history`"
-                                                        class="flex cursor-pointer items-center text-foreground"
-                                                    >
-                                                        <Download
-                                                            class="mr-2 h-4 w-4 text-blue-500"
-                                                        />
-                                                        Historial Descargas
+                                                    <Link :href="`/admin/users/${user.id}/download-history`"
+                                                        class="flex cursor-pointer items-center text-foreground">
+                                                    <Download class="mr-2 h-4 w-4 text-blue-500" />
+                                                    Historial Descargas
                                                     </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem as-child>
-                                                    <Link
-                                                        :href="`/admin/users/${user.id}/loan-history`"
-                                                        class="flex cursor-pointer items-center text-foreground"
-                                                    >
-                                                        <BookOpen
-                                                            class="mr-2 h-4 w-4 text-emerald-500"
-                                                        />
-                                                        Historial Préstamos
+                                                    <Link :href="`/admin/users/${user.id}/loan-history`"
+                                                        class="flex cursor-pointer items-center text-foreground">
+                                                    <BookOpen class="mr-2 h-4 w-4 text-emerald-500" />
+                                                    Historial Préstamos
                                                     </Link>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
@@ -752,14 +623,11 @@ function isMembershipExpired(user: any) {
                     </div>
 
                     <!-- Empty State -->
-                    <div
-                        v-if="users.data.length === 0"
-                        class="m-6 rounded-xl border-2 border-dashed border-border py-16 text-center"
-                    >
+                    <div v-if="users.data.length === 0"
+                        class="m-6 rounded-xl border-2 border-dashed border-border py-16 text-center">
                         <div class="mx-auto max-w-md">
                             <div
-                                class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 p-4"
-                            >
+                                class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 p-4">
                                 <Users class="h-10 w-10 text-primary" />
                             </div>
                             <h3 class="mb-3 text-2xl font-bold text-foreground">
@@ -773,38 +641,22 @@ function isMembershipExpired(user: any) {
                                 }}
                             </p>
                             <div class="flex justify-center gap-3">
-                                <Button
-                                    as-child
-                                    variant="outline"
-                                    class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
-                                >
-                                    <Link
-                                        href="/admin/users/import"
-                                        class="flex items-center gap-2"
-                                    >
-                                        <FileDown class="h-4 w-4" />
-                                        Importar Usuarios
+                                <Button as-child variant="outline"
+                                    class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
+                                    <Link href="/admin/users/import" class="flex items-center gap-2">
+                                    <FileDown class="h-4 w-4" />
+                                    Importar Usuarios
                                     </Link>
                                 </Button>
-                                <Button
-                                    as-child
-                                    v-if="activeFiltersCount === 0"
-                                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90"
-                                >
-                                    <Link
-                                        href="/admin/users/create"
-                                        class="flex items-center gap-2"
-                                    >
-                                        <UserPlus class="h-5 w-5" />
-                                        Crear Usuario
+                                <Button as-child v-if="activeFiltersCount === 0"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90">
+                                    <Link href="/admin/users/create" class="flex items-center gap-2">
+                                    <UserPlus class="h-5 w-5" />
+                                    Crear Usuario
                                     </Link>
                                 </Button>
-                                <Button
-                                    v-else
-                                    variant="outline"
-                                    @click="clearFilters"
-                                    class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
-                                >
+                                <Button v-else variant="outline" @click="clearFilters"
+                                    class="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground">
                                     <X class="mr-2 h-4 w-4" />
                                     Limpiar Filtros
                                 </Button>
@@ -817,21 +669,14 @@ function isMembershipExpired(user: any) {
             <!-- Pagination - Consistente con Books -->
             <div v-if="users.data.length > 0" class="flex justify-center">
                 <div class="flex gap-2">
-                    <Link
-                        v-for="(link, index) in users.links"
-                        :key="index"
-                        :href="link.url ?? ''"
-                        :disabled="!link.url"
+                    <Link v-for="(link, index) in users.links" :key="index" :href="link.url ?? ''" :disabled="!link.url"
                         :class="[
                             'rounded-lg px-3 py-1.5 text-sm font-medium',
                             link.active
                                 ? 'bg-primary text-primary-foreground'
                                 : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
                             !link.url ? 'cursor-not-allowed opacity-50' : '',
-                        ]"
-                        v-html="link.label"
-                        preserve-scroll
-                    />
+                        ]" v-html="link.label" preserve-scroll />
                 </div>
             </div>
         </div>

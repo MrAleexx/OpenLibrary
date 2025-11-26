@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => CheckRole::class,
+            'ensure_active' => \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
