@@ -40,6 +40,7 @@ class LoanController extends Controller
         'active',
         'overdue',
         'returned',
+        'returned_pending',
         'cancelled'
     ];
 
@@ -182,23 +183,12 @@ class LoanController extends Controller
                 'Este préstamo no puede ser marcado como devuelto en su estado actual.'
             );
 
-            // Actualizar préstamo
-            $loan->update([
-                'status' => 'returned',
-                'actual_return_date' => now(),
-            ]);
-
-            // Restaurar disponibilidad
-            $book = $loan->physicalCopy->book;
-            $this->restoreBookAvailability($loan, $book);
-
-            // Activar siguiente reserva FIFO
-            $activatedReservation = $this->activateNextPendingReservation($book);
+            $activatedReservation = $this->executeReturn($loan);
 
             DB::commit();
 
             $this->logAction('Préstamo marcado como devuelto', $loan, [
-                'book_id' => $book->id,
+                'book_id' => $loan->physicalCopy->book_id,
                 'reservation_activated' => $activatedReservation !== null,
             ]);
 
@@ -286,11 +276,12 @@ class LoanController extends Controller
     {
         return "CASE status
             WHEN 'overdue' THEN 1
-            WHEN 'active' THEN 2
-            WHEN 'ready_for_pickup' THEN 3
-            WHEN 'pending_pickup' THEN 4
-            WHEN 'returned' THEN 5
-            ELSE 6
+            WHEN 'returned_pending' THEN 2
+            WHEN 'active' THEN 3
+            WHEN 'ready_for_pickup' THEN 4
+            WHEN 'pending_pickup' THEN 5
+            WHEN 'returned' THEN 6
+            ELSE 7
         END";
     }
 
@@ -508,6 +499,7 @@ class LoanController extends Controller
             'active' => BookLoan::where('status', 'active')->count(),
             'overdue' => BookLoan::where('status', 'overdue')->count(),
             'returned' => BookLoan::where('status', 'returned')->count(),
+            'returned_pending' => BookLoan::where('status', 'returned_pending')->count(),
             'overdue_soon' => BookLoan::where('status', 'active')
                 ->where('due_date', '<=', now()->addDays(3))
                 ->where('due_date', '>', now())
@@ -719,6 +711,91 @@ class LoanController extends Controller
             ]);
 
             return back()->with('error', 'Error al cancelar préstamo');
+        }
+    }
+
+    /**
+     * Verificar devolución reportada por usuario
+     */
+    public function verifyReturn(BookLoan $loan): RedirectResponse
+    {
+        if (!$loan->isReturnedPending()) {
+            return back()->with('error', 'Solo se pueden verificar préstamos pendientes de devolución');
+        }
+
+        DB::beginTransaction();
+        try {
+            $activatedReservation = $this->executeReturn($loan);
+            
+            DB::commit();
+
+            $this->logAction('Devolución verificada por administrador', $loan, [
+                'book_id' => $loan->physicalCopy->book_id,
+                'reservation_activated' => $activatedReservation !== null,
+            ]);
+
+            return back()->with('success', $this->buildReturnMessage($activatedReservation));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al verificar devolución: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Ejecutar lógica de devolución
+     * 
+     * @param BookLoan $loan
+     * @return BookReservation|null
+     */
+    private function executeReturn(BookLoan $loan): ?BookReservation
+    {
+        // Actualizar préstamo
+        $loan->update([
+            'status' => 'returned',
+            'actual_return_date' => now(),
+        ]);
+
+        // Restaurar disponibilidad
+        $book = $loan->physicalCopy->book;
+        $this->restoreBookAvailability($loan, $book);
+
+        // Activar siguiente reserva FIFO
+        return $this->activateNextPendingReservation($book);
+    }
+
+    /**
+     * Rechazar devolución reportada por usuario
+     */
+    public function rejectReturn(BookLoan $loan, Request $request): RedirectResponse
+    {
+        if (!$loan->isReturnedPending()) {
+            return back()->with('error', 'Solo se pueden rechazar préstamos pendientes de devolución');
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Revertir a estado anterior (active u overdue)
+            // Si ya pasó la fecha de vencimiento, es overdue, si no active
+            $newStatus = $loan->due_date < now() ? 'overdue' : 'active';
+            
+            $loan->update([
+                'status' => $newStatus,
+                'notes' => $loan->notes . "\nDevolución rechazada: " . $request->reason
+            ]);
+
+            $this->logAction('Devolución rechazada por administrador', $loan, [
+                'reason' => $request->reason
+            ]);
+
+            DB::commit();
+            return back()->with('success', 'Devolución rechazada. El préstamo vuelve a estar activo/vencido.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al rechazar devolución');
         }
     }
 }

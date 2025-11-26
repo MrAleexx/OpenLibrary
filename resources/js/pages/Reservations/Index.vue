@@ -243,6 +243,7 @@ const cancelReservation = async (reservationId: number) => {
 
 <template>
     <AppLayout title="Mis Reservas" :breadcrumbs="breadcrumbs">
+
         <Head title="Mis Reservas" />
 
         <div class="container mx-auto max-w-7xl px-4 py-8">
@@ -264,18 +265,12 @@ const cancelReservation = async (reservationId: number) => {
             </div>
 
             <!-- Alert para reservas listas -->
-            <div
-                v-if="hasReadyReservations"
-                class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
-            >
+            <div v-if="hasReadyReservations"
+                class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
                 <div class="flex items-start gap-3">
-                    <Package
-                        class="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400"
-                    />
+                    <Package class="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
                     <div>
-                        <h3
-                            class="mb-1 font-semibold text-green-900 dark:text-green-100"
-                        >
+                        <h3 class="mb-1 font-semibold text-green-900 dark:text-green-100">
                             ¡Tienes libros listos para recoger!
                         </h3>
                         <p class="text-sm text-green-700 dark:text-green-300">
@@ -287,13 +282,9 @@ const cancelReservation = async (reservationId: number) => {
             </div>
 
             <!-- Estadísticas -->
-            <div
-                class="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6"
-            >
+            <div class="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
                 <!-- Total -->
-                <div
-                    class="rounded-xl border border-border bg-card p-4 shadow-sm"
-                >
+                <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
                     <p class="mb-1 text-xs text-muted-foreground">Total</p>
                     <p class="text-2xl font-bold text-foreground">
                         {{ stats.total }}
@@ -302,72 +293,55 @@ const cancelReservation = async (reservationId: number) => {
 
                 <!-- Pendientes -->
                 <div
-                    class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm dark:border-yellow-800 dark:bg-yellow-900/20"
-                >
-                    <p
-                        class="mb-1 text-xs text-yellow-700 dark:text-yellow-400"
-                    >
+                    class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm dark:border-yellow-800 dark:bg-yellow-900/20">
+                    <p class="mb-1 text-xs text-yellow-700 dark:text-yellow-400">
                         Pendientes
                     </p>
-                    <p
-                        class="text-2xl font-bold text-yellow-900 dark:text-yellow-100"
-                    >
+                    <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
                         {{ stats.pending }}
                     </p>
                 </div>
 
                 <!-- Listas -->
                 <div
-                    class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm dark:border-green-800 dark:bg-green-900/20"
-                >
+                    class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm dark:border-green-800 dark:bg-green-900/20">
                     <p class="mb-1 text-xs text-green-700 dark:text-green-400">
                         Listas
                     </p>
-                    <p
-                        class="text-2xl font-bold text-green-900 dark:text-green-100"
-                    >
+                    <p class="text-2xl font-bold text-green-900 dark:text-green-100">
                         {{ stats.ready }}
                     </p>
                 </div>
 
                 <!-- Recogidas -->
                 <div
-                    class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20"
-                >
+                    class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
                     <p class="mb-1 text-xs text-blue-700 dark:text-blue-400">
                         Recogidas
                     </p>
-                    <p
-                        class="text-2xl font-bold text-blue-900 dark:text-blue-100"
-                    >
+                    <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">
                         {{ stats.collected }}
                     </p>
                 </div>
 
                 <!-- Expiradas -->
                 <div
-                    class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20"
-                >
+                    class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20">
                     <p class="mb-1 text-xs text-gray-700 dark:text-gray-400">
                         Expiradas
                     </p>
-                    <p
-                        class="text-2xl font-bold text-gray-900 dark:text-gray-100"
-                    >
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {{ stats.expired }}
                     </p>
                 </div>
 
                 <!-- Canceladas -->
                 <div
-                    class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20"
-                >
+                    class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20">
                     <p class="mb-1 text-xs text-gray-700 dark:text-gray-400">
                         Canceladas
                     </p>
-                    <p
-                        class="text-2xl font-bold text-gray-900 dark:text-gray-100"
-                    >
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {{ stats.cancelled }}
                     </p>
                 </div>
@@ -375,30 +349,20 @@ const cancelReservation = async (reservationId: number) => {
 
             <!-- Reservas Activas -->
             <div v-if="activeReservations.length > 0" class="mb-8">
-                <h2
-                    class="mb-4 flex items-center gap-2 text-xl font-bold text-foreground"
-                >
+                <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-foreground">
                     <Clock class="h-5 w-5 text-primary" />
                     Reservas Activas
-                    <span class="text-sm font-normal text-muted-foreground"
-                        >({{ activeReservations.length }})</span
-                    >
+                    <span class="text-sm font-normal text-muted-foreground">({{ activeReservations.length }})</span>
                 </h2>
 
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div
-                        v-for="reservation in activeReservations"
-                        :key="reservation.id"
-                        class="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-lg"
-                    >
+                    <div v-for="reservation in activeReservations" :key="reservation.id"
+                        class="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-lg">
                         <div class="flex gap-4">
                             <!-- Portada -->
                             <div class="shrink-0">
-                                <img
-                                    :src="getCoverUrl(reservation.book)"
-                                    :alt="reservation.book.title"
-                                    class="h-28 w-20 rounded-lg object-cover shadow-md"
-                                    @error="
+                                <img :src="getCoverUrl(reservation.book)" :alt="reservation.book.title"
+                                    class="h-28 w-20 rounded-lg object-cover shadow-md" @error="
                                         (e) => {
                                             const img =
                                                 e.target as HTMLImageElement;
@@ -408,19 +372,16 @@ const cancelReservation = async (reservationId: number) => {
                                                 img.src =
                                                     '/images/book-placeholder.svg';
                                         }
-                                    "
-                                />
+                                    " />
                             </div>
 
                             <!-- Información -->
                             <div class="min-w-0 flex-1">
                                 <!-- Título y Estado -->
                                 <div class="mb-2">
-                                    <Link
-                                        :href="`/books/${reservation.book.id}`"
-                                        class="line-clamp-2 font-semibold text-foreground transition-colors hover:text-primary"
-                                    >
-                                        {{ reservation.book.title }}
+                                    <Link :href="`/books/${reservation.book.id}`"
+                                        class="line-clamp-2 font-semibold text-foreground transition-colors hover:text-primary">
+                                    {{ reservation.book.title }}
                                     </Link>
                                     <p class="text-sm text-muted-foreground">
                                         {{ getAuthors(reservation.book) }}
@@ -429,64 +390,48 @@ const cancelReservation = async (reservationId: number) => {
 
                                 <!-- Badge de Estado -->
                                 <div class="mb-3">
-                                    <span
-                                        :class="
-                                            getStatusBadge(reservation).class
+                                    <span :class="getStatusBadge(reservation).class
                                         "
-                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-                                    >
-                                        <component
-                                            :is="
-                                                getStatusBadge(reservation).icon
-                                            "
-                                            class="h-3.5 w-3.5"
-                                        />
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium">
+                                        <component :is="getStatusBadge(reservation).icon
+                                            " class="h-3.5 w-3.5" />
                                         {{ getStatusBadge(reservation).text }}
                                     </span>
                                 </div>
 
                                 <!-- Fechas -->
                                 <div class="mb-3 space-y-1 text-sm">
-                                    <div
-                                        class="flex items-center gap-2 text-muted-foreground"
-                                    >
+                                    <div class="flex items-center gap-2 text-muted-foreground">
                                         <Calendar class="h-4 w-4" />
-                                        <span
-                                            >Reservado:
+                                        <span>Reservado:
                                             {{
                                                 formatDate(
                                                     reservation.reservation_date,
                                                 )
-                                            }}</span
-                                        >
+                                            }}</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <Clock class="h-4 w-4" />
-                                        <span
-                                            :class="
-                                                getDaysRemaining(
+                                        <span :class="getDaysRemaining(
+                                            reservation.pickup_deadline,
+                                        ) <= 1
+                                                ? 'font-semibold text-red-600 dark:text-red-400'
+                                                : getDaysRemaining(
                                                     reservation.pickup_deadline,
-                                                ) <= 1
-                                                    ? 'font-semibold text-red-600 dark:text-red-400'
-                                                    : getDaysRemaining(
-                                                            reservation.pickup_deadline,
-                                                        ) <= 2
-                                                      ? 'font-semibold text-orange-600 dark:text-orange-400'
-                                                      : 'text-muted-foreground'
-                                            "
-                                        >
+                                                ) <= 2
+                                                    ? 'font-semibold text-orange-600 dark:text-orange-400'
+                                                    : 'text-muted-foreground'
+                                            ">
                                             Recoger antes:
                                             {{
                                                 formatDate(
                                                     reservation.pickup_deadline,
                                                 )
                                             }}
-                                            <span
-                                                v-if="
-                                                    reservation.status ===
-                                                    'ready'
-                                                "
-                                            >
+                                            <span v-if="
+                                                reservation.status ===
+                                                'ready'
+                                            ">
                                                 ({{
                                                     getDaysRemaining(
                                                         reservation.pickup_deadline,
@@ -500,30 +445,23 @@ const cancelReservation = async (reservationId: number) => {
 
                                 <!-- Acciones -->
                                 <div class="flex gap-2">
-                                    <Link
-                                        :href="`/books/${reservation.book.id}`"
-                                        class="inline-flex items-center gap-1 rounded-lg border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5 hover:text-primary/80"
-                                    >
-                                        <Eye class="h-4 w-4" />
-                                        Ver libro
+                                    <Link :href="`/books/${reservation.book.id}`"
+                                        class="inline-flex items-center gap-1 rounded-lg border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5 hover:text-primary/80">
+                                    <Eye class="h-4 w-4" />
+                                    Ver libro
                                     </Link>
 
-                                    <button
-                                        v-if="
-                                            reservation.status === 'pending' ||
-                                            (reservation.status === 'ready' &&
-                                                getDaysRemaining(
-                                                    reservation.pickup_deadline,
-                                                ) > 0)
-                                        "
-                                        @click="
+                                    <button v-if="
+                                        reservation.status === 'pending' ||
+                                        (reservation.status === 'ready' &&
+                                            getDaysRemaining(
+                                                reservation.pickup_deadline,
+                                            ) > 0)
+                                    " @click="
                                             cancelReservation(reservation.id)
-                                        "
-                                        :disabled="
-                                            cancellingId === reservation.id
-                                        "
-                                        class="inline-flex items-center gap-1 rounded-lg border border-destructive/20 px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5 hover:text-destructive/80 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
+                                            " :disabled="cancellingId === reservation.id
+                                            "
+                                        class="inline-flex items-center gap-1 rounded-lg border border-destructive/20 px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5 hover:text-destructive/80 disabled:cursor-not-allowed disabled:opacity-50">
                                         <Trash2 class="h-4 w-4" />
                                         {{
                                             cancellingId === reservation.id
@@ -539,91 +477,66 @@ const cancelReservation = async (reservationId: number) => {
             </div>
 
             <!-- Empty State - Sin reservas activas -->
-            <div
-                v-else
-                class="mb-8 rounded-xl border border-border bg-card p-12 text-center"
-            >
-                <BookMarked
-                    class="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50"
-                />
+            <div v-else class="mb-8 rounded-xl border border-border bg-card p-12 text-center">
+                <BookMarked class="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50" />
                 <h3 class="mb-2 text-xl font-semibold text-foreground">
                     No tienes reservas activas
                 </h3>
                 <p class="mb-6 text-muted-foreground">
                     Cuando reserves un libro, aparecerá aquí
                 </p>
-                <Link
-                    href="/books"
-                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                    Explorar catálogo
-                    <ArrowRight class="h-4 w-4" />
+                <Link href="/books"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                Explorar catálogo
+                <ArrowRight class="h-4 w-4" />
                 </Link>
             </div>
 
             <!-- Historial de Reservas -->
             <div v-if="reservationHistory.length > 0">
-                <h2
-                    class="mb-4 flex items-center gap-2 text-xl font-bold text-foreground"
-                >
+                <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-foreground">
                     <Calendar class="h-5 w-5 text-muted-foreground" />
                     Historial de Reservas
-                    <span class="text-sm font-normal text-muted-foreground"
-                        >({{ reservationHistory.length }})</span
-                    >
+                    <span class="text-sm font-normal text-muted-foreground">({{ reservationHistory.length }})</span>
                 </h2>
 
-                <div
-                    class="overflow-hidden rounded-xl border border-border bg-card"
-                >
+                <div class="overflow-hidden rounded-xl border border-border bg-card">
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead class="border-b border-border bg-muted/50">
                                 <tr>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                    >
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Libro
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                    >
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Reservado
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                    >
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Deadline
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                    >
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Estado
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                    >
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                         Acción
                                     </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-border">
-                                <tr
-                                    v-for="reservation in reservationHistory"
-                                    :key="reservation.id"
-                                    class="transition-colors hover:bg-muted/30"
-                                >
+                                <tr v-for="reservation in reservationHistory" :key="reservation.id"
+                                    class="transition-colors hover:bg-muted/30">
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-3">
-                                            <img
-                                                :src="
-                                                    getCoverUrl(
-                                                        reservation.book,
-                                                    )
-                                                "
-                                                :alt="reservation.book.title"
-                                                class="h-14 w-10 rounded object-cover shadow-sm"
-                                                @error="
+                                            <img :src="getCoverUrl(
+                                                reservation.book,
+                                            )
+                                                " :alt="reservation.book.title"
+                                                class="h-14 w-10 rounded object-cover shadow-sm" @error="
                                                     (e) => {
                                                         const img =
                                                             e.target as HTMLImageElement;
@@ -635,17 +548,12 @@ const cancelReservation = async (reservationId: number) => {
                                                             img.src =
                                                                 '/images/book-placeholder.svg';
                                                     }
-                                                "
-                                            />
+                                                " />
                                             <div>
-                                                <p
-                                                    class="line-clamp-1 text-sm font-medium text-foreground"
-                                                >
+                                                <p class="line-clamp-1 text-sm font-medium text-foreground">
                                                     {{ reservation.book.title }}
                                                 </p>
-                                                <p
-                                                    class="text-xs text-muted-foreground"
-                                                >
+                                                <p class="text-xs text-muted-foreground">
                                                     {{
                                                         getAuthors(
                                                             reservation.book,
@@ -655,18 +563,14 @@ const cancelReservation = async (reservationId: number) => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td
-                                        class="px-4 py-3 text-sm text-muted-foreground"
-                                    >
+                                    <td class="px-4 py-3 text-sm text-muted-foreground">
                                         {{
                                             formatDate(
                                                 reservation.reservation_date,
                                             )
                                         }}
                                     </td>
-                                    <td
-                                        class="px-4 py-3 text-sm text-muted-foreground"
-                                    >
+                                    <td class="px-4 py-3 text-sm text-muted-foreground">
                                         {{
                                             formatDate(
                                                 reservation.pickup_deadline,
@@ -674,32 +578,23 @@ const cancelReservation = async (reservationId: number) => {
                                         }}
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span
-                                            :class="
-                                                getStatusBadge(reservation)
-                                                    .class
+                                        <span :class="getStatusBadge(reservation)
+                                                .class
                                             "
-                                            class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
-                                        >
-                                            <component
-                                                :is="
-                                                    getStatusBadge(reservation)
-                                                        .icon
-                                                "
-                                                class="h-3 w-3"
-                                            />
+                                            class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium">
+                                            <component :is="getStatusBadge(reservation)
+                                                    .icon
+                                                " class="h-3 w-3" />
                                             {{
                                                 getStatusBadge(reservation).text
                                             }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <Link
-                                            :href="`/books/${reservation.book.id}`"
-                                            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80"
-                                        >
-                                            <Eye class="h-4 w-4" />
-                                            Ver
+                                        <Link :href="`/books/${reservation.book.id}`"
+                                            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80">
+                                        <Eye class="h-4 w-4" />
+                                        Ver
                                         </Link>
                                     </td>
                                 </tr>
@@ -710,20 +605,14 @@ const cancelReservation = async (reservationId: number) => {
             </div>
 
             <!-- Información adicional -->
-            <div
-                class="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
-            >
+            <div class="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                 <div class="flex items-start gap-3">
-                    <Info
-                        class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-                    />
+                    <Info class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
                     <div class="text-sm text-blue-900 dark:text-blue-100">
                         <p class="mb-2 font-semibold">
                             Información sobre reservas:
                         </p>
-                        <ul
-                            class="list-inside list-disc space-y-1 text-blue-700 dark:text-blue-300"
-                        >
+                        <ul class="list-inside list-disc space-y-1 text-blue-700 dark:text-blue-300">
                             <li>
                                 Las reservas tienen un plazo de 7 días para
                                 recoger el libro

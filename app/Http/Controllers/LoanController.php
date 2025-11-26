@@ -23,7 +23,7 @@ class LoanController extends Controller
             'physicalCopy:id,book_id,barcode'
         ])
             ->where('user_id', $user->id)
-            ->whereIn('status', ['pending_pickup', 'ready_for_pickup', 'active', 'overdue'])
+            ->whereIn('status', ['pending_pickup', 'ready_for_pickup', 'active', 'overdue', 'returned_pending'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($loan) {
@@ -85,7 +85,7 @@ class LoanController extends Controller
         $stats = [
             'total_loans' => BookLoan::where('user_id', $user->id)->count(),
             'active_loans' => BookLoan::where('user_id', $user->id)
-                ->whereIn('status', ['active', 'overdue'])
+                ->whereIn('status', ['active', 'overdue', 'returned_pending'])
                 ->count(),
             'overdue_loans' => BookLoan::where('user_id', $user->id)
                 ->where('status', 'overdue')
@@ -130,5 +130,23 @@ class LoanController extends Controller
         ]);
 
         return back()->with('success', 'Préstamo renovado exitosamente. Nueva fecha de devolución: ' . $loan->due_date->format('d/m/Y'));
+    }
+
+    /**
+     * Mark loan as returned by user (pending verification)
+     */
+    public function markAsReturned(BookLoan $loan)
+    {
+        if ($loan->user_id !== Auth::id()) {
+            abort(403, 'No autorizado');
+        }
+
+        if (!$loan->isActive() && !$loan->isOverdue()) {
+            return back()->with('error', 'Solo se pueden devolver préstamos activos o vencidos');
+        }
+
+        $loan->markAsReturnedPending();
+
+        return back()->with('success', 'Devolución registrada. Pendiente de verificación por el administrador.');
     }
 }

@@ -57,7 +57,7 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
     // IMPORTACIÓN DE USUARIOS
     // ===========================
     Route::prefix('/admin/users/import')->name('admin.users.import.')->group(function () {
-        Route::get('/', [UserImportController::class, 'import'])->name('index'); // Vista principal de importación
+        Route::get('/', [UserImportController::class, 'import'])->name('index'); 
         Route::get('/template', [UserImportController::class, 'downloadTemplate'])->name('template');
         Route::post('/', [UserImportController::class, 'processImport'])->name('process');
         Route::get('/report', [UserImportController::class, 'downloadImportReport'])->name('report');
@@ -70,6 +70,10 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
     // USUARIOS
     // ===========================
     Route::prefix('/admin/users')->name('admin.users.')->group(function () {
+        // RUTAS PARA CONTRASEÑAS TEMPORALES
+        Route::get('/temp-passwords', [UserImportController::class, 'showTempPasswords'])->name('temp-passwords');
+        Route::get('/temp-passwords/report', [UserImportController::class, 'downloadPasswordReport'])->name('temp-passwords.report');
+
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/', [UserController::class, 'store'])->name('store');
@@ -81,10 +85,6 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::patch('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
         Route::get('/{user}/download-history', [UserController::class, 'downloadHistory'])->name('download-history');
         Route::get('/{user}/loan-history', [UserController::class, 'loanHistory'])->name('loan-history');
-
-        // RUTAS PARA CONTRASEÑAS TEMPORALES
-        Route::get('/temp-passwords', [UserImportController::class, 'showTempPasswords'])->name('temp-passwords');
-        Route::get('/temp-passwords/report', [UserImportController::class, 'downloadPasswordReport'])->name('temp-passwords.report');
     });
 
     // ===========================
@@ -98,6 +98,8 @@ Route::middleware(['auth', 'verified', 'role:admin|librarian'])->group(function 
         Route::post('/{loan}/activate', [LoanController::class, 'activateLoan'])->name('activate');
         Route::post('/{loan}/cancel', [LoanController::class, 'cancelLoan'])->name('cancel');
         Route::post('/{loan}/mark-returned', [LoanController::class, 'markAsReturned'])->name('mark-returned');
+        Route::post('/{loan}/verify-return', [LoanController::class, 'verifyReturn'])->name('verify-return');
+        Route::post('/{loan}/reject-return', [LoanController::class, 'rejectReturn'])->name('reject-return');
     });
 
     // ===========================

@@ -57,10 +57,15 @@ Route::get('/usage-policies', function () {
     ]);
 })->name('usage-policies');
 
-// Dashboard - solo para usuarios autenticados
+// Dashboard - solo para usuarios autenticados y activos
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'ensure_active'])
     ->name('dashboard');
+
+// Ruta para usuarios pendientes de aprobación
+Route::get('/approval-pending', [App\Http\Controllers\ApprovalPendingController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('approval.pending');
 
 // ============================================
 // RUTAS DE CATÁLOGO DE LIBROS (PÚBLICAS)
@@ -75,7 +80,7 @@ Route::get('/books/{book}', [BookController::class, 'show'])
     ->name('books.show');
 
 // Búsqueda de libros - requiere autenticación
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'ensure_active'])->group(function () {
     Route::get('/search', [BookController::class, 'search'])
         ->name('books.search');
 });
@@ -84,7 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // RUTAS DE CARRITO DE PRÉSTAMOS
 // ============================================
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'ensure_active'])->group(function () {
     // Ver carrito
     Route::get('/cart', [CartController::class, 'index'])
         ->name('cart.index');
@@ -120,6 +125,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Solicitar renovación de préstamo (opcional)
     Route::post('/loans/{loan}/renew', [\App\Http\Controllers\LoanController::class, 'requestRenewal'])
         ->name('loans.renew');
+
+    // Marcar como devuelto (Self-return)
+    Route::post('/loans/{loan}/return', [\App\Http\Controllers\LoanController::class, 'markAsReturned'])
+        ->name('loans.return');
     
     // ============================================
     // RUTAS DE RESERVAS DE LIBROS
@@ -172,6 +181,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ============================================
 
 // Incluir rutas del admin
-require __DIR__.'/admin.php';
+require_once __DIR__.'/admin.php';
 
-require __DIR__.'/settings.php';
+require_once __DIR__.'/settings.php';

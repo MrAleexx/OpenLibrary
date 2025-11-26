@@ -377,6 +377,7 @@ const clearFilters = () => {
 
 <template>
     <AppLayout title="Gestión de Reservas" :breadcrumbs="breadcrumbs">
+
         <Head title="Gestión de Reservas" />
 
         <div class="container mx-auto max-w-7xl px-4 py-8">
@@ -384,12 +385,8 @@ const clearFilters = () => {
             <div class="mb-8">
                 <div class="mb-6 flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div
-                            class="rounded-xl bg-purple-100 p-3 dark:bg-purple-900/30"
-                        >
-                            <Calendar
-                                class="h-8 w-8 text-purple-600 dark:text-purple-400"
-                            />
+                        <div class="rounded-xl bg-purple-100 p-3 dark:bg-purple-900/30">
+                            <Calendar class="h-8 w-8 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div>
                             <h1 class="text-3xl font-bold text-foreground">
@@ -400,92 +397,63 @@ const clearFilters = () => {
                             </p>
                         </div>
                     </div>
-                    <button
-                        @click="applyFilters"
-                        class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
-                    >
+                    <button @click="applyFilters"
+                        class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700">
                         <RefreshCw class="h-4 w-4" />
                         Actualizar
                     </button>
                 </div>
 
                 <!-- Estadísticas -->
-                <div
-                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6"
-                >
-                    <div
-                        class="rounded-xl border border-border bg-card p-4 shadow-sm"
-                    >
+                <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                    <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
                         <p class="mb-1 text-xs text-muted-foreground">Total</p>
                         <p class="text-2xl font-bold text-foreground">
                             {{ stats.total }}
                         </p>
                     </div>
                     <div
-                        class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm dark:border-yellow-800 dark:bg-yellow-900/20"
-                    >
-                        <p
-                            class="mb-1 text-xs text-yellow-700 dark:text-yellow-400"
-                        >
+                        class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm dark:border-yellow-800 dark:bg-yellow-900/20">
+                        <p class="mb-1 text-xs text-yellow-700 dark:text-yellow-400">
                             En Cola
                         </p>
-                        <p
-                            class="text-2xl font-bold text-yellow-900 dark:text-yellow-100"
-                        >
+                        <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
                             {{ stats.pending }}
                         </p>
                     </div>
                     <div
-                        class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm dark:border-green-800 dark:bg-green-900/20"
-                    >
-                        <p
-                            class="mb-1 text-xs text-green-700 dark:text-green-400"
-                        >
+                        class="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm dark:border-green-800 dark:bg-green-900/20">
+                        <p class="mb-1 text-xs text-green-700 dark:text-green-400">
                             Listas
                         </p>
-                        <p
-                            class="text-2xl font-bold text-green-900 dark:text-green-100"
-                        >
+                        <p class="text-2xl font-bold text-green-900 dark:text-green-100">
                             {{ stats.ready }}
                         </p>
                     </div>
                     <div
-                        class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20"
-                    >
-                        <p
-                            class="mb-1 text-xs text-blue-700 dark:text-blue-400"
-                        >
+                        class="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-800 dark:bg-blue-900/20">
+                        <p class="mb-1 text-xs text-blue-700 dark:text-blue-400">
                             Recogidas
                         </p>
-                        <p
-                            class="text-2xl font-bold text-blue-900 dark:text-blue-100"
-                        >
+                        <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">
                             {{ stats.collected }}
                         </p>
                     </div>
                     <div
-                        class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20"
-                    >
-                        <p
-                            class="mb-1 text-xs text-gray-700 dark:text-gray-400"
-                        >
+                        class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900/20">
+                        <p class="mb-1 text-xs text-gray-700 dark:text-gray-400">
                             Expiradas
                         </p>
-                        <p
-                            class="text-2xl font-bold text-gray-900 dark:text-gray-100"
-                        >
+                        <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                             {{ stats.expired }}
                         </p>
                     </div>
                     <div
-                        class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-900/20"
-                    >
+                        class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-800 dark:bg-red-900/20">
                         <p class="mb-1 text-xs text-red-700 dark:text-red-400">
                             Canceladas
                         </p>
-                        <p
-                            class="text-2xl font-bold text-red-900 dark:text-red-100"
-                        >
+                        <p class="text-2xl font-bold text-red-900 dark:text-red-100">
                             {{ stats.cancelled }}
                         </p>
                     </div>
@@ -493,18 +461,12 @@ const clearFilters = () => {
             </div>
 
             <!-- Alerta de Reservas Listas -->
-            <div
-                v-if="stats.ready > 0"
-                class="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20"
-            >
+            <div v-if="stats.ready > 0"
+                class="mb-6 rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
                 <div class="flex items-center gap-3">
-                    <AlertCircle
-                        class="h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400"
-                    />
+                    <AlertCircle class="h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" />
                     <div>
-                        <p
-                            class="font-semibold text-orange-900 dark:text-orange-100"
-                        >
+                        <p class="font-semibold text-orange-900 dark:text-orange-100">
                             {{ stats.ready }}
                             {{
                                 stats.ready === 1
@@ -523,9 +485,7 @@ const clearFilters = () => {
             </div>
 
             <!-- Filtros -->
-            <div
-                class="mb-6 rounded-xl border border-border bg-card p-6 shadow-sm"
-            >
+            <div class="mb-6 rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div class="mb-4 flex items-center gap-2">
                     <Filter class="h-5 w-5 text-muted-foreground" />
                     <h2 class="text-lg font-semibold text-foreground">
@@ -535,32 +495,21 @@ const clearFilters = () => {
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <!-- Búsqueda -->
                     <div>
-                        <label
-                            class="mb-2 block text-sm font-medium text-foreground"
-                        >
+                        <label class="mb-2 block text-sm font-medium text-foreground">
                             <Search class="mr-1 inline h-4 w-4" />
                             Buscar
                         </label>
-                        <input
-                            v-model="searchQuery"
-                            type="text"
-                            placeholder="Usuario, DNI, libro..."
+                        <input v-model="searchQuery" type="text" placeholder="Usuario, DNI, libro..."
                             class="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-purple-500"
-                            @keyup.enter="applyFilters"
-                        />
+                            @keyup.enter="applyFilters" />
                     </div>
 
                     <!-- Estado -->
                     <div>
-                        <label
-                            class="mb-2 block text-sm font-medium text-foreground"
-                            >Estado</label
-                        >
-                        <select
-                            v-model="selectedStatus"
+                        <label class="mb-2 block text-sm font-medium text-foreground">Estado</label>
+                        <select v-model="selectedStatus"
                             class="w-full rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-transparent focus:ring-2 focus:ring-purple-500"
-                            @change="applyFilters"
-                        >
+                            @change="applyFilters">
                             <option value="">Todos</option>
                             <option value="pending">En Cola</option>
                             <option value="ready">Listas</option>
@@ -572,17 +521,12 @@ const clearFilters = () => {
 
                     <!-- Botones -->
                     <div class="flex items-end gap-2">
-                        <button
-                            @click="applyFilters"
-                            class="rounded-lg bg-purple-600 px-6 py-2 font-medium text-white transition-colors hover:bg-purple-700"
-                        >
+                        <button @click="applyFilters"
+                            class="rounded-lg bg-purple-600 px-6 py-2 font-medium text-white transition-colors hover:bg-purple-700">
                             Aplicar
                         </button>
-                        <button
-                            v-if="hasFilters"
-                            @click="clearFilters"
-                            class="rounded-lg bg-muted px-6 py-2 font-medium text-muted-foreground transition-colors hover:bg-muted/80"
-                        >
+                        <button v-if="hasFilters" @click="clearFilters"
+                            class="rounded-lg bg-muted px-6 py-2 font-medium text-muted-foreground transition-colors hover:bg-muted/80">
                             Limpiar
                         </button>
                     </div>
@@ -590,106 +534,76 @@ const clearFilters = () => {
             </div>
 
             <!-- Tabla de Reservas -->
-            <div
-                class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-            >
+            <div class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="border-b border-border bg-muted/50">
                             <tr>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Posición
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Usuario
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Libro
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Estado
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Reservado
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Expira
                                 </th>
                                 <th
-                                    class="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase"
-                                >
+                                    class="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
                                     Acciones
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
-                            <tr
-                                v-for="reservation in reservations.data"
-                                :key="reservation.id"
-                                class="transition-colors hover:bg-muted/30"
-                            >
+                            <tr v-for="reservation in reservations.data" :key="reservation.id"
+                                class="transition-colors hover:bg-muted/30">
                                 <!-- Posición en Cola -->
                                 <td class="px-4 py-4">
-                                    <div
-                                        v-if="
-                                            reservation.status === 'pending' &&
-                                            reservation.queue_position
-                                        "
-                                        class="text-center"
-                                    >
+                                    <div v-if="
+                                        reservation.status === 'pending' &&
+                                        reservation.queue_position
+                                    " class="text-center">
                                         <div
-                                            class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30"
-                                        >
-                                            <span
-                                                class="font-bold text-yellow-700 dark:text-yellow-400"
-                                                >#{{
-                                                    reservation.queue_position
-                                                }}</span
-                                            >
+                                            class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+                                            <span class="font-bold text-yellow-700 dark:text-yellow-400">#{{
+                                                reservation.queue_position
+                                            }}</span>
                                         </div>
-                                        <p
-                                            class="mt-1 text-xs text-muted-foreground"
-                                        >
+                                        <p class="mt-1 text-xs text-muted-foreground">
                                             de {{ reservation.total_in_queue }}
                                         </p>
                                     </div>
-                                    <span v-else class="text-muted-foreground"
-                                        >-</span
-                                    >
+                                    <span v-else class="text-muted-foreground">-</span>
                                 </td>
 
                                 <!-- Usuario -->
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         <div
-                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30"
-                                        >
-                                            <User
-                                                class="h-5 w-5 text-purple-600 dark:text-purple-400"
-                                            />
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                                            <User class="h-5 w-5 text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <div>
-                                            <p
-                                                class="text-sm font-medium text-foreground"
-                                            >
+                                            <p class="text-sm font-medium text-foreground">
                                                 {{ reservation.user.name }}
                                                 {{ reservation.user.last_name }}
                                             </p>
-                                            <p
-                                                class="text-xs text-muted-foreground"
-                                            >
+                                            <p class="text-xs text-muted-foreground">
                                                 DNI: {{ reservation.user.dni }}
                                             </p>
                                         </div>
@@ -699,11 +613,8 @@ const clearFilters = () => {
                                 <!-- Libro -->
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
-                                        <img
-                                            :src="getBookCoverUrl(reservation)"
-                                            :alt="getBookTitle(reservation)"
-                                            class="h-14 w-10 rounded object-cover shadow-sm"
-                                            @error="
+                                        <img :src="getBookCoverUrl(reservation)" :alt="getBookTitle(reservation)"
+                                            class="h-14 w-10 rounded object-cover shadow-sm" @error="
                                                 (e) => {
                                                     const img =
                                                         e.target as HTMLImageElement;
@@ -715,20 +626,14 @@ const clearFilters = () => {
                                                         img.src =
                                                             '/images/book-placeholder.svg';
                                                 }
-                                            "
-                                        />
+                                            " />
                                         <div class="max-w-xs">
-                                            <p
-                                                class="line-clamp-2 text-sm font-medium text-foreground"
-                                            >
+                                            <p class="line-clamp-2 text-sm font-medium text-foreground">
                                                 {{ getBookTitle(reservation) }}
                                             </p>
-                                            <p
-                                                v-if="
-                                                    getCopyNumber(reservation)
-                                                "
-                                                class="text-xs text-muted-foreground"
-                                            >
+                                            <p v-if="
+                                                getCopyNumber(reservation)
+                                            " class="text-xs text-muted-foreground">
                                                 Copia #{{
                                                     getCopyNumber(reservation)
                                                 }}
@@ -739,26 +644,17 @@ const clearFilters = () => {
 
                                 <!-- Estado -->
                                 <td class="px-4 py-4">
-                                    <span
-                                        :class="
-                                            getStatusBadge(reservation).class
+                                    <span :class="getStatusBadge(reservation).class
                                         "
-                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap"
-                                    >
-                                        <component
-                                            :is="
-                                                getStatusBadge(reservation).icon
-                                            "
-                                            class="h-3.5 w-3.5"
-                                        />
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap">
+                                        <component :is="getStatusBadge(reservation).icon
+                                            " class="h-3.5 w-3.5" />
                                         {{ getStatusBadge(reservation).text }}
                                     </span>
                                 </td>
 
                                 <!-- Fecha Reserva -->
-                                <td
-                                    class="px-4 py-4 text-sm text-muted-foreground"
-                                >
+                                <td class="px-4 py-4 text-sm text-muted-foreground">
                                     {{
                                         formatDateShort(
                                             reservation.reservation_date,
@@ -768,52 +664,36 @@ const clearFilters = () => {
 
                                 <!-- Fecha Expiración -->
                                 <td class="px-4 py-4 text-sm">
-                                    <span
-                                        v-if="reservation.status === 'ready'"
-                                        :class="
-                                            getDaysRemaining(
+                                    <span v-if="reservation.status === 'ready'" :class="getDaysRemaining(
+                                        reservation.expiration_date,
+                                    ) <= 1
+                                            ? 'font-semibold text-red-600 dark:text-red-400'
+                                            : getDaysRemaining(
                                                 reservation.expiration_date,
-                                            ) <= 1
-                                                ? 'font-semibold text-red-600 dark:text-red-400'
-                                                : getDaysRemaining(
-                                                        reservation.expiration_date,
-                                                    ) <= 2
-                                                  ? 'text-orange-600 dark:text-orange-400'
-                                                  : 'text-muted-foreground'
-                                        "
-                                    >
+                                            ) <= 2
+                                                ? 'text-orange-600 dark:text-orange-400'
+                                                : 'text-muted-foreground'
+                                        ">
                                         {{
                                             formatDateShort(
                                                 reservation.expiration_date,
                                             )
                                         }}
                                     </span>
-                                    <span v-else class="text-muted-foreground"
-                                        >-</span
-                                    >
+                                    <span v-else class="text-muted-foreground">-</span>
                                 </td>
 
                                 <!-- Acciones -->
                                 <td class="px-4 py-4 text-right">
                                     <div class="flex justify-end gap-2">
-                                        <button
-                                            v-for="(
-                                                actionItem, index
+                                        <button v-for="(
+actionItem, index
                                             ) in getAvailableActions(
-                                                reservation,
-                                            )"
-                                            :key="index"
-                                            @click="actionItem.action"
-                                            :disabled="
-                                                processingId === reservation.id
-                                            "
-                                            :class="actionItem.color"
-                                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            <component
-                                                :is="actionItem.icon"
-                                                class="h-3.5 w-3.5"
-                                            />
+                                                    reservation,
+                                                )" :key="index" @click="actionItem.action" :disabled="processingId === reservation.id
+                                                " :class="actionItem.color"
+                                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+                                            <component :is="actionItem.icon" class="h-3.5 w-3.5" />
                                             {{
                                                 processingId === reservation.id
                                                     ? 'Procesando...'
@@ -828,13 +708,8 @@ const clearFilters = () => {
                 </div>
 
                 <!-- Empty State -->
-                <div
-                    v-if="reservations.data.length === 0"
-                    class="p-12 text-center"
-                >
-                    <Calendar
-                        class="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50"
-                    />
+                <div v-if="reservations.data.length === 0" class="p-12 text-center">
+                    <Calendar class="mx-auto mb-4 h-16 w-16 text-muted-foreground opacity-50" />
                     <h3 class="mb-2 text-xl font-semibold text-foreground">
                         No se encontraron reservas
                     </h3>
@@ -848,29 +723,19 @@ const clearFilters = () => {
                 </div>
 
                 <!-- Paginación -->
-                <div
-                    v-if="reservations.last_page > 1"
-                    class="border-t border-border px-6 py-4"
-                >
+                <div v-if="reservations.last_page > 1" class="border-t border-border px-6 py-4">
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-muted-foreground">
                             Mostrando {{ reservations.data.length }} de
                             {{ reservations.total }} reservas
                         </p>
                         <div class="flex gap-2">
-                            <Link
-                                v-for="page in reservations.last_page"
-                                :key="page"
-                                :href="`/admin/reservations?page=${page}`"
-                                :class="
-                                    page === reservations.current_page
+                            <Link v-for="page in reservations.last_page" :key="page"
+                                :href="`/admin/reservations?page=${page}`" :class="page === reservations.current_page
                                         ? 'bg-purple-600 text-white'
                                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                "
-                                class="rounded-lg px-3 py-1 text-sm font-medium transition-colors"
-                                preserve-state
-                            >
-                                {{ page }}
+                                    " class="rounded-lg px-3 py-1 text-sm font-medium transition-colors" preserve-state>
+                            {{ page }}
                             </Link>
                         </div>
                     </div>

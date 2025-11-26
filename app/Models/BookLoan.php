@@ -43,6 +43,7 @@ class BookLoan extends Model
     public const STATUS_ACTIVE = 'active';
     public const STATUS_OVERDUE = 'overdue';
     public const STATUS_RETURNED = 'returned';
+    public const STATUS_RETURNED_PENDING = 'returned_pending';
     public const STATUS_CANCELLED = 'cancelled';
 
     /**
@@ -200,6 +201,14 @@ class BookLoan extends Model
     }
 
     /**
+     * Verificar si está pendiente de confirmación de devolución
+     */
+    public function isReturnedPending(): bool
+    {
+        return $this->status === self::STATUS_RETURNED_PENDING;
+    }
+
+    /**
      * Verificar si puede ser activado (está en estado ready_for_pickup)
      */
     public function canBeActivated(): bool
@@ -243,6 +252,19 @@ class BookLoan extends Model
         
         $this->physicalCopy->update(['status' => 'available']);
         $this->physicalCopy->book->increment('available_physical_copies');
+    }
+
+    /**
+     * Marcar como devuelto por el usuario (pendiente de verificación)
+     */
+    public function markAsReturnedPending(): void
+    {
+        if ($this->isActive() || $this->isOverdue()) {
+            $this->update([
+                'status' => self::STATUS_RETURNED_PENDING,
+                'actual_return_date' => now(),
+            ]);
+        }
     }
 
     /**

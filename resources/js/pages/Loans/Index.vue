@@ -11,7 +11,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     AlertCircle,
     BookOpen,
@@ -39,12 +39,13 @@ interface BookLoan {
     due_date: string | null;
     actual_return_date: string | null;
     status:
-        | 'pending_pickup'
-        | 'ready_for_pickup'
-        | 'active'
-        | 'overdue'
-        | 'returned'
-        | 'cancelled';
+    | 'pending_pickup'
+    | 'ready_for_pickup'
+    | 'active'
+    | 'overdue'
+    | 'returned'
+    | 'returned_pending'
+    | 'cancelled';
     renewal_count: number;
     notes: string | null;
     created_at: string;
@@ -131,6 +132,13 @@ function getLoanStatusBadge(loan: BookLoan) {
             label: 'Vencido',
             icon: XCircle,
         };
+    } else if (loan.status === 'returned_pending') {
+        return {
+            variant: 'outline' as const,
+            class: 'bg-purple-500/10 text-purple-600 border-purple-200 dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-800',
+            label: 'Verificando Devolución',
+            icon: Clock,
+        };
     } else {
         // Status: active
         if (!loan.due_date) {
@@ -165,10 +173,26 @@ function getBookCover(loan: BookLoan): string {
         loan.physical_copy.book.cover_image || '/images/default-book-cover.jpg'
     );
 }
+
+const markAsReturned = (loanId: number) => {
+    if (!confirm('¿Confirmas que has devuelto este libro? El administrador verificará la devolución.')) return;
+
+    router.post(`/loans/${loanId}/return`, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Optional: Show success toast
+        },
+    });
+};
+
+// Polling para actualizaciones en tiempo real
+import { usePolling } from '@/composables/useLoanPolling';
+usePolling(3000, ['activeLoans', 'loanHistory', 'stats']);
 </script>
 
 <template>
     <AppLayout>
+
         <Head title="Mis Préstamos" />
 
         <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -183,12 +207,8 @@ function getBookCover(loan: BookLoan): string {
             <!-- Stats Cards -->
             <div class="mb-6 grid gap-4 md:grid-cols-3">
                 <Card>
-                    <CardHeader
-                        class="flex flex-row items-center justify-between space-y-0 pb-2"
-                    >
-                        <CardTitle class="text-sm font-medium"
-                            >Total Préstamos</CardTitle
-                        >
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Total Préstamos</CardTitle>
                         <BookOpen class="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -202,12 +222,8 @@ function getBookCover(loan: BookLoan): string {
                 </Card>
 
                 <Card>
-                    <CardHeader
-                        class="flex flex-row items-center justify-between space-y-0 pb-2"
-                    >
-                        <CardTitle class="text-sm font-medium"
-                            >Préstamos Activos</CardTitle
-                        >
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Préstamos Activos</CardTitle>
                         <Clock class="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -221,19 +237,12 @@ function getBookCover(loan: BookLoan): string {
                 </Card>
 
                 <Card>
-                    <CardHeader
-                        class="flex flex-row items-center justify-between space-y-0 pb-2"
-                    >
-                        <CardTitle class="text-sm font-medium"
-                            >Préstamos Vencidos</CardTitle
-                        >
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium">Préstamos Vencidos</CardTitle>
                         <AlertCircle class="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div
-                            class="text-2xl font-bold"
-                            :class="hasOverdueLoans ? 'text-red-600' : ''"
-                        >
+                        <div class="text-2xl font-bold" :class="hasOverdueLoans ? 'text-red-600' : ''">
                             {{ stats.overdue_loans }}
                         </div>
                         <p class="text-xs text-muted-foreground">
@@ -244,20 +253,14 @@ function getBookCover(loan: BookLoan): string {
             </div>
 
             <!-- Ready for Pickup Alert -->
-            <Alert
-                v-if="hasReadyForPickup"
-                class="mb-6 border-cyan-200 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-950"
-            >
+            <Alert v-if="hasReadyForPickup"
+                class="mb-6 border-cyan-200 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-950">
                 <CheckCircle class="h-4 w-4 text-cyan-600" />
                 <AlertDescription class="text-cyan-900 dark:text-cyan-100">
-                    <span class="font-semibold"
-                        >¡Tienes {{ readyForPickupLoans.length }} libro(s)
-                        esperándote!</span
-                    >
-                    <span class="ml-1"
-                        >Tu(s) libro(s) ha(n) sido apartado(s) y está(n)
-                        listo(s) para recoger en biblioteca.</span
-                    >
+                    <span class="font-semibold">¡Tienes {{ readyForPickupLoans.length }} libro(s)
+                        esperándote!</span>
+                    <span class="ml-1">Tu(s) libro(s) ha(n) sido apartado(s) y está(n)
+                        listo(s) para recoger en biblioteca.</span>
                 </AlertDescription>
             </Alert>
 
@@ -280,111 +283,69 @@ function getBookCover(loan: BookLoan): string {
                 </CardHeader>
                 <CardContent>
                     <div v-if="hasActiveLoans" class="space-y-4">
-                        <div
-                            v-for="loan in activeLoans"
-                            :key="loan.id"
-                            class="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-accent/50 sm:flex-row"
-                        >
+                        <div v-for="loan in activeLoans" :key="loan.id"
+                            class="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-accent/50 sm:flex-row">
                             <!-- Book Cover -->
                             <div class="flex-shrink-0">
-                                <img
-                                    :src="getBookCover(loan)"
-                                    :alt="loan.physical_copy.book.title"
-                                    class="h-28 w-20 rounded-md object-cover shadow-sm"
-                                />
+                                <img :src="getBookCover(loan)" :alt="loan.physical_copy.book.title"
+                                    class="h-28 w-20 rounded-md object-cover shadow-sm" />
                             </div>
 
                             <!-- Loan Info -->
                             <div class="min-w-0 flex-1">
-                                <div
-                                    class="mb-2 flex items-start justify-between gap-2"
-                                >
+                                <div class="mb-2 flex items-start justify-between gap-2">
                                     <div class="flex-1">
-                                        <Link
-                                            :href="`/books/${loan.physical_copy.book.id}`"
-                                            class="line-clamp-2 text-lg font-semibold hover:underline"
-                                        >
-                                            {{ loan.physical_copy.book.title }}
+                                        <Link :href="`/books/${loan.physical_copy.book.id}`"
+                                            class="line-clamp-2 text-lg font-semibold hover:underline">
+                                        {{ loan.physical_copy.book.title }}
                                         </Link>
-                                        <p
-                                            class="text-sm text-muted-foreground"
-                                        >
+                                        <p class="text-sm text-muted-foreground">
                                             Código:
                                             {{ loan.physical_copy.barcode }}
                                         </p>
                                     </div>
-                                    <Badge
-                                        :class="getLoanStatusBadge(loan).class"
-                                    >
-                                        <component
-                                            :is="getLoanStatusBadge(loan).icon"
-                                            class="mr-1 h-3 w-3"
-                                        />
+                                    <Badge :class="getLoanStatusBadge(loan).class">
+                                        <component :is="getLoanStatusBadge(loan).icon" class="mr-1 h-3 w-3" />
                                         {{ getLoanStatusBadge(loan).label }}
                                     </Badge>
                                 </div>
 
                                 <!-- Dates -->
-                                <div
-                                    class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2"
-                                >
+                                <div class="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                                     <!-- Fecha de préstamo (solo si existe) -->
-                                    <div
-                                        v-if="loan.loan_date"
-                                        class="flex items-center gap-2 text-muted-foreground"
-                                    >
+                                    <div v-if="loan.loan_date" class="flex items-center gap-2 text-muted-foreground">
                                         <Calendar class="h-4 w-4" />
-                                        <span
-                                            >Prestado:
+                                        <span>Prestado:
                                             {{
                                                 formatDate(loan.loan_date)
-                                            }}</span
-                                        >
+                                            }}</span>
                                     </div>
-                                    <div
-                                        v-else
-                                        class="flex items-center gap-2 text-muted-foreground"
-                                    >
+                                    <div v-else class="flex items-center gap-2 text-muted-foreground">
                                         <Clock class="h-4 w-4" />
-                                        <span
-                                            >Solicitado:
+                                        <span>Solicitado:
                                             {{
                                                 formatDate(loan.created_at)
-                                            }}</span
-                                        >
+                                            }}</span>
                                     </div>
 
                                     <!-- Fecha de vencimiento (solo si existe) -->
-                                    <div
-                                        v-if="loan.due_date"
-                                        class="flex items-center gap-2"
-                                    >
-                                        <Calendar
-                                            class="h-4 w-4"
-                                            :class="
-                                                loan.status === 'overdue'
-                                                    ? 'text-red-600'
-                                                    : 'text-muted-foreground'
-                                            "
-                                        />
-                                        <span
-                                            :class="
-                                                loan.status === 'overdue'
-                                                    ? 'font-semibold text-red-600'
-                                                    : 'text-muted-foreground'
-                                            "
-                                        >
+                                    <div v-if="loan.due_date" class="flex items-center gap-2">
+                                        <Calendar class="h-4 w-4" :class="loan.status === 'overdue'
+                                            ? 'text-red-600'
+                                            : 'text-muted-foreground'
+                                            " />
+                                        <span :class="loan.status === 'overdue'
+                                            ? 'font-semibold text-red-600'
+                                            : 'text-muted-foreground'
+                                            ">
                                             Vence:
                                             {{ formatDate(loan.due_date) }}
-                                            <span
-                                                v-if="
-                                                    loan.status !== 'overdue' &&
-                                                    getDaysRemaining(
-                                                        loan.due_date,
-                                                    ) !== null
-                                                "
-                                                class="ml-1"
-                                            >
+                                            <span v-if="
+                                                loan.status !== 'overdue' &&
+                                                getDaysRemaining(
+                                                    loan.due_date,
+                                                ) !== null
+                                            " class="ml-1">
                                                 ({{
                                                     getDaysRemaining(
                                                         loan.due_date,
@@ -394,46 +355,40 @@ function getBookCover(loan: BookLoan): string {
                                             </span>
                                         </span>
                                     </div>
-                                    <div
-                                        v-else-if="
-                                            loan.status === 'pending_pickup'
-                                        "
-                                        class="flex items-center gap-2 text-amber-600"
-                                    >
+                                    <div v-else-if="
+                                        loan.status === 'pending_pickup'
+                                    " class="flex items-center gap-2 text-amber-600">
                                         <AlertCircle class="h-4 w-4" />
-                                        <span class="font-medium"
-                                            >En preparación - Te avisaremos
-                                            cuando esté listo</span
-                                        >
+                                        <span class="font-medium">En preparación - Te avisaremos
+                                            cuando esté listo</span>
                                     </div>
-                                    <div
-                                        v-else-if="
-                                            loan.status === 'ready_for_pickup'
-                                        "
-                                        class="flex animate-pulse items-center gap-2 text-cyan-600"
-                                    >
+                                    <div v-else-if="
+                                        loan.status === 'ready_for_pickup'
+                                    " class="flex animate-pulse items-center gap-2 text-cyan-600">
                                         <CheckCircle class="h-4 w-4" />
-                                        <span class="font-bold"
-                                            >¡Tu libro te está esperando!
-                                            Recógelo en biblioteca</span
-                                        >
+                                        <span class="font-bold">¡Tu libro te está esperando!
+                                            Recógelo en biblioteca</span>
                                     </div>
                                 </div>
 
                                 <!-- Renewals -->
-                                <div
-                                    v-if="loan.renewal_count > 0"
-                                    class="mt-2 text-sm text-muted-foreground"
-                                >
+                                <div v-if="loan.renewal_count > 0" class="mt-2 text-sm text-muted-foreground">
                                     Renovaciones: {{ loan.renewal_count }}
                                 </div>
 
                                 <!-- Notes -->
-                                <div
-                                    v-if="loan.notes"
-                                    class="mt-2 text-sm text-muted-foreground italic"
-                                >
+                                <div v-if="loan.notes" class="mt-2 text-sm text-muted-foreground italic">
                                     {{ loan.notes }}
+                                </div>
+
+                                <!-- Actions -->
+                                <div v-if="['active', 'overdue'].includes(loan.status)" class="mt-3 flex justify-end">
+                                    <Button variant="outline" size="sm"
+                                        class="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200 dark:border-green-800 dark:hover:bg-green-900/20"
+                                        @click="markAsReturned(loan.id)">
+                                        <CheckCircle class="mr-2 h-4 w-4" />
+                                        Marcar como Devuelto
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -441,9 +396,7 @@ function getBookCover(loan: BookLoan): string {
 
                     <!-- Empty State -->
                     <div v-else class="py-12 text-center">
-                        <BookOpen
-                            class="mx-auto h-12 w-12 text-muted-foreground/50"
-                        />
+                        <BookOpen class="mx-auto h-12 w-12 text-muted-foreground/50" />
                         <h3 class="mt-4 text-lg font-semibold">
                             No tienes préstamos activos
                         </h3>
@@ -467,48 +420,34 @@ function getBookCover(loan: BookLoan): string {
                 </CardHeader>
                 <CardContent>
                     <div v-if="loanHistory.length > 0" class="space-y-3">
-                        <div
-                            v-for="loan in loanHistory"
-                            :key="loan.id"
-                            class="flex items-start gap-4 rounded-lg border p-3 transition-colors hover:bg-accent/30"
-                        >
+                        <div v-for="loan in loanHistory" :key="loan.id"
+                            class="flex items-start gap-4 rounded-lg border p-3 transition-colors hover:bg-accent/30">
                             <!-- Book Cover Small -->
                             <div class="flex-shrink-0">
-                                <img
-                                    :src="getBookCover(loan)"
-                                    :alt="loan.physical_copy.book.title"
-                                    class="h-16 w-12 rounded object-cover shadow-sm"
-                                />
+                                <img :src="getBookCover(loan)" :alt="loan.physical_copy.book.title"
+                                    class="h-16 w-12 rounded object-cover shadow-sm" />
                             </div>
 
                             <!-- Info -->
                             <div class="min-w-0 flex-1">
-                                <Link
-                                    :href="`/books/${loan.physical_copy.book.id}`"
-                                    class="line-clamp-1 font-medium hover:underline"
-                                >
-                                    {{ loan.physical_copy.book.title }}
+                                <Link :href="`/books/${loan.physical_copy.book.id}`"
+                                    class="line-clamp-1 font-medium hover:underline">
+                                {{ loan.physical_copy.book.title }}
                                 </Link>
-                                <div
-                                    class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground"
-                                >
+                                <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                                     <!-- Mostrar fechas según disponibilidad -->
-                                    <span
-                                        v-if="
-                                            loan.loan_date &&
-                                            loan.actual_return_date
-                                        "
-                                    >
+                                    <span v-if="
+                                        loan.loan_date &&
+                                        loan.actual_return_date
+                                    ">
                                         {{ formatDate(loan.loan_date) }} -
                                         {{
                                             formatDate(loan.actual_return_date)
                                         }}
                                     </span>
-                                    <span
-                                        v-else-if="
-                                            loan.loan_date && loan.due_date
-                                        "
-                                    >
+                                    <span v-else-if="
+                                        loan.loan_date && loan.due_date
+                                    ">
                                         {{ formatDate(loan.loan_date) }} -
                                         {{ formatDate(loan.due_date) }}
                                     </span>
@@ -516,10 +455,7 @@ function getBookCover(loan: BookLoan): string {
                                         {{ formatDate(loan.created_at) }}
                                     </span>
 
-                                    <Badge
-                                        :class="getLoanStatusBadge(loan).class"
-                                        class="h-5"
-                                    >
+                                    <Badge :class="getLoanStatusBadge(loan).class" class="h-5">
                                         {{ getLoanStatusBadge(loan).label }}
                                     </Badge>
                                 </div>
