@@ -51,7 +51,7 @@ class Book extends Model
     ];
 
     // Agregar URLs completas para las imágenes y PDFs
-    protected $appends = ['cover_url', 'pdf_url', 'physical_copies_count', 'available_copies_count'];
+    protected $appends = ['cover_url', 'pdf_url', 'physical_copies_count', 'available_copies_count', 'authors'];
 
     /**
      * Relationships
