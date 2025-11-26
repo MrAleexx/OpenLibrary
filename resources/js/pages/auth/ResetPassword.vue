@@ -19,73 +19,39 @@ const inputEmail = ref(props.email);
 </script>
 
 <template>
-    <AuthLayout
-        title="Reset password"
-        description="Please enter your new password below"
-    >
-        <Head title="Reset password" />
+    <AuthLayout title="Restablecer contraseña" description="Por favor ingresa tu nueva contraseña a continuación">
 
-        <Form
-            v-bind="update.form()"
-            :transform="(data) => ({ ...data, token, email })"
-            :reset-on-success="['password', 'password_confirmation']"
-            v-slot="{ errors, processing }"
-        >
+        <Head title="Restablecer contraseña" />
+
+        <Form v-bind="update.form()" :transform="(data) => ({ ...data, token, email })"
+            :reset-on-success="['password', 'password_confirmation']" v-slot="{ errors, processing }">
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email</Label>
-                    <Input
-                        id="email"
-                        type="email"
-                        name="email"
-                        autocomplete="email"
-                        v-model="inputEmail"
-                        class="mt-1 block w-full"
-                        readonly
-                    />
+                    <Label for="email">Correo electrónico</Label>
+                    <Input id="email" type="email" name="email" autocomplete="email" v-model="inputEmail"
+                        class="mt-1 block w-full" readonly />
                     <InputError :message="errors.email" class="mt-2" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="password">Password</Label>
-                    <Input
-                        id="password"
-                        type="password"
-                        name="password"
-                        autocomplete="new-password"
-                        class="mt-1 block w-full"
-                        autofocus
-                        placeholder="Password"
-                    />
+                    <Label for="password">Contraseña</Label>
+                    <Input id="password" type="password" name="password" autocomplete="new-password"
+                        class="mt-1 block w-full" autofocus placeholder="Contraseña" />
                     <InputError :message="errors.password" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="password_confirmation">
-                        Confirm Password
+                        Confirmar contraseña
                     </Label>
-                    <Input
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        autocomplete="new-password"
-                        class="mt-1 block w-full"
-                        placeholder="Confirm password"
-                    />
+                    <Input id="password_confirmation" type="password" name="password_confirmation"
+                        autocomplete="new-password" class="mt-1 block w-full" placeholder="Confirmar contraseña" />
                     <InputError :message="errors.password_confirmation" />
                 </div>
 
-                <Button
-                    type="submit"
-                    class="mt-4 w-full"
-                    :disabled="processing"
-                    data-test="reset-password-button"
-                >
-                    <LoaderCircle
-                        v-if="processing"
-                        class="h-4 w-4 animate-spin"
-                    />
-                    Reset password
+                <Button type="submit" class="mt-4 w-full" :disabled="processing" data-test="reset-password-button">
+                    <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
+                    Restablecer contraseña
                 </Button>
             </div>
         </Form>

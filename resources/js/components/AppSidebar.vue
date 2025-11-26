@@ -41,11 +41,12 @@ import {
     Home,
     LayoutGrid,
     Library,
+    MessageSquare,
     ShoppingCart,
     Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
-import AppLogo from './AppLogo.vue';
+import AppLogoPng from './AppLogoPng.vue';
 
 // Definir la interfaz para el usuario y sus roles
 interface Role {
@@ -154,6 +155,11 @@ const adminNavItems = computed<NavItem[]>(() => [
         href: '/admin/reservations',
         icon: CalendarCheck,
     },
+    {
+        title: 'Reclamaciones',
+        href: '/admin/claims',
+        icon: MessageSquare,
+    },
 ]);
 
 /**
@@ -221,7 +227,7 @@ const footerNavItems = computed(() => {
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
                         <Link :href="dashboard()">
-                            <AppLogo />
+                        <AppLogoPng />
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLogo from '@/components/AppLogo.vue';
+import AppLogoPng from '@/components/AppLogoPng.vue';
 import { login, register } from '@/routes';
 import { Link } from '@inertiajs/vue3';
 import { ArrowRight } from 'lucide-vue-next';
@@ -10,7 +10,7 @@ import { ArrowRight } from 'lucide-vue-next';
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div data-animate>
-                    <AppLogo class="mb-4" />
+                    <AppLogoPng class="mb-4" height-class="h-20" />
                     <p class="text-muted-foreground leading-relaxed">
                         Tu biblioteca digital universitaria. Conectando
                         conocimiento, personas y oportunidades de aprendizaje.
@@ -121,6 +121,9 @@ import { ArrowRight } from 'lucide-vue-next';
                     <Link href="/cookies"
                         class="text-muted-foreground hover:text-foreground transition-colors duration-300 text-sm hover:scale-105">
                     Cookies</Link>
+                    <Link href="/claims/create"
+                        class="text-muted-foreground hover:text-foreground transition-colors duration-300 text-sm hover:scale-105">
+                    Libro de Reclamaciones</Link>
                 </div>
             </div>
         </div>
