@@ -1,4 +1,6 @@
-# OpenLibrary
+# MIS Library
+
+![Matt Innova Solutions Logo](public/images/logo.webp)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/MrAleexx/OpenLibrary)
 ![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=flat&logo=laravel&logoColor=white)
@@ -47,15 +49,15 @@ Asegúrate de tener instalado lo siguiente:
 
 ### Instalación
 
-1.  **Clonar el repositorio**
+1. **Clonar el repositorio**
 
     ```bash
     git clone https://github.com/MrAleexx/OpenLibrary.git
     cd OpenLibrary
     ```
 
-2.  **Instalar Dependencias**
-    Puedes usar el script de configuración automatizado definido en `composer.json`:
+2. **Instalar Dependencias**
+   Puedes usar el script de configuración automatizado definido en `composer.json`:
 
     ```bash
     composer run setup
@@ -107,4 +109,4 @@ composer run test
 
 ## 📄 Licencia
 
-Este proyecto es software de código abierto licenciado bajo la [licencia MIT](https://opensource.org/licenses/MIT).
+Este proyecto ha sido desarrollado por **Matt Innova Solutions**.
