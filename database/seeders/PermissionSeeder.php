@@ -18,77 +18,77 @@ class PermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ==================== PERMISOS DE USUARIOS ====================
-        Permission::create(['name' => 'view users']);
-        Permission::create(['name' => 'create users']);
-        Permission::create(['name' => 'edit users']);
-        Permission::create(['name' => 'delete users']);
-        Permission::create(['name' => 'import users']);
-        Permission::create(['name' => 'export users']);
-        Permission::create(['name' => 'view user profiles']);
-        Permission::create(['name' => 'manage user passwords']);
-        Permission::create(['name' => 'toggle user status']);
-        Permission::create(['name' => 'view user statistics']);
+        Permission::firstOrCreate(['name' => 'view users']);
+        Permission::firstOrCreate(['name' => 'create users']);
+        Permission::firstOrCreate(['name' => 'edit users']);
+        Permission::firstOrCreate(['name' => 'delete users']);
+        Permission::firstOrCreate(['name' => 'import users']);
+        Permission::firstOrCreate(['name' => 'export users']);
+        Permission::firstOrCreate(['name' => 'view user profiles']);
+        Permission::firstOrCreate(['name' => 'manage user passwords']);
+        Permission::firstOrCreate(['name' => 'toggle user status']);
+        Permission::firstOrCreate(['name' => 'view user statistics']);
 
         // ==================== PERMISOS DE LIBROS ====================
-        Permission::create(['name' => 'view books']);
-        Permission::create(['name' => 'create books']);
-        Permission::create(['name' => 'edit books']);
-        Permission::create(['name' => 'delete books']);
-        Permission::create(['name' => 'download books']);
-        Permission::create(['name' => 'manage featured']);
-        Permission::create(['name' => 'publish books']);
-        Permission::create(['name' => 'view book statistics']);
-        Permission::create(['name' => 'manage book downloads']);
+        Permission::firstOrCreate(['name' => 'view books']);
+        Permission::firstOrCreate(['name' => 'create books']);
+        Permission::firstOrCreate(['name' => 'edit books']);
+        Permission::firstOrCreate(['name' => 'delete books']);
+        Permission::firstOrCreate(['name' => 'download books']);
+        Permission::firstOrCreate(['name' => 'manage featured']);
+        Permission::firstOrCreate(['name' => 'publish books']);
+        Permission::firstOrCreate(['name' => 'view book statistics']);
+        Permission::firstOrCreate(['name' => 'manage book downloads']);
 
         // ==================== PERMISOS DE CATEGORÍAS ====================
-        Permission::create(['name' => 'view categories']);
-        Permission::create(['name' => 'create categories']);
-        Permission::create(['name' => 'edit categories']);
-        Permission::create(['name' => 'delete categories']);
+        Permission::firstOrCreate(['name' => 'view categories']);
+        Permission::firstOrCreate(['name' => 'create categories']);
+        Permission::firstOrCreate(['name' => 'edit categories']);
+        Permission::firstOrCreate(['name' => 'delete categories']);
 
         // ==================== PERMISOS DE PRÉSTAMOS ====================
-        Permission::create(['name' => 'view loans']);
-        Permission::create(['name' => 'create loans']);
-        Permission::create(['name' => 'edit loans']);
-        Permission::create(['name' => 'delete loans']);
-        Permission::create(['name' => 'renew loans']);
-        Permission::create(['name' => 'manage overdue loans']);
+        Permission::firstOrCreate(['name' => 'view loans']);
+        Permission::firstOrCreate(['name' => 'create loans']);
+        Permission::firstOrCreate(['name' => 'edit loans']);
+        Permission::firstOrCreate(['name' => 'delete loans']);
+        Permission::firstOrCreate(['name' => 'renew loans']);
+        Permission::firstOrCreate(['name' => 'manage overdue loans']);
 
         // ==================== PERMISOS DE RESERVAS ====================
-        Permission::create(['name' => 'view reservations']);
-        Permission::create(['name' => 'create reservations']);
-        Permission::create(['name' => 'edit reservations']);
-        Permission::create(['name' => 'delete reservations']);
-        Permission::create(['name' => 'manage reservation queue']);
+        Permission::firstOrCreate(['name' => 'view reservations']);
+        Permission::firstOrCreate(['name' => 'create reservations']);
+        Permission::firstOrCreate(['name' => 'edit reservations']);
+        Permission::firstOrCreate(['name' => 'delete reservations']);
+        Permission::firstOrCreate(['name' => 'manage reservation queue']);
 
         // ==================== PERMISOS DE COPIAS FÍSICAS ====================
-        Permission::create(['name' => 'view physical copies']);
-        Permission::create(['name' => 'create physical copies']);
-        Permission::create(['name' => 'edit physical copies']);
-        Permission::create(['name' => 'delete physical copies']);
-        Permission::create(['name' => 'manage copy status']);
+        Permission::firstOrCreate(['name' => 'view physical copies']);
+        Permission::firstOrCreate(['name' => 'create physical copies']);
+        Permission::firstOrCreate(['name' => 'edit physical copies']);
+        Permission::firstOrCreate(['name' => 'delete physical copies']);
+        Permission::firstOrCreate(['name' => 'manage copy status']);
 
         // ==================== PERMISOS DE REPORTES ====================
-        Permission::create(['name' => 'view reports']);
-        Permission::create(['name' => 'export reports']);
-        Permission::create(['name' => 'view usage statistics']);
-        Permission::create(['name' => 'view audit logs']);
+        Permission::firstOrCreate(['name' => 'view reports']);
+        Permission::firstOrCreate(['name' => 'export reports']);
+        Permission::firstOrCreate(['name' => 'view usage statistics']);
+        Permission::firstOrCreate(['name' => 'view audit logs']);
 
         // ==================== PERMISOS DE CONFIGURACIÓN ====================
-        Permission::create(['name' => 'view settings']);
-        Permission::create(['name' => 'edit settings']);
-        Permission::create(['name' => 'view dashboard']);
-        Permission::create(['name' => 'manage system logs']);
+        Permission::firstOrCreate(['name' => 'view settings']);
+        Permission::firstOrCreate(['name' => 'edit settings']);
+        Permission::firstOrCreate(['name' => 'view dashboard']);
+        Permission::firstOrCreate(['name' => 'manage system logs']);
 
         // ==================== ROLES Y ASIGNACIÓN ====================
 
         // 👑 ADMINISTRADOR - Acceso total
-        $admin = Role::create(['name' => 'admin']);
-        $admin->givePermissionTo(Permission::all());
+        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $admin->syncPermissions(Permission::all());
 
         // 📚 BIBLIOTECARIO - Gestión operativa
-        $librarian = Role::create(['name' => 'librarian']);
-        $librarian->givePermissionTo([
+        $librarian = Role::firstOrCreate(['name' => 'librarian']);
+        $librarian->syncPermissions([
             // Usuarios
             'view users',
             'edit users',
@@ -110,6 +110,7 @@ class PermissionSeeder extends Seeder
             'view categories',
             'create categories',
             'edit categories',
+            'delete categories',
 
             // Préstamos
             'view loans',
@@ -140,8 +141,8 @@ class PermissionSeeder extends Seeder
         ]);
 
         // 👤 USUARIO REGULAR - Acceso básico (Estudiantes, Externos, Docentes)
-        $user = Role::create(['name' => 'user']);
-        $user->givePermissionTo([
+        $user = Role::firstOrCreate(['name' => 'user']);
+        $user->syncPermissions([
             'view books',
             'view categories',
             'download books',
