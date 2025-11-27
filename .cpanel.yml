@@ -56,10 +56,8 @@ deployment:
         --exclude='.env' \
         --exclude='vendor' \
         --exclude='build' \
+        --exclude='index.php' \
         "$APPDIR/public/" "$DEPLOYPATH/"
-
-      # Ajustar rutas en index.php para que apunten a APPDIR
-      sed -i "s|__DIR__.'/../|'$APPDIR/|g" "$DEPLOYPATH/index.php"
 
     # 8) Crear enlace de storage directamente en public_html
     - |
