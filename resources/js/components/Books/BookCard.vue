@@ -19,6 +19,9 @@
     - Protección contra loops infinitos en carga de imágenes
 -->
 <script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/composables/useCart';
 import { Link, usePage } from '@inertiajs/vue3';
 import {
@@ -32,7 +35,7 @@ import {
     ShoppingCart,
     User,
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 /**
  * Interface que define la estructura de datos de un libro
@@ -48,6 +51,7 @@ interface Book {
     downloadable: boolean;
     book_type: 'physical' | 'digital' | 'both';
     total_views: number;
+    featured?: boolean;
     available_copies_count?: number;
     physical_copies_count?: number;
     publisher?: {
@@ -77,6 +81,8 @@ const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
 const isAddingToCart = ref(false);
 const showAddedMessage = ref(false);
+const isImageLoaded = ref(false);
+const imageRef = ref<HTMLImageElement | null>(null);
 
 // ===============================================
 // COMPUTED PROPERTIES
@@ -122,9 +128,7 @@ const availabilityStatus = computed(() => {
         return {
             text: `${available} ${available === 1 ? 'copia disponible' : 'copias disponibles'}`,
             icon: BookOpen,
-            color: 'text-success',
-            bgColor: 'bg-success/10',
-            borderColor: 'border-success/20',
+            variant: 'secondary' as const,
         };
     }
 
@@ -133,9 +137,7 @@ const availabilityStatus = computed(() => {
         return {
             text: 'Sin copias disponibles',
             icon: BookMarked,
-            color: 'text-warning',
-            bgColor: 'bg-warning/10',
-            borderColor: 'border-warning/20',
+            variant: 'destructive' as const,
         };
     }
 
@@ -144,9 +146,7 @@ const availabilityStatus = computed(() => {
         return {
             text: 'PDF Disponible',
             icon: Download,
-            color: 'text-primary',
-            bgColor: 'bg-primary/10',
-            borderColor: 'border-primary/20',
+            variant: 'default' as const,
         };
     }
 
@@ -154,9 +154,7 @@ const availabilityStatus = computed(() => {
     return {
         text: 'No disponible',
         icon: BookMarked,
-        color: 'text-muted-foreground',
-        bgColor: 'bg-muted',
-        borderColor: 'border-border',
+        variant: 'outline' as const,
     };
 });
 
@@ -206,144 +204,126 @@ const handleAddToCart = async (e: Event) => {
 
     isAddingToCart.value = false;
 };
+
+const emit = defineEmits(['loaded']);
+
+const onImageLoad = () => {
+    isImageLoaded.value = true;
+    emit('loaded');
+};
+
+onMounted(() => {
+    if (imageRef.value?.complete) {
+        onImageLoad();
+    }
+});
 </script>
 
 <template>
-    <Link
-        :href="`/books/${book.id}`"
-        class="group block overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-2 hover:border-primary/50 hover:shadow-2xl"
-    >
-        <!-- Cover Image -->
-        <div class="relative aspect-[2/3] overflow-hidden bg-muted">
-            <img
-                :src="coverImageUrl"
-                :alt="book.title"
-                class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                @error="
-                    (e) => {
-                        const img = e.target as HTMLImageElement;
-                        if (!img.src.includes('placeholder'))
-                            img.src = '/images/book-placeholder.svg';
-                    }
-                "
-            />
+    <Link :href="`/books/${book.id}`"
+        class="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg">
+    <!-- Cover Image -->
+    <div class="relative aspect-[2/3] overflow-hidden bg-muted">
+        <!-- Skeleton Loader (Internal fallback) -->
+        <Skeleton v-if="!isImageLoaded" class="absolute inset-0 h-full w-full" />
 
-            <!-- Overlay con efecto hover -->
-            <div
-                class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            >
-                <div class="absolute right-4 bottom-4 left-4">
-                    <p
-                        class="flex items-center gap-2 text-sm font-medium text-white"
-                    >
-                        <Eye class="h-4 w-4" />
-                        {{ book.total_views || 0 }} vistas
-                    </p>
-                </div>
+        <img ref="imageRef" :src="coverImageUrl" :alt="book.title" loading="lazy" decoding="async"
+            class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            :class="{ 'opacity-0': !isImageLoaded, 'opacity-100': isImageLoaded }" @load="onImageLoad" @error="
+                (e) => {
+                    const img = e.target as HTMLImageElement;
+                    if (!img.src.includes('placeholder'))
+                        img.src = '/images/book-placeholder.svg';
+                    isImageLoaded = true;
+                    emit('loaded');
+                }
+            " />
+
+        <!-- Overlay con efecto hover -->
+        <div
+            class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div class="absolute right-4 bottom-4 left-4">
+                <p class="flex items-center gap-2 text-sm font-medium text-white">
+                    <Eye class="h-4 w-4" />
+                    {{ book.total_views || 0 }} vistas
+                </p>
             </div>
+        </div>
+
+        <!-- Badges Superiores -->
+        <div class="absolute top-3 left-3 flex flex-col gap-2">
+            <!-- Badge Destacado -->
+            <Badge v-if="book.featured" variant="default"
+                class="bg-yellow-500 text-white hover:bg-yellow-600 border-none shadow-md">
+                Destacado
+            </Badge>
 
             <!-- Badge de categoría -->
-            <div
-                v-if="book.categories && book.categories.length > 0"
-                class="absolute top-3 left-3"
-            >
-                <span
-                    class="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-lg"
-                >
-                    {{ book.categories[0].name }}
-                </span>
-            </div>
+            <Badge v-if="book.categories && book.categories.length > 0" variant="outline"
+                class="bg-background/90 text-foreground backdrop-blur-sm hover:bg-background/100 shadow-sm border-none">
+                {{ book.categories[0].name }}
+            </Badge>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-1 flex-col space-y-3 p-4">
+        <!-- Title -->
+        <h3 class="line-clamp-2 min-h-[3rem] font-semibold text-foreground transition-colors group-hover:text-primary"
+            :title="book.title">
+            {{ book.title }}
+        </h3>
+
+        <!-- Author -->
+        <p class="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <User class="h-3.5 w-3.5 flex-shrink-0" />
+            <span class="line-clamp-1">{{ authors }}</span>
+        </p>
+
+        <!-- Publisher & Year -->
+        <div class="flex items-center gap-3 text-xs text-muted-foreground">
+            <span v-if="book.publisher" class="flex items-center gap-1">
+                <Building2 class="h-3.5 w-3.5" />
+                <span class="line-clamp-1">{{ book.publisher.name }}</span>
+            </span>
+            <span v-if="book.publication_year" class="flex items-center gap-1">
+                <Calendar class="h-3.5 w-3.5" />
+                {{ book.publication_year }}
+            </span>
         </div>
 
-        <!-- Content -->
-        <div class="space-y-3 p-4">
-            <!-- Title -->
-            <h3
-                class="line-clamp-2 min-h-[3rem] font-semibold text-foreground transition-colors group-hover:text-primary"
-            >
-                {{ book.title }}
-            </h3>
+        <!-- Spacer to push bottom content -->
+        <div class="flex-1"></div>
 
-            <!-- Author -->
-            <p class="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <User class="h-3.5 w-3.5" />
-                <span class="line-clamp-1">{{ authors }}</span>
-            </p>
-
-            <!-- Publisher & Year -->
-            <div class="flex items-center gap-3 text-xs text-muted-foreground">
-                <span v-if="book.publisher" class="flex items-center gap-1">
-                    <Building2 class="h-3.5 w-3.5" />
-                    {{ book.publisher.name }}
-                </span>
-                <span
-                    v-if="book.publication_year"
-                    class="flex items-center gap-1"
-                >
-                    <Calendar class="h-3.5 w-3.5" />
-                    {{ book.publication_year }}
+        <!-- Divider -->
+        <div class="space-y-2 border-t border-border pt-3">
+            <!-- User Has Loaned Badge -->
+            <div v-if="userHasLoaned"
+                class="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-900/20">
+                <BookMarked class="h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    Préstamo activo
                 </span>
             </div>
 
-            <!-- Divider -->
-            <div class="space-y-2 border-t border-border pt-3">
-                <!-- User Has Loaned Badge -->
-                <div
-                    v-if="userHasLoaned"
-                    class="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-100 px-3 py-2 dark:border-blue-800 dark:bg-blue-900/30"
-                >
-                    <BookMarked
-                        class="h-4 w-4 flex-shrink-0 text-blue-700 dark:text-blue-400"
-                    />
-                    <span
-                        class="text-sm font-medium text-blue-700 dark:text-blue-400"
-                    >
-                        Tienes un préstamo activo
-                    </span>
-                </div>
+            <!-- Availability Badge -->
+            <Badge :variant="availabilityStatus.variant"
+                class="flex w-full items-center justify-center gap-2 py-2 text-sm font-medium">
+                <component :is="availabilityStatus.icon" class="h-4 w-4 flex-shrink-0" />
+                {{ availabilityStatus.text }}
+            </Badge>
 
-                <!-- Availability Badge -->
-                <div
-                    class="flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors"
-                    :class="[
-                        availabilityStatus.bgColor,
-                        availabilityStatus.borderColor,
-                    ]"
-                >
-                    <component
-                        :is="availabilityStatus.icon"
-                        class="h-4 w-4 flex-shrink-0"
-                        :class="availabilityStatus.color"
-                    />
-                    <span
-                        class="text-sm font-medium"
-                        :class="availabilityStatus.color"
-                    >
-                        {{ availabilityStatus.text }}
-                    </span>
-                </div>
-
-                <!-- Add to Cart Button -->
-                <button
-                    v-if="canAddToCart"
-                    @click="handleAddToCart"
-                    :disabled="isInCart(book.id) || isAddingToCart"
-                    class="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50"
-                    :class="
-                        isInCart(book.id)
-                            ? 'border border-green-300 bg-green-100 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                    "
-                >
-                    <component
-                        :is="isInCart(book.id) ? Check : ShoppingCart"
-                        class="h-4 w-4"
-                    />
-                    <span v-if="isInCart(book.id)">En carrito</span>
-                    <span v-else-if="isAddingToCart">Agregando...</span>
-                    <span v-else>Agregar al carrito</span>
-                </button>
-            </div>
+            <!-- Add to Cart Button -->
+            <Button v-if="canAddToCart" @click="handleAddToCart" :disabled="isInCart(book.id) || isAddingToCart"
+                class="w-full gap-2" :variant="isInCart(book.id) ? 'outline' : 'default'" :class="{
+                    'border-green-500 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40': isInCart(book.id)
+                }">
+                <component :is="isInCart(book.id) ? Check : ShoppingCart" class="h-4 w-4" />
+                <span v-if="isInCart(book.id)">En carrito</span>
+                <span v-else-if="isAddingToCart">Agregando...</span>
+                <span v-else>Agregar</span>
+            </Button>
         </div>
+    </div>
     </Link>
 </template>

@@ -20,8 +20,17 @@ import {
     Trash2,
     X,
     BookOpen,
+    MoreHorizontal,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 interface Props {
     categories: Category[];
@@ -411,7 +420,8 @@ const onDropInside = (event: DragEvent, category: Category) =>
                             searchQuery = '';
                         filterStatus = 'all';
                         filterType = 'all';
-                        " class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90">
+                        "
+                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90">
                             <X class="h-4 w-4" />
                             Limpiar filtros
                         </button>
@@ -517,30 +527,45 @@ const onDropInside = (event: DragEvent, category: Category) =>
                                         </span>
                                     </td>
                                     <td class="px-4 py-4">
-                                        <div class="flex items-center gap-1">
-                                            <button @click="viewDetails(category)"
-                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                                title="Ver detalles">
-                                                <Eye class="h-4 w-4" />
-                                            </button>
-                                            <button @click="viewHistory(category)"
-                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                                title="Historial">
-                                                <History class="h-4 w-4" />
-                                            </button>
-                                            <Link :href="`/admin/categories/${category.id}/edit`"
-                                                class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary">
-                                            <Edit class="h-4 w-4" />
-                                            </Link>
-                                            <button @click="
-                                                deleteCategory(category)
-                                                " class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                                :disabled="category.books_count > 0 ||
-                                                    category.children_count > 0
-                                                    ">
-                                                <Trash2 class="h-4 w-4" />
-                                            </button>
-                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger as-child>
+                                                <Button variant="ghost" size="sm"
+                                                    class="h-8 w-8 p-0 opacity-50 transition-opacity duration-200 group-hover:opacity-100">
+                                                    <MoreHorizontal class="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" class="w-48">
+                                                <DropdownMenuItem @click="viewDetails(category)" class="cursor-pointer">
+                                                    <Eye class="mr-2 h-4 w-4 text-blue-500" />
+                                                    Ver detalles
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem @click="viewHistory(category)" class="cursor-pointer">
+                                                    <History class="mr-2 h-4 w-4 text-purple-500" />
+                                                    Historial
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem as-child>
+                                                    <Link :href="`/admin/categories/${category.id}/edit`"
+                                                        class="flex cursor-pointer items-center text-foreground">
+                                                    <Edit class="mr-2 h-4 w-4 text-emerald-500" />
+                                                    Editar
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem @click="toggleStatus(category)"
+                                                    class="cursor-pointer">
+                                                    <component :is="category.is_active ? EyeOff : Eye"
+                                                        class="mr-2 h-4 w-4 text-orange-500" />
+                                                    {{ category.is_active ? 'Desactivar' : 'Activar' }}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem @click="deleteCategory(category)"
+                                                    class="cursor-pointer text-destructive focus:text-destructive"
+                                                    :disabled="category.books_count > 0 || category.children_count > 0">
+                                                    <Trash2 class="mr-2 h-4 w-4" />
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </td>
                                 </tr>
                             </tbody>
@@ -613,19 +638,19 @@ const onDropInside = (event: DragEvent, category: Category) =>
                             <span class="text-muted-foreground">Orden:</span>
                             <span class="ml-2 font-medium">{{
                                 selectedCategory.sort_order
-                            }}</span>
+                                }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground">Libros:</span>
                             <span class="ml-2 font-medium">{{
                                 selectedCategory.books_count
-                            }}</span>
+                                }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground">Subcategorías:</span>
                             <span class="ml-2 font-medium">{{
                                 selectedCategory.children_count
-                            }}</span>
+                                }}</span>
                         </div>
                     </div>
 
@@ -641,13 +666,13 @@ const onDropInside = (event: DragEvent, category: Category) =>
                             <span class="text-muted-foreground">Creado:</span>
                             <span class="ml-2 font-medium">{{
                                 selectedCategory.created_at
-                            }}</span>
+                                }}</span>
                         </div>
                         <div>
                             <span class="text-muted-foreground">Actualizado:</span>
                             <span class="ml-2 font-medium">{{
                                 selectedCategory.updated_at
-                            }}</span>
+                                }}</span>
                         </div>
                     </div>
 
