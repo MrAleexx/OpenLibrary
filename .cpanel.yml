@@ -55,6 +55,7 @@ deployment:
         --exclude='node_modules' \
         --exclude='.env' \
         --exclude='vendor' \
+        --exclude='build' \
         "$APPDIR/public/" "$DEPLOYPATH/"
 
       # Ajustar rutas en index.php para que apunten a APPDIR
