@@ -14,11 +14,18 @@ export function usePolling(
 ) {
     const isPolling = ref(false);
 
+    const isReloading = ref(false);
+
     const { pause, resume, isActive } = useIntervalFn(() => {
-        // Comentamos la verificación de visibilidad para facilitar pruebas en ventanas paralelas
-        // if (document.hidden) return;
+        // Verificamos visibilidad para evitar peticiones en segundo plano
+        if (document.hidden) return;
 
         if (propsToReload.length === 0) return;
+
+        // Evitar peticiones superpuestas
+        if (isReloading.value) return;
+
+        isReloading.value = true;
 
         router.reload({
             only: propsToReload,
@@ -26,6 +33,7 @@ export function usePolling(
             preserveScroll: true,
             preserveState: true,
             onFinish: () => {
+                isReloading.value = false;
                 // console.log('Datos actualizados via polling');
             },
         });
