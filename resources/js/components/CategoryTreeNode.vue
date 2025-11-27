@@ -10,7 +10,16 @@ import {
     GripVertical,
     History,
     Trash2,
+    MoreHorizontal,
 } from 'lucide-vue-next';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 
 interface Props {
     category: Category;
@@ -76,159 +85,108 @@ const onDragOver = (event: DragEvent) => {
 <template>
     <div class="category-node">
         <!-- Zona de drop "before" -->
-        <div
-            class="drop-zone drop-zone-before h-2 bg-transparent transition-colors hover:bg-primary/20"
-            @dragover="onDragOver"
-            @drop="onDropBefore($event, category)"
-        ></div>
+        <div class="drop-zone drop-zone-before h-2 bg-transparent transition-colors hover:bg-primary/20"
+            @dragover="onDragOver" @drop="onDropBefore($event, category)"></div>
 
         <!-- Contenido principal de la categoría -->
-        <div
-            class="mb-1 flex cursor-move items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
-            draggable="true"
-            @dragstart="onDragStart($event, category)"
-            @dragover="onDragOver"
-            @drop="onDropInside($event, category)"
-            :style="{ marginLeft: depth * 20 + 'px' }"
-        >
+        <div class="mb-1 flex cursor-move items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-accent/50"
+            draggable="true" @dragstart="onDragStart($event, category)" @dragover="onDragOver"
+            @drop="onDropInside($event, category)" :style="{ marginLeft: depth * 20 + 'px' }">
             <div class="flex flex-1 items-center gap-3">
-                <GripVertical
-                    class="h-4 w-4 cursor-move text-muted-foreground"
-                />
-                <div
-                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"
-                >
+                <GripVertical class="h-4 w-4 cursor-move text-muted-foreground" />
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                     <Folder class="h-4 w-4 text-primary" />
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
                         <span class="font-semibold text-foreground">{{
                             category.name
-                        }}</span>
-                        <span class="text-xs text-muted-foreground"
-                            >({{ category.books_count }} libros)</span
-                        >
+                            }}</span>
+                        <span class="text-xs text-muted-foreground">({{ category.books_count }} libros)</span>
                     </div>
-                    <p
-                        v-if="category.description"
-                        class="truncate text-sm text-muted-foreground"
-                    >
+                    <p v-if="category.description" class="truncate text-sm text-muted-foreground">
                         {{ category.description }}
                     </p>
                 </div>
             </div>
 
             <div class="flex items-center gap-2">
-                <span
-                    class="rounded bg-muted px-2 py-1 text-xs text-foreground"
-                >
+                <span class="rounded bg-muted px-2 py-1 text-xs text-foreground">
                     Orden: {{ category.sort_order }}
                 </span>
 
-                <button
-                    @click.stop="onToggleStatus(category)"
-                    class="flex items-center gap-1 rounded px-2 py-1 text-sm transition-colors"
-                    :class="
-                        category.is_active
-                            ? 'bg-success/10 text-success hover:bg-success/20'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    "
-                >
-                    <component
-                        :is="category.is_active ? Eye : EyeOff"
-                        class="h-3 w-3"
-                    />
-                    {{ category.is_active ? 'Activa' : 'Inactiva' }}
-                </button>
-
-                <button
-                    @click.stop="onViewDetails(category)"
-                    class="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                    title="Ver detalles"
-                >
-                    <Eye class="h-4 w-4" />
-                </button>
-
-                <button
-                    @click.stop="onViewHistory(category)"
-                    class="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                    title="Historial"
-                >
-                    <History class="h-4 w-4" />
-                </button>
-
-                <Link
-                    :href="'/admin/categories/' + category.id + '/edit'"
-                    class="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                    title="Editar"
-                >
-                    <Edit class="h-4 w-4" />
-                </Link>
-
-                <button
-                    @click.stop="onDeleteCategory(category)"
-                    class="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    :disabled="
-                        category.books_count > 0 ||
-                        (category.children && category.children.length > 0)
-                    "
-                    title="Eliminar"
-                >
-                    <Trash2 class="h-4 w-4" />
-                </button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="sm"
+                            class="h-8 w-8 p-0 opacity-50 transition-opacity duration-200 group-hover:opacity-100">
+                            <MoreHorizontal class="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-48">
+                        <DropdownMenuItem @click.stop="onViewDetails(category)" class="cursor-pointer">
+                            <Eye class="mr-2 h-4 w-4 text-blue-500" />
+                            Ver detalles
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click.stop="onViewHistory(category)" class="cursor-pointer">
+                            <History class="mr-2 h-4 w-4 text-purple-500" />
+                            Historial
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <Link :href="`/admin/categories/${category.id}/edit`"
+                                class="flex cursor-pointer items-center text-foreground">
+                            <Edit class="mr-2 h-4 w-4 text-emerald-500" />
+                            Editar
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem @click.stop="onToggleStatus(category)" class="cursor-pointer">
+                            <component :is="category.is_active ? EyeOff : Eye" class="mr-2 h-4 w-4 text-orange-500" />
+                            {{ category.is_active ? 'Desactivar' : 'Activar' }}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem @click.stop="onDeleteCategory(category)"
+                            class="cursor-pointer text-destructive focus:text-destructive"
+                            :disabled="category.books_count > 0 || (category.children && category.children.length > 0)">
+                            <Trash2 class="mr-2 h-4 w-4" />
+                            Eliminar
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
 
         <!-- Zona de drop "after" -->
-        <div
-            class="drop-zone drop-zone-after h-2 bg-transparent transition-colors hover:bg-primary/20"
-            @dragover="onDragOver"
-            @drop="onDropAfter($event, category)"
-        ></div>
+        <div class="drop-zone drop-zone-after h-2 bg-transparent transition-colors hover:bg-primary/20"
+            @dragover="onDragOver" @drop="onDropAfter($event, category)"></div>
 
         <!-- Subcategorías -->
-        <div
-            v-if="category.children && category.children.length > 0"
-            class="children-container"
-        >
-            <CategoryTreeNode
-                v-for="child in category.children"
-                :key="child.id"
-                :category="child"
-                :depth="depth + 1"
+        <div v-if="category.children && category.children.length > 0" class="children-container">
+            <CategoryTreeNode v-for="child in category.children" :key="child.id" :category="child" :depth="depth + 1"
                 @drag-start="
                     (event: DragEvent, childCategory: Category) =>
                         emit('drag-start', event, childCategory)
-                "
-                @drop-before="
+                " @drop-before="
                     (event: DragEvent, childCategory: Category) =>
                         emit('drop-before', event, childCategory)
-                "
-                @drop-after="
+                " @drop-after="
                     (event: DragEvent, childCategory: Category) =>
                         emit('drop-after', event, childCategory)
-                "
-                @drop-inside="
+                " @drop-inside="
                     (event: DragEvent, childCategory: Category) =>
                         emit('drop-inside', event, childCategory)
-                "
-                @toggle-status="
+                " @toggle-status="
                     (childCategory: Category) =>
                         emit('toggle-status', childCategory)
-                "
-                @view-details="
+                " @view-details="
                     (childCategory: Category) =>
                         emit('view-details', childCategory)
-                "
-                @view-history="
+                " @view-history="
                     (childCategory: Category) =>
                         emit('view-history', childCategory)
-                "
-                @delete-category="
+                " @delete-category="
                     (childCategory: Category) =>
                         emit('delete-category', childCategory)
-                "
-            />
+                " />
         </div>
     </div>
 </template>

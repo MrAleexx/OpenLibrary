@@ -4,14 +4,21 @@ import { BookOpen, Clock, Download, Users } from 'lucide-vue-next';
 
 <template>
     <section class="py-20 bg-card/50 relative overflow-hidden">
-        <div class="container mx-auto px-4">
+        <!-- Background decorative elements -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div class="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] bg-secondary/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="container mx-auto px-4 relative z-10">
             <div class="text-center max-w-3xl mx-auto mb-16" data-animate>
-                <h2 class="text-3xl lg:text-4xl font-bold text-foreground mb-4 animate-slide-up">
+                <h2 class="text-3xl lg:text-5xl font-bold text-foreground mb-6 animate-slide-up tracking-tight">
                     Todo lo que necesitas para tu
-                    <span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">éxito
+                    <span
+                        class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent inline-block">éxito
                         académico</span>
                 </h2>
-                <p class="text-lg text-muted-foreground animate-slide-up" style="animation-delay: 0.1s">
+                <p class="text-lg text-muted-foreground animate-slide-up leading-relaxed" style="animation-delay: 0.1s">
                     Una plataforma diseñada específicamente para la comunidad
                     universitaria con herramientas y recursos que facilitan tu
                     aprendizaje e investigación.
@@ -49,30 +56,37 @@ import { BookOpen, Clock, Download, Users } from 'lucide-vue-next';
                         color: 'secondary',
                     },
                 ]" :key="index"
-                    class="group p-8 rounded-2xl bg-background border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 animate-slide-up"
+                    class="group p-8 rounded-2xl bg-background/60 backdrop-blur-md border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-slide-up relative overflow-hidden"
                     :style="{
                         animationDelay: `${index * 0.1 + 0.2}s`,
                     }" data-animate>
-                    <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-12"
-                        :class="{
-                            'bg-primary/10': feature.color === 'primary',
-                            'bg-secondary/10': feature.color === 'secondary',
-                        }">
-                        <component :is="feature.icon" class="w-8 h-8 transition-colors duration-300" :class="{
-                            'text-primary': feature.color === 'primary',
-                            'text-secondary': feature.color === 'secondary',
-                        }" />
-                    </div>
-                    <h3
-                        class="text-xl font-semibold text-foreground mb-3 group-hover:translate-x-1 transition-transform duration-300">
-                        {{ feature.title }}
-                    </h3>
-                    <p
-                        class="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
-                        {{ feature.description }}
-                    </p>
+
+                    <!-- Hover gradient background -->
                     <div
-                        class="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-500 rounded-full">
+                        class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    </div>
+
+                    <div class="relative z-10">
+                        <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-6 shadow-lg"
+                            :class="{
+                                'bg-primary/10 text-primary shadow-primary/10': feature.color === 'primary',
+                                'bg-secondary/10 text-secondary shadow-secondary/10': feature.color === 'secondary',
+                            }">
+                            <component :is="feature.icon" class="w-8 h-8 transition-colors duration-300"
+                                stroke-width="2" />
+                        </div>
+                        <h3
+                            class="text-xl font-bold text-foreground mb-3 group-hover:translate-x-1 transition-transform duration-300">
+                            {{ feature.title }}
+                        </h3>
+                        <p
+                            class="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300 text-sm">
+                            {{ feature.description }}
+                        </p>
+                    </div>
+
+                    <div
+                        class="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-primary to-secondary group-hover:w-full transition-all duration-500 ease-out">
                     </div>
                 </div>
             </div>

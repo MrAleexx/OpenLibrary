@@ -76,9 +76,17 @@ onUnmounted(() => {
             content="Accede a miles de libros digitales y físicos. Tu biblioteca universitaria en línea con recursos académicos, investigación y literatura." />
     </Head>
 
-    <div class="min-h-screen overflow-hidden bg-background">
+    <div class="min-h-screen overflow-x-hidden bg-background">
         <!-- Efectos de fondo animados -->
-        <div class="fixed inset-0 pointer-events-none">
+        <div class="fixed inset-0 pointer-events-none z-0">
+            <!-- Logo de fondo -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-50 transition-transform duration-1000"
+                :style="{
+                    transform: `translate(${(mousePosition.x - 50) * 0.01}px, ${(mousePosition.y - 50) * 0.01}px)`,
+                }">
+                <img src="/images/logo.webp" alt="Background Logo" class="w-[800px] h-[800px] object-contain blur-sm" />
+            </div>
+
             <div class="absolute inset-0 opacity-30 transition-transform duration-1000" :style="{
                 transform: `translate(${(mousePosition.x - 50) * 0.02}px, ${(mousePosition.y - 50) * 0.02}px)`,
             }">
