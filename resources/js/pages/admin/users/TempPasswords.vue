@@ -59,7 +59,7 @@ const tempPasswords = computed(() => {
     const passwordsFromImport = page.props.flash?.temp_passwords || [];
     const passwordFromIndividual = page.props.flash?.temp_password;
 
-    let allPasswords = [...passwordsFromImport];
+    const allPasswords = [...passwordsFromImport];
 
     // AGREGAR CONTRASEÑA INDIVIDUAL SI EXISTE
     if (passwordFromIndividual) {
