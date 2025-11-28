@@ -12,6 +12,8 @@ use App\Http\Controllers\UserReservationController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\DownloadController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ClaimController;
+use App\Http\Controllers\ApprovalPendingController;
 
 // Ruta principal que redirige según autenticación
 Route::get('/', function () {
@@ -58,8 +60,8 @@ Route::get('/usage-policies', function () {
 })->name('usage-policies');
 
 // Rutas de Reclamaciones
-Route::get('/claims/create', [App\Http\Controllers\ClaimController::class, 'create'])->name('claims.create');
-Route::post('/claims', [App\Http\Controllers\ClaimController::class, 'store'])->name('claims.store');
+Route::get('/claims/create', [ClaimController::class, 'create'])->name('claims.create');
+Route::post('/claims', [ClaimController::class, 'store'])->name('claims.store');
 
 // Dashboard - solo para usuarios autenticados y activos
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -67,7 +69,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 // Ruta para usuarios pendientes de aprobación
-Route::get('/approval-pending', [App\Http\Controllers\ApprovalPendingController::class, 'show'])
+Route::get('/approval-pending', [ApprovalPendingController::class, 'show'])
     ->middleware(['auth'])
     ->name('approval.pending');
 
