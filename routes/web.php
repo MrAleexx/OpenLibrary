@@ -191,7 +191,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('/admin/system/migrate', function () {
         try {
-            Artisan::call('migrate');
+            Artisan::call('migrate', ['--force' => true]);
             return response()->json([
                 'status' => 'success',
                 'message' => 'Migraciones ejecutadas correctamente',
