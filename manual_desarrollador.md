@@ -805,8 +805,6 @@ Acceder en: `http://localhost:8000`
         - php artisan view:cache
     ```
 
-````
-
 ---
 
 ## 📝 Convenciones de Código
