@@ -20,7 +20,7 @@ Route::get('/', function () {
     if (auth::check()) {
         return redirect('/dashboard');
     }
-    
+
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
     ]);
@@ -99,35 +99,35 @@ Route::middleware(['auth', 'verified', 'ensure_active'])->group(function () {
     // Ver carrito
     Route::get('/cart', [CartController::class, 'index'])
         ->name('cart.index');
-    
+
     // Agregar libro al carrito
     Route::post('/cart/add/{book}', [CartController::class, 'add'])
         ->name('cart.add');
-    
+
     // Remover libro del carrito
     Route::delete('/cart/remove/{book}', [CartController::class, 'remove'])
         ->name('cart.remove');
-    
+
     // Obtener items del carrito
     Route::get('/cart/items', [CartController::class, 'getItems'])
         ->name('cart.items');
-    
+
     // Proceso de checkout
     Route::post('/cart/checkout', [CartController::class, 'checkout'])
         ->name('cart.checkout');
-    
+
     // Limpiar carrito
     Route::delete('/cart/clear', [CartController::class, 'clear'])
         ->name('cart.clear');
-    
+
     // ============================================
     // RUTAS DE PRÉSTAMOS
     // ============================================
-    
+
     // Ver mis préstamos
     Route::get('/loans', [\App\Http\Controllers\LoanController::class, 'index'])
         ->name('loans.index');
-    
+
     // Solicitar renovación de préstamo (opcional)
     Route::post('/loans/{loan}/renew', [\App\Http\Controllers\LoanController::class, 'requestRenewal'])
         ->name('loans.renew');
@@ -135,34 +135,40 @@ Route::middleware(['auth', 'verified', 'ensure_active'])->group(function () {
     // Marcar como devuelto (Self-return)
     Route::post('/loans/{loan}/return', [\App\Http\Controllers\LoanController::class, 'markAsReturned'])
         ->name('loans.return');
-    
+
     // ============================================
     // RUTAS DE RESERVAS DE LIBROS
     // ============================================
-    
+
     // Ver mis reservas (Panel del usuario)
     Route::get('/reservations', [UserReservationController::class, 'index'])
         ->name('reservations.index');
-    
+
     // Crear nueva reserva
     Route::post('/reservations', [ReservationController::class, 'store'])
         ->name('reservations.store');
-    
+
     // Cancelar reserva
     Route::delete('/reservations/{reservation}', [UserReservationController::class, 'destroy'])
         ->name('reservations.destroy');
-    
+
     // ============================================
     // RUTAS DE DESCARGAS DE LIBROS
     // ============================================
-    
+
     // Registrar y descargar PDF
     Route::post('/downloads', [DownloadController::class, 'download'])
         ->name('downloads.register');
-    
+
     // Stream directo de PDF (alternativo)
     Route::get('/downloads/{book}/stream', [DownloadController::class, 'stream'])
         ->name('downloads.stream');
+
+
+});
+
+// Ruta para ejecutar migraciones (Solo Admin)
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('/clear', function () {
         try {
@@ -182,11 +188,27 @@ Route::middleware(['auth', 'verified', 'ensure_active'])->group(function () {
             ], 500);
         }
     });
+
+    Route::get('/admin/system/migrate', function () {
+        try {
+            Artisan::call('migrate');
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Migraciones ejecutadas correctamente',
+                'output' => Artisan::output()
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
 });
 
 // ============================================
 
 // Incluir rutas del admin
-require_once __DIR__.'/admin.php';
+require_once __DIR__ . '/admin.php';
 
-require_once __DIR__.'/settings.php';
+require_once __DIR__ . '/settings.php';
