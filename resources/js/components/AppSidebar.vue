@@ -46,7 +46,7 @@ import {
     Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
-import AppLogoPng from './AppLogoPng.vue';
+
 
 // Definir la interfaz para el usuario y sus roles
 interface Role {
@@ -227,7 +227,10 @@ const footerNavItems = computed(() => {
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
                         <Link :href="dashboard()">
-                        <AppLogoPng />
+                        <div class="flex items-center gap-2">
+                            <img src="/images/logos/transparente-dark.png" alt="Logo" class="block h-10 w-auto dark:hidden" />
+                            <img src="/images/logos/transparente-white.png" alt="Logo" class="hidden h-10 w-auto dark:block" />
+                        </div>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>

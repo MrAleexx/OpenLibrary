@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLogoPng from '@/components/AppLogoPng.vue';
+
 import { dashboard, login, register } from '@/routes';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ArrowRight, BookText } from 'lucide-vue-next';
@@ -33,7 +33,10 @@ onUnmounted(() => {
         }">
         <div class="container mx-auto px-4 py-4">
             <nav class="flex items-center justify-between">
-                <AppLogoPng height-class="h-18" />
+                <Link href="/" class="flex items-center gap-2">
+                    <img src="/images/logos/transparente-dark.png" alt="Logo" class="block h-16 w-auto dark:hidden" />
+                    <img src="/images/logos/transparente-white.png" alt="Logo" class="hidden h-16 w-auto dark:block" />
+                </Link>
                 <div class="flex items-center gap-3">
                     <Link v-if="page.props.auth.user" :href="dashboard()"
                         class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/20 hover:shadow-primary/30 flex items-center gap-2 hover:gap-3 group">

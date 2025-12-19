@@ -1,0 +1,16 @@
+import{d as m,ak as k,c as p,F as y,q as f,g as n,f as d,k as x,t as g,n as b,u as o,o as t,w as l,i as e,v}from"./app-LMLfy6T_.js";import{c as s}from"./createLucideIcon-DAteRrvL.js";import{e as C,_ as M,a as w}from"./Layout.vue_vue_type_script_setup_true_lang-BW9AhWFO.js";import{_ as I}from"./AppLayout.vue_vue_type_script_setup_true_lang-Dg9vcmqC.js";import"./index-BP8NaMnx.js";import"./utils-DXrZ82kT.js";import"./useForwardExpose-BGfwThGJ.js";import"./index-Cs2OOWYa.js";import"./index-C8XGm11V.js";import"./VisuallyHidden-B-IbK-2_.js";import"./house-JRBk0Cia.js";import"./Collection-CHrqpE2f.js";import"./useArrowNavigation-C6Y-ieo6.js";import"./RovingFocusGroup-BtwHaQnx.js";import"./log-out-B30-6VwK.js";import"./clock-DEh5UtGW.js";import"./_plugin-vue_export-helper-Cs5A_DpR.js";import"./users-DURgrSZU.js";import"./Breadcrumbs.vue_vue_type_script_setup_true_lang-bAsAvttd.js";import"./chevron-right-ti3lw4Bb.js";/**
+ * @license lucide-vue-next v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const $=s("MonitorIcon",[["rect",{width:"20",height:"14",x:"2",y:"3",rx:"2",key:"48i651"}],["line",{x1:"8",x2:"16",y1:"21",y2:"21",key:"1svkeh"}],["line",{x1:"12",x2:"12",y1:"17",y2:"21",key:"vw1qmm"}]]);/**
+ * @license lucide-vue-next v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const A=s("MoonIcon",[["path",{d:"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z",key:"a7tn18"}]]);/**
+ * @license lucide-vue-next v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const z=s("SunIcon",[["circle",{cx:"12",cy:"12",r:"4",key:"4exip2"}],["path",{d:"M12 2v2",key:"tus03m"}],["path",{d:"M12 20v2",key:"1lh1kg"}],["path",{d:"m4.93 4.93 1.41 1.41",key:"149t6j"}],["path",{d:"m17.66 17.66 1.41 1.41",key:"ptbguv"}],["path",{d:"M2 12h2",key:"1t8f8n"}],["path",{d:"M20 12h2",key:"1q8mjw"}],["path",{d:"m6.34 17.66-1.41 1.41",key:"1m8zz5"}],["path",{d:"m19.07 4.93-1.41 1.41",key:"1shlcs"}]]),B={class:"inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800"},S=["onClick"],q={class:"ml-1.5 text-sm"},D=m({__name:"AppearanceTabs",setup(u){const{appearance:a,updateAppearance:i}=k(),c=[{value:"light",Icon:z,label:"Light"},{value:"dark",Icon:A,label:"Dark"},{value:"system",Icon:$,label:"System"}];return(j,F)=>(t(),p("div",B,[(t(),p(y,null,f(c,({value:r,Icon:_,label:h})=>n("button",{key:r,onClick:N=>o(i)(r),class:b(["flex items-center rounded-md px-3.5 py-1.5 transition-colors",o(a)===r?"bg-white shadow-xs dark:bg-neutral-700 dark:text-neutral-100":"text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60"])},[(t(),d(x(_),{class:"-ml-1 h-4 w-4"})),n("span",q,g(h),1)],10,S)),64))]))}}),L={class:"space-y-6"},ne=m({__name:"Appearance",setup(u){const a=[{title:"Configuración de apariencia",href:C().url}];return(i,c)=>(t(),d(I,{breadcrumbs:a},{default:l(()=>[e(o(v),{title:"Configuración de apariencia"}),e(M,null,{default:l(()=>[n("div",L,[e(w,{title:"Configuración de apariencia",description:"Actualiza la configuración de apariencia de tu cuenta"}),e(D)])]),_:1})]),_:1}))}});export{ne as default};

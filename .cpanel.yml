@@ -50,12 +50,15 @@ deployment:
 
     # 7) Sincronizar solo public/ al web root (public_html) y AJUSTAR RUTAS en index.php
     - |
+      # Sincronizar TODO el contenido de public/ a public_html
+      # IMPORTANTE: Excluir index.php y .htaccess porque son específicos del servidor
       /bin/rsync -av --delete \
         --exclude='.git' \
         --exclude='node_modules' \
         --exclude='.env' \
         --exclude='vendor' \
         --exclude='index.php' \
+        --exclude='.htaccess' \
         "$APPDIR/public/" "$DEPLOYPATH/"
 
     # 8) Crear enlace de storage directamente en public_html

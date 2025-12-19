@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppLogoPng from '@/components/AppLogoPng.vue';
+
 import { login, register } from '@/routes';
 import { Link } from '@inertiajs/vue3';
 import { ArrowRight } from 'lucide-vue-next';
@@ -10,7 +10,10 @@ import { ArrowRight } from 'lucide-vue-next';
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div data-animate>
-                    <AppLogoPng class="mb-4" height-class="h-20" />
+                    <div class="mb-4">
+                        <img src="/images/logos/transparente-dark.png" alt="Logo" class="block h-20 w-auto dark:hidden" />
+                        <img src="/images/logos/transparente-white.png" alt="Logo" class="hidden h-20 w-auto dark:block" />
+                    </div>
                     <p class="text-muted-foreground leading-relaxed">
                         Tu biblioteca digital universitaria. Conectando
                         conocimiento, personas y oportunidades de aprendizaje.

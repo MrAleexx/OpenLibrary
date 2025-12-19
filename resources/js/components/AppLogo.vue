@@ -5,8 +5,8 @@
 <template>
     <div class="flex items-center gap-2">
         <!-- Logo para modo claro (texto oscuro) -->
-        <img src="/images/logos/whiteLogo.svg" alt="MIS Library" class="h-15 w-auto block dark:hidden" />
+        <img src="/images/logos/transparente-dark.png" alt="Logo Library" class="h-10 w-auto block dark:hidden" />
         <!-- Logo para modo oscuro (texto blanco) -->
-        <img src="/images/logos/darkLogo.svg" alt="MIS Library" class="h-15 w-auto hidden dark:block" />
+        <img src="/images/logos/transparente-white.png" alt="Logo Library" class="h-10 w-auto hidden dark:block" />
     </div>
 </template>
