@@ -18,7 +18,7 @@
 
 ## 📖 Resumen del Proyecto
 
-   **MIS Library** es un sistema moderno de gestión de bibliotecas desarrollado con Laravel 12 y Vue 3. El sistema permite:
+**MIS Library** es un sistema moderno de gestión de bibliotecas desarrollado con Laravel 12 y Vue 3. El sistema permite:
 
 - ✅ Gestión de catálogo de libros (físicos y digitales)
 - ✅ Sistema de préstamos y devoluciones
@@ -182,98 +182,613 @@ MIS Library/
 
 ### Modelos Principales
 
-#### 1. **User**
+#### 1. **User** (app/Models/User.php)
 
-```php
-// app/Models/User.php
-```
+El modelo `User` es el núcleo del sistema de autenticación y autorización.
 
 **Campos principales:**
 
-- `name`, `last_name`, `email`, `password`
-- `user_type`: tipo de usuario (student, teacher, external, staff, admin)
-- `institutional_id`, `institutional_email`, `microsoft_id`
-- `is_active`: estado de aprobación del usuario
-- `max_concurrent_loans`: límite de préstamos simultáneos
-- `can_download`: permiso para descargar PDFs
-- `downloads_today`, `last_download_reset`: control de límite de descargas
+| Campo                   | Tipo      | Descripción                                  |
+| ----------------------- | --------- | -------------------------------------------- |
+| `name`                  | string    | Nombre del usuario                           |
+| `last_name`             | string    | Apellido del usuario                         |
+| `email`                 | string    | Email principal (único)                      |
+| `password`              | string    | Contraseña encriptada (bcrypt)               |
+| `user_type`             | enum      | student, teacher, external, staff, admin     |
+| `institutional_id`      | string    | ID institucional (matrícula)                 |
+| `institutional_email`   | string    | Email institucional (@institucion.edu)       |
+| `microsoft_id`          | string    | ID de Microsoft (para SSO)                   |
+| `is_active`             | boolean   | Usuario aprobado por admin (default: false)  |
+| `max_concurrent_loans`  | integer   | Límite de préstamos simultáneos (default: 3) |
+| `can_download`          | boolean   | Permiso para descargar PDFs (default: true)  |
+| `downloads_today`       | integer   | Contador de descargas del día                |
+| `last_download_reset`   | date      | Última vez que se reseteó el contador        |
+| `membership_expires_at` | timestamp | Fecha de expiración de membresía (nullable)  |
+| `email_verified_at`     | timestamp | Fecha de verificación de email               |
+| `two_factor_secret`     | text      | Secreto para 2FA (encriptado)                |
+| `two_factor_enabled`    | boolean   | 2FA activado                                 |
 
 **Relaciones:**
 
-- `loans()`: Préstamos del usuario
-- `reservations()`: Reservas del usuario
-- `downloads()`: Descargas realizadas
-- `roles()`: Roles asignados (via Spatie)
+```php
+// Préstamos del usuario
+public function loans(): HasMany
+{
+    return $this->hasMany(BookLoan::class);
+}
+
+// Préstamos activos
+public function activeLoans(): HasMany
+{
+    return $this->loans()->where('status', 'active');
+}
+
+// Reservas del usuario
+public function reservations(): HasMany
+{
+    return $this->hasMany(BookReservation::class);
+}
+
+// Descargas realizadas
+public function downloads(): HasMany
+{
+    return $this->hasMany(UserDownload::class);
+}
+
+// Roles asignados (via Spatie Permission)
+public function roles(): BelongsToMany
+{
+    return $this->belongsToMany(Role::class, 'model_has_roles');
+}
+```
 
 **Métodos importantes:**
 
-- `canBorrowMoreBooks()`: Verifica límite de préstamos
-- `hasReachedDownloadLimit()`: Verifica límite de descargas diarias
-- `hasMembershipExpired()`: Verifica vigencia de membresía
+```php
+/**
+ * Verifica si el usuario puede solicitar más préstamos
+ */
+public function canBorrowMoreBooks(): bool
+{
+    $activeLoans = $this->activeLoans()->count();
+    return $activeLoans < $this->max_concurrent_loans;
+}
 
-#### 2. **Book**
+/**
+ * Verifica si alcanzó el límite diario de descargas
+ */
+public function hasReachedDownloadLimit(): bool
+{
+    // Resetear contador si es un nuevo día
+    if ($this->last_download_reset?->isToday() === false) {
+        $this->update([
+            'downloads_today' => 0,
+            'last_download_reset' => now(),
+        ]);
+    }
+
+    return $this->downloads_today >= 5; // Límite: 5 descargas diarias
+}
+
+/**
+ * Verifica si la membresía ha expirado
+ */
+public function hasMembershipExpired(): bool
+{
+    return $this->membership_expires_at
+        && $this->membership_expires_at->isPast();
+}
+
+/**
+ * Incrementa contador de descargas
+ */
+public function incrementDownloadCount(): void
+{
+    $this->increment('downloads_today');
+}
+
+/**
+ * Obtiene nombre completo del usuario
+ */
+public function getFullNameAttribute(): string
+{
+    return "{$this->name} {$this->last_name}";
+}
+```
+
+**Scopes útiles:**
 
 ```php
-// app/Models/Book.php
+// Solo usuarios activos
+public function scopeActive($query)
+{
+    return $query->where('is_active', true);
+}
+
+// Solo usuarios inactivos (pendientes de aprobación)
+public function scopeInactive($query)
+{
+    return $query->where('is_active', false);
+}
+
+// Filtrar por tipo de usuario
+public function scopeOfType($query, string $type)
+{
+    return $query->where('user_type', $type);
+}
 ```
+
+**Ejemplo de uso:**
+
+```php
+// Crear usuario con validaciones
+$user = User::create([
+    'name' => 'Juan',
+    'last_name' => 'Pérez',
+    'email' => 'juan@example.com',
+    'password' => bcrypt('password'),
+    'user_type' => 'student',
+    'institutional_id' => '2024001',
+    'max_concurrent_loans' => 3,
+]);
+
+// Asignar rol
+$user->assignRole('user');
+
+// Verificar permisos
+if ($user->canBorrowMoreBooks()) {
+    // Permitir préstamo
+}
+
+// Obtener préstamos activos con libros
+$activeLoans = $user->activeLoans()->with('physicalCopy.book')->get();
+```
+
+#### 2. **Book** (app/Models/Book.php)
+
+El modelo `Book` representa el catálogo de libros (físicos y/o digitales).
 
 **Campos principales:**
 
-- `title`, `isbn`, `publication_year`, `pages`
-- `book_type`: tipo (physical, digital, both)
-- `cover_image`, `pdf_file`: rutas de archivos
-- `total_physical_copies`, `available_physical_copies`
-- `downloadable`, `featured`, `is_active`
-- `publisher_id`, `language_code`
+| Campo                       | Tipo    | Descripción                               |
+| --------------------------- | ------- | ----------------------------------------- |
+| `title`                     | string  | Título del libro                          |
+| `isbn`                      | string  | ISBN único (único en BD)                  |
+| `publication_year`          | year    | Año de publicación                        |
+| `pages`                     | integer | Número de páginas                         |
+| `book_type`                 | enum    | **physical**, **digital**, **both**       |
+| `cover_image`               | string  | Ruta de la portada (storage/books/covers) |
+| `pdf_file`                  | string  | Ruta del PDF (storage/books/pdfs)         |
+| `total_physical_copies`     | integer | Total copias físicas disponibles          |
+| `available_physical_copies` | integer | Copias actualmente disponibles            |
+| `downloadable`              | boolean | Permite descarga del PDF                  |
+| `featured`                  | boolean | Destacado en portada                      |
+| `is_active`                 | boolean | Visible en catálogo público               |
+| `publisher_id`              | bigint  | FK a publishers                           |
+| `language_code`             | string  | FK a languages (codigo ISO)               |
+| `views_count`               | integer | Contador de vistas                        |
+| `downloads_count`           | integer | Contador de descargas                     |
+| `description`               | text    | Descripción/sinopsis                      |
 
 **Relaciones:**
 
-- `publisher()`: Editorial del libro
-- `language()`: Idioma del libro
-- `categories()`: Categorías (many-to-many)
-- `contributors()`: Autores/editores
-- `physicalCopies()`: Copias físicas
-- `loans()`: Préstamos (through PhysicalCopy)
-- `reservations()`: Reservas
-- `downloads()`: Descargas
+```php
+// Editorial del libro
+public function publisher(): BelongsTo
+{
+    return $this->belongsTo(Publisher::class);
+}
+
+// Idioma del libro
+public function language(): BelongsTo
+{
+    return $this->belongsTo(Language::class, 'language_code', 'code');
+}
+
+// Categorías (many-to-many)
+public function categories(): BelongsToMany
+{
+    return $this->belongsToMany(Category::class, 'book_category')
+                ->withTimestamps();
+}
+
+// Autores, editores, ilustradores, etc.
+public function contributors(): HasMany
+{
+    return $this->hasMany(BookContributor::class);
+}
+
+// Solo autores
+public function authors(): HasMany
+{
+    return $this->contributors()->where('role', 'author');
+}
+
+// Copias físicas individuales
+public function physicalCopies(): HasMany
+{
+    return $this->hasMany(PhysicalCopy::class);
+}
+
+// Copias disponibles para préstamo
+public function availablePhysicalCopies(): HasMany
+{
+    return $this->physicalCopies()->where('status', 'available');
+}
+
+// Préstamos (through PhysicalCopy)
+public function loans(): HasManyThrough
+{
+    return $this->hasManyThrough(
+        BookLoan::class,
+        PhysicalCopy::class,
+        'book_id',
+        'physical_copy_id'
+    );
+}
+
+// Reservas activas
+public function reservations(): HasMany
+{
+    return $this->hasMany(BookReservation::class);
+}
+
+// Reservas pendientes
+public function pendingReservations(): HasMany
+{
+    return $this->reservations()
+                ->whereIn('status', ['pending', 'ready']);
+}
+
+// Registro de descargas
+public function downloads(): HasMany
+{
+    return $this->hasMany(UserDownload::class);
+}
+
+// Detalles adicionales
+public function details(): HasOne
+{
+    return $this->hasOne(BookDetail::class);
+}
+```
 
 **Métodos importantes:**
 
-- `isAvailableForLoan()`: Verifica disponibilidad
-- `getAvailablePhysicalCopies()`: Cuenta copias disponibles
-- `incrementViews()`, `incrementDownloads()`: Actualiza estadísticas
+```php
+/**
+ * Verifica si el libro está disponible para préstamo
+ */
+public function isAvailableForLoan(): bool
+{
+    // Debe ser libro físico o ambos
+    if ($this->book_type === 'digital') {
+        return false;
+    }
 
-#### 3. **BookLoan**
+    // Debe estar activo
+    if (!$this->is_active) {
+        return false;
+    }
+
+    // Debe tener copias disponibles
+    return $this->available_physical_copies > 0;
+}
+
+/**
+ * Verifica si el libro es descargable
+ */
+public function isDownloadable(): bool
+{
+    return $this->book_type !== 'physical'
+        && $this->downloadable
+        && $this->is_active
+        && $this->pdf_file;
+}
+
+/**
+ * Obtiene número de copias disponibles actualizadas
+ */
+public function getAvailablePhysicalCopies(): int
+{
+    return $this->availablePhysicalCopies()->count();
+}
+
+/**
+ * Incrementa contador de vistas
+ */
+public function incrementViews(): void
+{
+    $this->increment('views_count');
+}
+
+/**
+ * Incrementa contador de descargas
+ */
+public function incrementDownloads(): void
+{
+    $this->increment('downloads_count');
+}
+
+/**
+ * Obtiene nombres de autores
+ */
+public function getAuthorsNamesAttribute(): string
+{
+    return $this->authors->pluck('name')->join(', ');
+}
+
+/**
+ * Obtiene URL de portada
+ */
+public function getCoverUrlAttribute(): ?string
+{
+    return $this->cover_image
+        ? Storage::url($this->cover_image)
+        : null;
+}
+```
+
+**Scopes útiles:**
+
+```php
+// Solo libros activos
+public function scopeActive($query)
+{
+    return $query->where('is_active', true);
+}
+
+// Solo libros destacados
+public function scopeFeatured($query)
+{
+    return $query->where('featured', true)->where('is_active', true);
+}
+
+// Filtrar por tipo de libro
+public function scopeOfType($query, string $type)
+{
+    return $query->where('book_type', $type);
+}
+
+// Búsqueda por título, ISBN o autor
+public function scopeSearch($query, string $search)
+{
+    return $query->where(function ($q) use ($search) {
+        $q->where('title', 'like', "%{$search}%")
+          ->orWhere('isbn', 'like', "%{$search}%")
+          ->orWhereHas('contributors', function ($q) use ($search) {
+              $q->where('name', 'like', "%{$search}%");
+          });
+    });
+}
+
+// Filtrar por categoría
+public function scopeInCategory($query, int $categoryId)
+{
+    return $query->whereHas('categories', function ($q) use ($categoryId) {
+        $q->where('categories.id', $categoryId);
+    });
+}
+
+// Solo descargables
+public function scopeDownloadable($query)
+{
+    return $query->where('downloadable', true)
+                 ->whereIn('book_type', ['digital', 'both'])
+                 ->whereNotNull('pdf_file');
+}
+
+// Solo con copias disponibles
+public function scopeAvailable($query)
+{
+    return $query->where('available_physical_copies', '>', 0);
+}
+```
+
+**Ejemplo de uso:**
+
+```php
+// Crear un libro completo
+$book = Book::create([
+    'title' => 'Clean Code',
+    'isbn' => '978-0132350884',
+    'publication_year' => 2008,
+    'pages' => 464,
+    'book_type' => 'both', // físico y digital
+    'publisher_id' => 1,
+    'language_code' => 'en',
+    'description' => 'A handbook of agile software craftsmanship',
+    'cover_image' => 'books/covers/clean-code.jpg',
+    'pdf_file' => 'books/pdfs/clean-code.pdf',
+    'total_physical_copies' => 5,
+    'available_physical_copies' => 5,
+    'downloadable' => true,
+    'featured' => true,
+    'is_active' => true,
+]);
+
+// Agregar autor
+$book->contributors()->create([
+    'name' => 'Robert C. Martin',
+    'role' => 'author',
+]);
+
+// Agregar categorías
+$book->categories()->attach([1, 5, 8]); // Programming, Software, Clean Code
+
+// Crear copias físicas
+for ($i = 1; $i <= 5; $i++) {
+    $book->physicalCopies()->create([
+        'barcode' => "CLEAN-CODE-{$i}",
+        'status' => 'available',
+    ]);
+}
+
+// Búsquedas complejas
+$books = Book::active()
+    ->featured()
+    ->with(['publisher', 'authors', 'categories'])
+    ->search('clean')
+    ->paginate(20);
+
+// Filtrar por categoría de programación
+$programmingBooks = Book::active()
+    ->inCategory(1) // ID categoría Programming
+    ->downloadable()
+    ->get();
+
+// Verificar disponibilidad
+if ($book->isAvailableForLoan()) {
+    // Mostrar botón "Agregar al carrito"
+} else {
+    // Mostrar botón "Reservar"
+}
+```
+
+#### 3. **BookLoan** (app/Models/BookLoan.php)
+
+Representa un préstamo de libro físico.
 
 **Estados posibles:**
 
-- `pending`: Solicitud pendiente de aprobación
-- `active`: Préstamo activo
-- `returned_pending`: Devuelto, pendiente de confirmación
-- `returned`: Devuelto confirmado
-- `overdue`: Vencido
-- `cancelled`: Cancelado
+| Estado             | Descripción                                  |
+| ------------------ | -------------------------------------------- |
+| `pending`          | Solicitud pendiente de aprobación            |
+| `active`           | Préstamo activo (usuario tiene el libro)     |
+| `returned_pending` | Usuario marcó como devuelto, falta confirmar |
+| `returned`         | Devuelto y confirmado                        |
+| `overdue`          | Vencido (pasó fecha de devolución)           |
+| `cancelled`        | Cancelado por admin o usuario                |
 
-#### 4. **BookReservation**
+**Campos principales:**
+
+| Campo              | Tipo      | Descripción                      |
+| ------------------ | --------- | -------------------------------- |
+| `user_id`          | bigint    | FK a users                       |
+| `physical_copy_id` | bigint    | FK a physical_copies             |
+| `status`           | enum      | Estado del préstamo              |
+| `borrowed_at`      | timestamp | Fecha de aprobación del préstamo |
+| `due_date`         | date      | Fecha límite de devolución       |
+| `returned_at`      | timestamp | Fecha de devolución confirmada   |
+| `notes`            | text      | Notas del bibliotecario          |
+
+**Relaciones:**
+
+```php
+public function user(): BelongsTo
+{
+    return $this->belongsTo(User::class);
+}
+
+public function physicalCopy(): BelongsTo
+{
+    return $this->belongsTo(PhysicalCopy::class);
+}
+
+// Libro asociado (through physical copy)
+public function book(): HasOneThrough
+{
+    return $this->hasOneThrough(
+        Book::class,
+        PhysicalCopy::class,
+        'id',
+        'id',
+        'physical_copy_id',
+        'book_id'
+    );
+}
+```
+
+**Scopes útiles:**
+
+```php
+public function scopeActive($query)
+{
+    return $query->where('status', 'active');
+}
+
+public function scopeOverdue($query)
+{
+    return $query->where('status', 'active')
+                 ->where('due_date', '<', now());
+}
+
+public function scopePending($query)
+{
+    return $query->where('status', 'pending');
+}
+```
+
+#### 4. **BookReservation** (app/Models/BookReservation.php)
+
+Representa una reserva de libro no disponible.
 
 **Estados posibles:**
 
-- `pending`: Reserva pendiente
-- `ready`: Libro listo para recoger
-- `picked_up`: Libro recogido
-- `cancelled`: Reserva cancelada
-- `expired`: Reserva expirada
+| Estado      | Descripción                            |
+| ----------- | -------------------------------------- |
+| `pending`   | Reserva en espera de disponibilidad    |
+| `ready`     | Libro disponible, listo para recoger   |
+| `picked_up` | Usuario recogió el libro               |
+| `cancelled` | Reserva cancelada                      |
+| `expired`   | Expiró el tiempo para recoger el libro |
+
+**Campos principales:**
+
+| Campo          | Tipo      | Descripción                     |
+| -------------- | --------- | ------------------------------- |
+| `user_id`      | bigint    | FK a users                      |
+| `book_id`      | bigint    | FK a books                      |
+| `status`       | enum      | Estado de la reserva            |
+| `reserved_at`  | timestamp | Fecha de creación de la reserva |
+| `ready_at`     | timestamp | Fecha cuando estuvo listo       |
+| `expires_at`   | timestamp | Fecha de expiración             |
+| `picked_up_at` | timestamp | Fecha de retiro                 |
+
+#### 5. **PhysicalCopy** (app/Models/PhysicalCopy.php)
+
+Representa una copia física individual de un libro.
+
+**Estados posibles:**
+
+| Estado        | Descripción                 |
+| ------------- | --------------------------- |
+| `available`   | Disponible para préstamo    |
+| `on_loan`     | En préstamo activo          |
+| `reserved`    | Reservada para un usuario   |
+| `maintenance` | En mantenimiento/reparación |
+| `lost`        | Extraviada o perdida        |
+
+**Campos principales:**
+
+```php
+public function book(): BelongsTo
+{
+    return $this->belongsTo(Book::class);
+}
+
+public function loans(): HasMany
+{
+    return $this->hasMany(BookLoan::class);
+}
+
+public function currentLoan(): HasOne
+{
+    return $this->hasOne(BookLoan::class)
+                ->where('status', 'active')
+                ->latest();
+}
+```
 
 #### Otros Modelos
 
-- **Category**: Categorías jerárquicas (con parent/children)
-- **Publisher**: Editoriales
-- **Language**: Idiomas
-- **PhysicalCopy**: Copias físicas individuales
-- **BookContributor**: Autores, editores, ilustradores
-- **BookDetail**: Detalles adicionales del libro
-- **UserDownload**: Registro de descargas
-- **Claim**: Reclamos/contacto
+- **Category** (`app/Models/Category.php`): Categorías jerárquicas con parent/children (self-referencing)
+- **Publisher** (`app/Models/Publisher.php`): Editoriales
+- **Language** (`app/Models/Language.php`): Idiomas (ISO codes)
+- **BookContributor** (`app/Models/BookContributor.php`): Autores, editores, ilustradores
+- **BookDetail** (`app/Models/BookDetail.php`): Detalles adicionales del libro
+- **UserDownload** (`app/Models/UserDownload.php`): Registro de descargas
+- **Claim** (`app/Models/Claim.php`): Reclamos y formulario de contacto
 
 ### Controladores Principales
 
@@ -337,9 +852,230 @@ MIS Library/
 
 - Todas las rutas administrativas con prefijo `/admin`
 
-#### settings.php
-
 - Configuración de perfil, contraseña, 2FA
+
+---
+
+## 🌐 APIs y Endpoints Detallados
+
+### Endpoints Públicos
+
+#### GET `/books` - Catálogo
+
+**Query Params**:
+
+```text
+?search=clean&category=1&type=both&downloadable=true&page=2
+```
+
+**Ejemplo de Implementación**:
+
+```php
+// BookController.php
+public function index(Request $request)
+{
+    $books = Book::with(['publisher', 'authors', 'categories'])
+        ->active()
+        ->when($request->search, fn($q, $search) => $q->search($search))
+        ->when($request->category, fn($q, $cat) => $q->inCategory($cat))
+        ->when($request->type, fn($q, $type) => $q->ofType($type))
+        ->when($request->downloadable, fn($q) => $q->downloadable())
+        ->paginate(20)
+        ->withQueryString();
+
+    return Inertia::render('Books/Index', [
+        'books' => $books,
+        'categories' => Category::active()->get(),
+        'filters' => $request->only(['search', 'category', 'type']),
+    ]);
+}
+```
+
+### Endpoints Autenticados
+
+#### POST `/cart` - Agregar al Carrito
+
+**Request**:
+
+```json
+{
+    "book_id": 1
+}
+```
+
+**Validaciones en Controlador**:
+
+```php
+public function store(Request $request)
+{
+    $request->validate(['book_id' => 'required|exists:books,id']);
+
+    $user = auth()->user();
+    $book = Book::findOrFail($request->book_id);
+
+    // Validar límite de préstamos
+    if (!$user->canBorrowMoreBooks()) {
+        return back()->withErrors([
+            'book_id' => 'Alcanzaste el límite de préstamos'
+        ]);
+    }
+
+    // Validar disponibilidad
+    if (!$book->isAvailableForLoan()) {
+        return back()->withErrors([
+            'book_id' => 'Libro no disponible'
+        ]);
+    }
+
+    // Agregar al carrito (sesión)
+    $cart = session()->get('cart', []);
+    $cart[] = $book->id;
+    session()->put('cart', array_unique($cart));
+
+    return back()->with('success', 'Libro agregado');
+}
+```
+
+#### GET `/downloads/{book}` - Descargar PDF
+
+**Validaciones y Lógica**:
+
+```php
+public function download(Book $book)
+{
+    $user = auth()->user();
+
+    // 1. Verificar permiso
+    abort_if(!$user->can_download, 403, 'Sin permiso para descargar');
+
+    // 2. Verificar límite diario
+    abort_if(
+        $user->hasReachedDownloadLimit(),
+        403,
+        'Límite diario alcanzado (5/5)'
+    );
+
+    // 3. Verificar que el libro sea descargable
+    abort_if(
+        !$book->isDownloadable(),
+        404,
+        'Libro no disponible para descarga'
+    );
+
+    // 4. Registrar descarga
+    UserDownload::create([
+        'user_id' => $user->id,
+        'book_id' => $book->id,
+    ]);
+
+    // 5. Actualizar contadores
+    $user->incrementDownloadCount();
+    $book->incrementDownloads();
+
+    // 6. Servir archivo
+    return Storage::download($book->pdf_file, "{$book->title}.pdf");
+}
+```
+
+### Endpoints Administrativos
+
+#### POST `/admin/loans/{id}/approve` - Aprobar Préstamo
+
+```php
+public function approve(BookLoan $loan, Request $request)
+{
+    $request->validate([
+        'due_date' => 'nullable|date|after:today',
+    ]);
+
+    // Validar estado
+    abort_if(
+        $loan->status !== 'pending',
+        422,
+        'Solo se pueden aprobar préstamos pendientes'
+    );
+
+    // Aprobar
+    $loan->update([
+        'status' => 'active',
+        'borrowed_at' => now(),
+        'due_date' => $request->due_date ?? now()->addDays(14),
+    ]);
+
+    // Actualizar estado de copia física
+    $loan->physicalCopy->update(['status' => 'on_loan']);
+
+    // Notificar usuario
+    $loan->user->notify(new LoanApprovedNotification($loan));
+
+    return back()->with('success', 'Préstamo aprobado');
+}
+```
+
+#### POST `/admin/users/import` - Importación Masiva
+
+**Formato Excel Esperado**:
+
+| name | last_name | email    | user_type | institutional_id |
+| ---- | --------- | -------- | --------- | ---------------- |
+| Juan | Pérez     | juan@... | student   | 2024001          |
+
+**Implementación**:
+
+```php
+public function store(Request $request)
+{
+    $request->validate([
+        'file' => 'required|file|mimes:xlsx,xls,csv',
+    ]);
+
+    $import = new UsersImport();
+    Excel::import($import, $request->file('file'));
+
+    return back()->with([
+        'success' => "{$import->getRowCount()} usuarios importados",
+        'passwords' => $import->getTemporaryPasswords(),
+    ]);
+}
+```
+
+**UsersImport Class**:
+
+```php
+class UsersImport implements ToModel, WithHeadingRow
+{
+    private $passwords = [];
+
+    public function model(array $row)
+    {
+        $password = Str::random(12);
+
+        $user = User::create([
+            'name' => $row['name'],
+            'last_name' => $row['last_name'],
+            'email' => $row['email'],
+            'password' => bcrypt($password),
+            'user_type' => $row['user_type'],
+            'institutional_id' => $row['institutional_id'],
+            'is_active' => true,
+        ]);
+
+        $user->assignRole('user');
+
+        $this->passwords[] = [
+            'email' => $user->email,
+            'password' => $password,
+        ];
+
+        return $user;
+    }
+
+    public function getTemporaryPasswords()
+    {
+        return $this->passwords;
+    }
+}
+```
 
 ---
 
@@ -397,29 +1133,428 @@ MIS Library/
 
 ### Composables
 
+Los composables son funciones reutilizables que encapsulan lógica reactiva using Vue's Composition API.
+
 #### [useCart.ts](resources/js/composables/useCart.ts)
 
-Gestiona el carrito de préstamos con persistencia en `localStorage`.
+Gestiona el carrito de préstamos con persistencia en `localStorage` y sincronización con el servidor.
 
-**Funciones principales**:
+**Interfaz completa**:
 
-- `addToCart(book)`: Agregar libro al carrito
-- `removeFromCart(bookId)`: Remover libro
-- `clearCart()`: Limpiar carrito
-- `syncWithServer()`: Sincronizar con servidor
-- `checkout()`: Procesar checkout
+```typescript
+export interface CartItem {
+    id: number;
+    title: string;
+    cover_url: string;
+    authors_names: string;
+}
+
+export function useCart() {
+    const cart = ref<CartItem[]>([]);
+    const isLoading = ref(false);
+
+    // Cargar carrito desde localStorage al iniciar
+    onMounted(() => {
+        loadCart();
+    });
+
+    // Cargar desde localStorage
+    const loadCart = () => {
+        const stored = localStorage.getItem('cart');
+        if (stored) {
+            cart.value = JSON.parse(stored);
+        }
+    };
+
+    // Guardar en localStorage
+    const saveCart = () => {
+        localStorage.setItem('cart', JSON.stringify(cart.value));
+    };
+
+    // Agregar libro
+    const addToCart = async (book: CartItem) => {
+        // Evitar duplicados
+        if (cart.value.some((item) => item.id === book.id)) {
+            return { success: false, message: 'Libro ya está en el carrito' };
+        }
+
+        cart.value.push(book);
+        saveCart();
+
+        // Sincronizar con servidor via Inertia
+        await router.post(
+            '/cart',
+            { book_id: book.id },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    console.log('Libro agregado al servidor');
+                },
+                onError: (errors) => {
+                    // Revertir si falla
+                    removeFromCart(book.id);
+                },
+            },
+        );
+
+        return { success: true, message: 'Libro agregado al carrito' };
+    };
+
+    // Remover libro
+    const removeFromCart = (bookId: number) => {
+        cart.value = cart.value.filter((item) => item.id !== bookId);
+        saveCart();
+
+        // Sincronizar con servidor
+        router.delete(`/cart/${bookId}`, {
+            preserveScroll: true,
+        });
+    };
+
+    // Limpiar carrito
+    const clearCart = () => {
+        cart.value = [];
+        localStorage.removeItem('cart');
+    };
+
+    // Checkout (crear préstamos)
+    const checkout = async () => {
+        isLoading.value = true;
+
+        await router.post(
+            '/cart/checkout',
+            {},
+            {
+                onSuccess: () => {
+                    clearCart();
+                },
+                onFinish: () => {
+                    isLoading.value = false;
+                },
+            },
+        );
+    };
+
+    return {
+        cart: computed(() => cart.value),
+        cartCount: computed(() => cart.value.length),
+        isLoading: computed(() => isLoading.value),
+        addToCart,
+        removeFromCart,
+        clearCart,
+        checkout,
+    };
+}
+```
+
+**Ejemplo de uso en componente**:
+
+```vue
+<script setup lang="ts">
+import { useCart } from '@/composables/useCart';
+
+const { cart, cartCount, addToCart, removeFromCart, checkout } = useCart();
+
+const handleAddToCart = async (book) => {
+    const result = await addToCart(book);
+    if (result.success) {
+        toast.success(result.message);
+    }
+};
+</script>
+
+<template>
+    <div>
+        <Badge>{{ cartCount }}</Badge>
+        <Button @click="checkout" :disabled="cartCount === 0">
+            Procesar Préstamo
+        </Button>
+    </div>
+</template>
+```
 
 #### [useAppearance.ts](resources/js/composables/useAppearance.ts)
 
-Gestiona temas (claro/oscuro) y preferencias de apariencia.
+Gestiona temas (claro/oscuro) y preferencias de apariencia con persistencia.
+
+**Implementación**:
+
+```typescript
+export function useAppearance() {
+    const theme = ref<'light' | 'dark' | 'system'>('system');
+    const effectiveTheme = ref<'light' | 'dark'>('light');
+
+    // Cargar preferencia guardada
+    onMounted(() => {
+        const stored = localStorage.getItem('theme');
+        if (stored) {
+            theme.value = stored as 'light' | 'dark' | 'system';
+        }
+        applyTheme();
+
+        // Escuchar cambios del sistema
+        if (window.matchMedia) {
+            window
+                .matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', applyTheme);
+        }
+    });
+
+    // Aplicar tema al DOM
+    const applyTheme = () => {
+        let resolvedTheme = theme.value;
+
+        if (theme.value === 'system') {
+            resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)')
+                .matches
+                ? 'dark'
+                : 'light';
+        }
+
+        effectiveTheme.value = resolvedTheme as 'light' | 'dark';
+
+        // Actualizar clase en <html>
+        if (resolvedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    };
+
+    // Cambiar tema
+    const setTheme = (newTheme: 'light' | 'dark' | 'system') => {
+        theme.value = newTheme;
+        localStorage.setItem('theme', newTheme);
+        applyTheme();
+    };
+
+    // Toggle light/dark
+    const toggleTheme = () => {
+        setTheme(effectiveTheme.value === 'dark' ? 'light' : 'dark');
+    };
+
+    return {
+        theme: computed(() => theme.value),
+        effectiveTheme: computed(() => effectiveTheme.value),
+        isDark: computed(() => effectiveTheme.value === 'dark'),
+        setTheme,
+        toggleTheme,
+    };
+}
+```
+
+**Ejemplo de uso**:
+
+```vue
+<script setup lang="ts">
+import { useAppearance } from '@/composables/useAppearance';
+import { Moon, Sun } from 'lucide-vue-next';
+
+const { isDark, toggleTheme } = useAppearance();
+</script>
+
+<template>
+    <Button @click="toggleTheme" variant="ghost" size="icon">
+        <Sun v-if="isDark" class="h-5 w-5" />
+        <Moon v-else class="h-5 w-5" />
+    </Button>
+</template>
+```
 
 #### [useLoanPolling.ts](resources/js/composables/useLoanPolling.ts)
 
 Polling para actualizar estado de préstamos en tiempo real.
 
+**Implementación**:
+
+```typescript
+export function useLoanPolling(intervalMs: number = 30000) {
+    const loans = ref([]);
+    const isPolling = ref(false);
+    let intervalId: number | null = null;
+
+    // Iniciar polling
+    const startPolling = () => {
+        if (isPolling.value) return;
+
+        isPolling.value = true;
+        fetchLoans();
+
+        intervalId = setInterval(() => {
+            fetchLoans();
+        }, intervalMs);
+    };
+
+    // Detener polling
+    const stopPolling = () => {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+        isPolling.value = false;
+    };
+
+    // Obtener préstamos
+    const fetchLoans = async () => {
+        try {
+            const response = await axios.get('/api/loans');
+            loans.value = response.data;
+        } catch (error) {
+            console.error('Error fetching loans:', error);
+        }
+    };
+
+    // Limpiar al desmontar
+    onUnmounted(() => {
+        stopPolling();
+    });
+
+    return {
+        loans: computed(() => loans.value),
+        isPolling: computed(() => isPolling.value),
+        startPolling,
+        stopPolling,
+    };
+}
+```
+
+**Ejemplo de uso**:
+
+```vue
+<script setup lang="ts">
+import { useLoanPolling } from '@/composables/useLoanPolling';
+
+const { loans, startPolling, stopPolling } = useLoanPolling(30000); // 30 segundos
+
+onMounted(() => {
+    startPolling();
+});
+</script>
+
+<template>
+    <div v-for="loan in loans" :key="loan.id">
+        <LoanCard :loan="loan" />
+    </div>
+</template>
+```
+
 #### [useTwoFactorAuth.ts](resources/js/composables/useTwoFactorAuth.ts)
 
-Gestiona autenticación de dos factores (2FA).
+Gestiona autenticación de dos factores (2FA) con generación de QR y verificación.
+
+**Implementación**:
+
+```typescript
+export function useTwoFactorAuth() {
+    const qrCode = ref<string | null>(null);
+    const recoveryCodes = ref<string[]>([]);
+    const isEnabled = ref(false);
+    const isEnabling = ref(false);
+
+    // Habilitar 2FA
+    const enable2FA = async () => {
+        isEnabling.value = true;
+
+        try {
+            const response = await router.post(
+                '/user/two-factor-authentication',
+                {},
+                {
+                    preserveScroll: true,
+                    onSuccess: async () => {
+                        // Obtener QR code
+                        const qrResponse = await axios.get(
+                            '/user/two-factor-qr-code',
+                        );
+                        qrCode.value = qrResponse.data.svg;
+
+                        // Obtener recovery codes
+                        const codesResponse = await axios.get(
+                            '/user/two-factor-recovery-codes',
+                        );
+                        recoveryCodes.value = codesResponse.data;
+
+                        isEnabled.value = true;
+                    },
+                },
+            );
+        } finally {
+            isEnabling.value = false;
+        }
+    };
+
+    // Deshabilitar 2FA
+    const disable2FA = async () => {
+        await router.delete('/user/two-factor-authentication', {
+            preserveScroll: true,
+            onSuccess: () => {
+                isEnabled.value = false;
+                qrCode.value = null;
+                recoveryCodes.value = [];
+            },
+        });
+    };
+
+    // Confirmar 2FA con código
+    const confirm2FA = async (code: string) => {
+        return await router.post(
+            '/user/confirmed-two-factor-authentication',
+            {
+                code,
+            },
+            {
+                preserveScroll: true,
+            },
+        );
+    };
+
+    // Regenerar recovery codes
+    const regenerateRecoveryCodes = async () => {
+        const response = await axios.post('/user/two-factor-recovery-codes');
+        recoveryCodes.value = response.data;
+    };
+
+    return {
+        qrCode: computed(() => qrCode.value),
+        recoveryCodes: computed(() => recoveryCodes.value),
+        isEnabled: computed(() => isEnabled.value),
+        isEnabling: computed(() => isEnabling.value),
+        enable2FA,
+        disable2FA,
+        confirm2FA,
+        regenerateRecoveryCodes,
+    };
+}
+```
+
+**Ejemplo de uso**:
+
+```vue
+<script setup lang="ts">
+import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
+
+const { qrCode, recoveryCodes, isEnabled, enable2FA, confirm2FA } =
+    useTwoFactorAuth();
+
+const code = ref('');
+
+const handleConfirm = async () => {
+    await confirm2FA(code.value);
+};
+</script>
+
+<template>
+    <div v-if="!isEnabled">
+        <Button @click="enable2FA">Habilitar 2FA</Button>
+    </div>
+
+    <div v-else>
+        <div v-html="qrCode"></div>
+        <Input v-model="code" placeholder="Código de 6 dígitos" />
+        <Button @click="handleConfirm">Confirmar</Button>
+    </div>
+</template>
+```
 
 ### TypeScript Types
 
@@ -855,7 +1990,7 @@ class BookController extends Controller
         ]);
     }
 }
-````
+```
 
 ### Frontend (Vue/TypeScript)
 
