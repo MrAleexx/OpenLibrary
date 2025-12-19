@@ -70,8 +70,8 @@ import { BookOpen, LoaderCircle, Shield, Users } from 'lucide-vue-next';
         <div class="flex items-center justify-center overflow-y-auto bg-background p-8">
             <div class="w-full max-w-md">
                 <div class="mb-8 flex items-center justify-center gap-2 lg:hidden">
-                    <img src="/images/logos/logo-Sinfondo-Dark.png" alt="Logo" class="block h-20 w-auto dark:hidden" />
-                    <img src="/images/logos/Logo-Sinfondo-white.png" alt="Logo" class="hidden h-20 w-auto dark:block" />
+                    <img src="/images/logos/transparente-dark.png" alt="Logo" class="block h-20 w-auto dark:hidden" />
+                    <img src="/images/logos/transparente-white.png" alt="Logo" class="hidden h-20 w-auto dark:block" />
                 </div>
                 <div class="mb-8">
                     <h2 class="mb-2 text-3xl font-bold text-foreground">

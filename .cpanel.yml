@@ -55,7 +55,6 @@ deployment:
         --exclude='node_modules' \
         --exclude='.env' \
         --exclude='vendor' \
-        --exclude='build' \
         --exclude='index.php' \
         "$APPDIR/public/" "$DEPLOYPATH/"
 

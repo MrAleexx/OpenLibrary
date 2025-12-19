@@ -34,7 +34,7 @@ defineProps<{
 
             <div class="relative z-10">
                 <div class="mb-8 flex items-center gap-2">
-                    <img src="/images/logos/Logo-Sinfondo-white.png" alt="Logo" class="h-20 w-auto" />
+                    <img src="/images/logos/transparente-white.png" alt="Logo" class="h-20 w-auto" />
                 </div>
 
                 <div class="max-w-md">
@@ -81,8 +81,8 @@ defineProps<{
             <div class="w-full max-w-md">
                 <!-- Logo móvil -->
                 <div class="mb-8 flex items-center justify-center gap-2 lg:hidden">
-                    <img src="/images/logos/logo-Sinfondo-Dark.png" alt="Logo" class="block h-20 w-auto dark:hidden" />
-                    <img src="/images/logos/Logo-Sinfondo-white.png" alt="Logo" class="hidden h-20 w-auto dark:block" />
+                    <img src="/images/logos/transparente-dark.png" alt="Logo" class="block h-20 w-auto dark:hidden" />
+                    <img src="/images/logos/transparente-white.png" alt="Logo" class="hidden h-20 w-auto dark:block" />
                 </div>
 
                 <div class="mb-8">
